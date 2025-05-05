@@ -6,7 +6,9 @@ import { Label } from '@/components/ui/label';
 import DueDateField from './DueDateField';
 import TaskStatusPriorityFields from './TaskStatusPriorityFields';
 import AttachmentField from './AttachmentField';
+import ProjectField from './ProjectField';
 import { Column } from '@/types/task';
+import { Project } from '@/types/project';
 
 interface TaskFormFieldsProps {
   title: string;
@@ -23,6 +25,9 @@ interface TaskFormFieldsProps {
   setAttachmentURL: (url: string | null) => void;
   onFileUpload?: (file: File) => Promise<void>;
   columns: Column[];
+  projects?: Project[];
+  projectId?: string | null;
+  setProjectId?: (id: string | null) => void;
 }
 
 const TaskFormFields: React.FC<TaskFormFieldsProps> = ({
@@ -39,12 +44,15 @@ const TaskFormFields: React.FC<TaskFormFieldsProps> = ({
   attachmentURL,
   setAttachmentURL,
   onFileUpload,
-  columns
+  columns,
+  projects = [],
+  projectId = null,
+  setProjectId = () => {}
 }) => {
   return (
     <div className="grid gap-4 py-4">
       <div className="grid gap-2">
-        <Label htmlFor="title">Title</Label>
+        <Label htmlFor="title">Title <span className="text-destructive">*</span></Label>
         <Input
           id="title"
           value={title}
@@ -73,15 +81,25 @@ const TaskFormFields: React.FC<TaskFormFieldsProps> = ({
         columns={columns}
       />
       
-      <DueDateField 
-        dueDate={dueDate}
-        setDueDate={setDueDate}
-      />
+      <div className="grid grid-cols-2 gap-4">
+        <DueDateField 
+          dueDate={dueDate}
+          setDueDate={setDueDate}
+        />
+        
+        {projects.length > 0 && (
+          <ProjectField
+            projects={projects}
+            projectId={projectId}
+            setProjectId={setProjectId}
+          />
+        )}
+      </div>
       
       <AttachmentField 
         attachmentURL={attachmentURL}
         setAttachmentURL={setAttachmentURL}
-        onFileUpload={onFileUpload}
+        onFileUpload={onFileUpload ? file => onFileUpload(file) : undefined}
       />
     </div>
   );
