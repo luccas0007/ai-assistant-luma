@@ -60,10 +60,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .single();
 
       if (error) {
-        throw error;
+        // Only log the error but don't throw it, so the app can continue
+        console.error('Error fetching profile:', error.message);
       }
 
-      setProfile(data);
+      setProfile(data || null);
     } catch (error: any) {
       console.error('Error fetching profile:', error.message);
     } finally {
@@ -98,6 +99,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
     try {
+      // First check if the profiles table exists by making a small query
+      const { error: tableCheckError } = await supabase
+        .from('profiles')
+        .select('id')
+        .limit(1);
+      
+      const profilesTableExists = !tableCheckError;
+
+      // Now attempt to sign up
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -108,19 +118,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (data.user) {
-        // Create a profile record
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: data.user.id,
-            first_name: firstName,
-            last_name: lastName,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          });
+        // Only attempt to create profile if the profiles table exists
+        if (profilesTableExists) {
+          try {
+            // Create a profile record
+            const { error: profileError } = await supabase
+              .from('profiles')
+              .insert({
+                id: data.user.id,
+                first_name: firstName,
+                last_name: lastName,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              });
 
-        if (profileError) {
-          throw profileError;
+            if (profileError) {
+              console.error('Error creating profile:', profileError.message);
+              // Continue with signup even if profile creation fails
+            }
+          } catch (profileError: any) {
+            console.error('Error creating profile:', profileError.message);
+            // Continue with signup even if profile creation fails
+          }
+        } else {
+          console.log('Profiles table does not exist. Skipping profile creation.');
         }
 
         toast({
