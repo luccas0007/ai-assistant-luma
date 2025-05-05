@@ -7,7 +7,8 @@ import { createClient } from '@supabase/supabase-js';
 // Create an untyped client for storage operations to avoid type issues
 const SUPABASE_URL = "https://kksxzbcvosofafpkstow.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtrc3h6YmN2b3NvZmFmcGtzdG93Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY0NzU3MzcsImV4cCI6MjA2MjA1MTczN30.vFyv-n7xymV41xu7qyBskGKeMP8I8psg7vV0q1bta-w";
-const storageClient = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+// Use 'any' type to avoid TypeScript issues with storage operations
+const storageClient = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY) as any;
 
 /**
  * Creates a new task in the database
