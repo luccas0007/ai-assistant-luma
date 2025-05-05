@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   ListFilter, 
@@ -13,10 +12,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import TaskDialogForm from '@/components/tasks/TaskDialogForm';
+import TaskDialog from '@/components/tasks/TaskDialog';
 import KanbanBoard from '@/components/tasks/KanbanBoard';
 import ListView from '@/components/tasks/ListView';
-import { useTaskManager } from '@/hooks/task-manager'; // Updated import path
+import { useTaskManager } from '@/hooks/task-manager';
 import {
   Dialog,
   DialogContent,
@@ -136,7 +135,7 @@ const TaskManager = () => {
         </CardContent>
       </Card>
 
-      <TaskDialogForm
+      <TaskDialog
         isOpen={taskDialogOpen}
         onClose={() => {
           setTaskDialogOpen(false);
