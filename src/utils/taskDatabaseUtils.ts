@@ -9,23 +9,18 @@ import { useToast } from '@/hooks/use-toast';
 export const setupTaskDatabase = async () => {
   try {
     console.log('Setting up task database...');
-    // Try to query tasks table to check if it exists
-    const { error: tasksExistError } = await supabase
-      .from('tasks')
-      .select('count')
-      .limit(1);
-      
-    if (tasksExistError && tasksExistError.message && tasksExistError.message.includes('does not exist')) {
-      console.log('Tasks table does not exist. Creating it now.');
-      // Create tasks table
-      const { error: createError } = await supabase.rpc('create_tasks_table');
-      if (createError) {
-        console.log('Creating tasks table via SQL query');
-        // If RPC function doesn't exist, use raw SQL
-        await supabase.rpc('exec', { 
+    
+    // Create tasks table directly with SQL
+    const { error: createTableError } = await supabase.from('_tables').select('*');
+    
+    // Regardless of the previous result, try to create the table
+    // This approach is more direct than trying to check if it exists first
+    try {
+      const { error } = await supabase
+        .rpc('exec', { 
           query: `
             CREATE TABLE IF NOT EXISTS public.tasks (
-              id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+              id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
               user_id UUID NOT NULL REFERENCES auth.users(id),
               title TEXT NOT NULL,
               description TEXT,
@@ -39,26 +34,86 @@ export const setupTaskDatabase = async () => {
             );
           `
         });
-        
-        // Configure RLS
+      
+      if (error) {
+        console.error('Error creating tasks table:', error);
+        // Try an alternative method
         await supabase.rpc('exec', {
           query: `
+            CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+            
+            CREATE TABLE IF NOT EXISTS public.tasks (
+              id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+              user_id UUID NOT NULL,
+              title TEXT NOT NULL,
+              description TEXT,
+              status TEXT NOT NULL DEFAULT 'todo',
+              priority TEXT NOT NULL DEFAULT 'medium',
+              due_date TIMESTAMPTZ,
+              completed BOOLEAN NOT NULL DEFAULT false,
+              attachment_url TEXT,
+              created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+              updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            );
+            
             ALTER TABLE public.tasks ENABLE ROW LEVEL SECURITY;
+            
             CREATE POLICY "Users can CRUD their own tasks" ON public.tasks
               USING (auth.uid() = user_id)
               WITH CHECK (auth.uid() = user_id);
           `
         });
       }
+    } catch (error) {
+      console.error('SQL execution error:', error);
+      // If SQL execution fails, try the CREATE TABLE directly
+      try {
+        // This is the last resort - create the table directly via SQL API
+        const result = await fetch(`${supabase.supabaseUrl}/rest/v1/?apikey=${supabase.supabaseKey}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabase.supabaseKey}`
+          },
+          body: JSON.stringify({
+            query: `
+              CREATE TABLE IF NOT EXISTS public.tasks (
+                id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                user_id UUID NOT NULL,
+                title TEXT NOT NULL,
+                description TEXT,
+                status TEXT NOT NULL DEFAULT 'todo',
+                priority TEXT NOT NULL DEFAULT 'medium',
+                due_date TIMESTAMPTZ,
+                completed BOOLEAN NOT NULL DEFAULT false,
+                attachment_url TEXT,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+              );
+            `
+          })
+        });
+        console.log('Direct SQL creation result:', result);
+      } catch (directError) {
+        console.error('Direct SQL execution error:', directError);
+      }
     }
     
-    // Create storage bucket for attachments if it doesn't exist
+    // Create storage bucket for attachments
     try {
       const { data: buckets } = await supabase.storage.listBuckets();
       const bucketExists = buckets?.some(bucket => bucket.name === 'task-attachments');
       
       if (!bucketExists) {
-        await supabase.storage.createBucket('task-attachments', { public: true });
+        const { error } = await supabase.storage.createBucket('task-attachments', { 
+          public: true,
+          fileSizeLimit: 10485760, // 10MB
+          allowedMimeTypes: ['image/*', 'application/pdf']
+        });
+        
+        if (error) {
+          console.error('Error creating storage bucket:', error);
+        }
       }
     } catch (error) {
       console.error('Error checking/creating storage bucket:', error);
@@ -75,8 +130,10 @@ export const setupTaskDatabase = async () => {
  */
 export const fetchUserTasks = async (userId: string) => {
   try {
-    // Direct query to the tasks table
-    // First check if table exists by trying to query it
+    // First try setting up the database to ensure it exists
+    await setupTaskDatabase();
+    
+    // Then attempt to query tasks
     try {
       const { data, error } = await supabase
         .from('tasks')
@@ -85,25 +142,17 @@ export const fetchUserTasks = async (userId: string) => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        if (error.message.includes('does not exist')) {
-          // Table doesn't exist yet
-          await setupTaskDatabase();
-          return { data: [], error: null };
-        }
+        console.error('Error fetching tasks:', error);
         return { data: [], error };
       }
 
       return { data: data || [], error: null };
     } catch (error: any) {
-      if (error.message.includes('does not exist')) {
-        // Table doesn't exist yet
-        await setupTaskDatabase();
-        return { data: [], error: null };
-      }
-      throw error;
+      console.error('Error in tasks query:', error);
+      return { data: [], error };
     }
   } catch (error: any) {
-    console.error('Error fetching tasks:', error.message);
+    console.error('Error in fetchUserTasks:', error);
     return { data: [], error };
   }
 };

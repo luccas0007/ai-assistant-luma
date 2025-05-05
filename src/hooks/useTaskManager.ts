@@ -95,10 +95,40 @@ export const useTaskManager = () => {
     if (!user) return;
 
     try {
+      // Clear any previous errors
       const { data, error } = await createTask(user.id, newTask);
       
       if (error) {
+        console.error('Task creation error details:', error);
+        let errorMessage = 'An error occurred while creating the task';
+        
+        if (error.message) {
+          if (error.message.includes('violates foreign key constraint')) {
+            errorMessage = 'User authentication error. Please log out and log back in.';
+          } else if (error.message.includes('does not exist')) {
+            errorMessage = 'Database table not found. The system will try to recreate it.';
+            // Try to set up the database again
+            await setupTaskDatabase();
+          } else {
+            errorMessage = `Error: ${error.message}`;
+          }
+        }
+        
+        toast({
+          title: 'Error creating task',
+          description: errorMessage,
+          variant: 'destructive'
+        });
         throw error;
+      }
+
+      if (!data || data.length === 0) {
+        toast({
+          title: 'Task creation issue',
+          description: 'Task was created but no data was returned. Refreshing may be needed.',
+          variant: 'destructive'
+        });
+        return;
       }
 
       setTasks([...(data || []), ...(tasks || [])]);

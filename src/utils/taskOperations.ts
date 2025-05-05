@@ -11,29 +11,41 @@ export const createTask = async (
   newTask: Omit<Task, 'id' | 'user_id' | 'created_at' | 'updated_at'>
 ) => {
   try {
-    // Try to create the task directly
-    const { data, error } = await supabase
-      .from('tasks')
-      .insert({
-        user_id: userId,
-        title: newTask.title,
-        description: newTask.description,
-        due_date: newTask.due_date,
-        status: newTask.status || 'todo',
-        priority: newTask.priority,
-        completed: newTask.completed || false,
-        attachment_url: newTask.attachment_url,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      })
-      .select();
+    // First ensure the database is set up
+    await setupTaskDatabase();
+    
+    // Then try to create the task
+    try {
+      const { data, error } = await supabase
+        .from('tasks')
+        .insert({
+          user_id: userId,
+          title: newTask.title,
+          description: newTask.description,
+          due_date: newTask.due_date,
+          status: newTask.status || 'todo',
+          priority: newTask.priority,
+          completed: newTask.completed || false,
+          attachment_url: newTask.attachment_url,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select();
 
-    if (error) {
-      // Check if the error message exists before trying to read includes
-      if (error.message && error.message.includes('does not exist')) {
-        // If table doesn't exist, create it first and then retry
+      if (error) {
+        console.error('Error in task creation:', error);
+        throw error;
+      }
+
+      return { data, error: null };
+    } catch (insertError: any) {
+      console.error('Failed to insert task:', insertError);
+      
+      // If specifically a "relation does not exist" error, try recreating the table
+      if (insertError.message && insertError.message.includes('does not exist')) {
         await setupTaskDatabase();
-        // Retry inserting the task
+        
+        // Retry inserting the task after table creation
         const { data: retryData, error: retryError } = await supabase
           .from('tasks')
           .insert({
@@ -51,14 +63,15 @@ export const createTask = async (
           .select();
           
         if (retryError) {
+          console.error('Error in retry task creation:', retryError);
           throw retryError;
         }
+        
         return { data: retryData, error: null };
       }
-      throw error;
+      
+      throw insertError;
     }
-
-    return { data, error: null };
   } catch (error) {
     console.error('Error creating task:', error);
     return { data: null, error };
