@@ -13,30 +13,33 @@ import Messages from "./pages/Messages";
 import Tasks from "./pages/Tasks";
 import Notifications from "./pages/Notifications";
 import NotFound from "./pages/NotFound";
+import React from "react";
 
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
+  <React.StrictMode>
+    <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Layout />}>
-            <Route index element={<Dashboard />} />
-            <Route path="voice-command" element={<VoiceCommand />} />
-            <Route path="calendar" element={<Calendar />} />
-            <Route path="email" element={<Email />} />
-            <Route path="messages" element={<Messages />} />
-            <Route path="tasks" element={<Tasks />} />
-            <Route path="notifications" element={<Notifications />} />
-          </Route>
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <TooltipProvider>
+          <Routes>
+            <Route path="/" element={<Layout />}>
+              <Route index element={<Dashboard />} />
+              <Route path="voice-command" element={<VoiceCommand />} />
+              <Route path="calendar" element={<Calendar />} />
+              <Route path="email" element={<Email />} />
+              <Route path="messages" element={<Messages />} />
+              <Route path="tasks" element={<Tasks />} />
+              <Route path="notifications" element={<Notifications />} />
+            </Route>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+          <Toaster />
+          <Sonner />
+        </TooltipProvider>
       </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+    </QueryClientProvider>
+  </React.StrictMode>
 );
 
 export default App;
