@@ -21,8 +21,9 @@ export const setupTaskDatabase = async () => {
     const { error: checkError } = await supabase.from('tasks').select('id').limit(1);
     
     // If the table doesn't exist, try to create it
-    // Fix: Add proper type check for error message to prevent TypeScript error
-    if (checkError && checkError.message && 
+    // Properly type-check the error message to prevent TypeScript errors
+    if (checkError && 
+        checkError.message !== undefined && 
         typeof checkError.message === 'string' && 
         checkError.message.includes('does not exist')) {
       console.log('Tasks table does not exist, creating it...');
