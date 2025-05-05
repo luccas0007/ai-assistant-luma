@@ -68,12 +68,17 @@ export const setupTaskDatabase = async () => {
       console.error('SQL execution error:', error);
       // If SQL execution fails, try the CREATE TABLE directly
       try {
-        // This is the last resort - create the table directly via SQL API
-        const result = await fetch(`${supabase.supabaseUrl}/rest/v1/?apikey=${supabase.supabaseKey}`, {
+        // This is the last resort - create the table directly
+        // Instead of accessing protected properties, use the fetch API with environment variables
+        const { VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY } = import.meta.env;
+        const supabaseUrl = VITE_SUPABASE_URL || 'https://kksxzbcvosofafpkstow.supabase.co';
+        const supabaseKey = VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtrc3h6YmN2b3NvZmFmcGtzdG93Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY0NzU3MzcsImV4cCI6MjA2MjA1MTczN30.vFyv-n7xymV41xu7qyBskGKeMP8I8psg7vV0q1bta-w';
+        
+        const result = await fetch(`${supabaseUrl}/rest/v1/?apikey=${supabaseKey}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${supabase.supabaseKey}`
+            'Authorization': `Bearer ${supabaseKey}`
           },
           body: JSON.stringify({
             query: `
