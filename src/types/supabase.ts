@@ -1,4 +1,3 @@
-
 export type Json =
   | string
   | number
@@ -42,9 +41,11 @@ export interface Database {
           user_id: string
           title: string
           description: string | null
-          due_date: string
+          status: string
+          due_date: string | null
           priority: 'high' | 'medium' | 'low'
           completed: boolean
+          attachment_url: string | null
           created_at: string
           updated_at: string
         }
@@ -53,9 +54,11 @@ export interface Database {
           user_id: string
           title: string
           description?: string | null
-          due_date: string
-          priority: 'high' | 'medium' | 'low'
+          status?: string
+          due_date?: string | null
+          priority?: 'high' | 'medium' | 'low'
           completed?: boolean
+          attachment_url?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -64,9 +67,11 @@ export interface Database {
           user_id?: string
           title?: string
           description?: string | null
-          due_date?: string
+          status?: string
+          due_date?: string | null
           priority?: 'high' | 'medium' | 'low'
           completed?: boolean
+          attachment_url?: string | null
           created_at?: string
           updated_at?: string
         }

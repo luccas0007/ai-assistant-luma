@@ -14,12 +14,31 @@ import Tasks from "./pages/Tasks";
 import TaskManager from "./pages/TaskManager";
 import Notifications from "./pages/Notifications";
 import NotFound from "./pages/NotFound";
-import React from "react";
+import React, { useEffect } from "react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import { initializeDatabase } from "./lib/supabase";
 
 const queryClient = new QueryClient();
+
+// Initialize database when app loads
+const DatabaseInitializer = () => {
+  useEffect(() => {
+    const init = async () => {
+      try {
+        console.log("Initializing database on app startup...");
+        await initializeDatabase();
+      } catch (error) {
+        console.error("Error initializing database:", error);
+      }
+    };
+    
+    init();
+  }, []);
+  
+  return null;
+};
 
 // Protected route component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -42,6 +61,7 @@ const App = () => (
       <AuthProvider>
         <BrowserRouter>
           <TooltipProvider>
+            <DatabaseInitializer />
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />

@@ -43,3 +43,48 @@ export const checkSupabaseConnection = async () => {
     return false;
   }
 };
+
+// Create database schema on app initialization
+export const initializeDatabase = async () => {
+  try {
+    console.log('Initializing database schema...');
+    
+    // Create the tasks table if it doesn't exist
+    const { error } = await supabase.rpc('create_tasks_table');
+    
+    if (error) {
+      // If RPC function doesn't exist, use a fallback approach with SQL
+      console.log('RPC not available, using fallback method to create schema');
+      
+      // Create the tasks table using SQL
+      const { error: sqlError } = await supabase.from('tasks').insert({
+        id: '00000000-0000-0000-0000-000000000000',
+        user_id: '00000000-0000-0000-0000-000000000000',
+        title: '_schema_initialization_',
+        description: 'This is a temporary record to ensure the table exists',
+        status: 'todo',
+        priority: 'medium',
+        completed: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }).select();
+      
+      if (sqlError && !sqlError.message.includes('already exists')) {
+        console.error('Error creating schema:', sqlError);
+        return { success: false, error: sqlError };
+      }
+      
+      // Clean up the initialization record
+      await supabase
+        .from('tasks')
+        .delete()
+        .eq('title', '_schema_initialization_');
+    }
+    
+    console.log('Database schema initialized successfully');
+    return { success: true };
+  } catch (error) {
+    console.error('Error initializing database schema:', error);
+    return { success: false, error };
+  }
+};

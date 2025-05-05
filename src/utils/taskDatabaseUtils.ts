@@ -1,5 +1,5 @@
 
-import { supabase } from '@/lib/supabase';
+import { supabase, initializeDatabase } from '@/lib/supabase';
 import { Task } from '@/types/task';
 
 /**
@@ -9,47 +9,12 @@ export const setupTaskDatabase = async () => {
   try {
     console.log('Setting up task database...');
     
-    // Check if tasks table exists by trying to query it
-    const { error: checkError } = await supabase
-      .from('tasks')
-      .select('count')
-      .limit(1);
+    // Initialize the database schema
+    const result = await initializeDatabase();
     
-    if (checkError) {
-      console.log('Tasks table does not exist or other error occurred:', checkError.message);
-      
-      // Try to create the tasks table using direct SQL queries
-      // Since we can't execute arbitrary SQL easily, we'll use the REST API 
-      // to insert a record and let Supabase create the table for us
-      try {
-        // Try to insert a test record
-        const testTask = {
-          title: '_test_task_creation',
-          description: 'This is a test task to ensure the table exists',
-          status: 'todo',
-          priority: 'medium',
-          completed: false,
-          user_id: '00000000-0000-0000-0000-000000000000', // Placeholder ID
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        };
-        
-        const { error: insertError } = await supabase
-          .from('tasks')
-          .insert(testTask);
-          
-        if (insertError) {
-          console.error('Error creating tasks table:', insertError.message);
-        } else {
-          // Try to remove the test task
-          await supabase
-            .from('tasks')
-            .delete()
-            .eq('title', '_test_task_creation');
-        }
-      } catch (error) {
-        console.error('Error in table creation process:', error);
-      }
+    if (!result.success) {
+      console.error('Error initializing database:', result.error);
+      return { success: false, error: result.error };
     }
     
     console.log('Task database setup complete');
@@ -65,6 +30,8 @@ export const setupTaskDatabase = async () => {
  */
 export const fetchUserTasks = async (userId: string) => {
   try {
+    console.log('Fetching tasks for user:', userId);
+    
     // First try setting up the database to ensure it exists
     await setupTaskDatabase();
     
@@ -81,6 +48,7 @@ export const fetchUserTasks = async (userId: string) => {
         return { data: [], error };
       }
 
+      console.log('Tasks fetched successfully:', data?.length || 0, 'tasks found');
       return { data: data || [], error: null };
     } catch (error: any) {
       console.error('Error in tasks query:', error);

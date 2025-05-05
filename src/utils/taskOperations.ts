@@ -1,3 +1,4 @@
+
 import { supabase } from '@/lib/supabase';
 import { Task } from '@/types/task';
 import { setupTaskDatabase } from './taskDatabaseUtils';
@@ -20,12 +21,12 @@ export const createTask = async (
     const taskData = {
       user_id: userId,
       title: newTask.title,
-      description: newTask.description,
+      description: newTask.description || null,
       status: newTask.status || 'todo',
       priority: newTask.priority || 'medium',
-      due_date: newTask.due_date,
+      due_date: newTask.due_date || null,
       completed: newTask.completed || false,
-      attachment_url: newTask.attachment_url,
+      attachment_url: newTask.attachment_url || null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
