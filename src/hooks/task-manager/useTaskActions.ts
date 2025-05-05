@@ -1,6 +1,8 @@
+
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { Task } from '@/types/task';
+import { useAuth } from '@/context/AuthContext';
 import { 
   createTask as apiCreateTask, 
   updateTask as apiUpdateTask, 
@@ -19,11 +21,10 @@ export const useTaskActions = (
 ) => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
 
-  const handleCreateTask = async (newTask: any) => {
-    const userId = newTask.user_id;
-    
-    if (!userId) {
+  const handleCreateTask = async (newTask: Partial<Task>) => {
+    if (!user) {
       toast({
         title: 'Authentication required',
         description: 'Please log in to create tasks',
@@ -36,7 +37,7 @@ export const useTaskActions = (
       console.log("Creating task with data:", newTask);
       
       // Clear any previous errors
-      const { data, error } = await apiCreateTask(userId, newTask);
+      const { data, error } = await apiCreateTask(user.id, newTask);
       
       if (error) {
         console.error('Task creation error details:', error);

@@ -8,7 +8,7 @@ import { setupTaskDatabase } from './taskDatabaseUtils';
  */
 export const createTask = async (
   userId: string,
-  newTask: Omit<Task, 'id' | 'user_id' | 'created_at' | 'updated_at'>
+  newTask: Partial<Task>
 ) => {
   try {
     console.log('Creating task for user:', userId);
