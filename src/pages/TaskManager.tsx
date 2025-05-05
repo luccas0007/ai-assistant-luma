@@ -16,7 +16,7 @@ import { Label } from '@/components/ui/label';
 import TaskDialogForm from '@/components/tasks/TaskDialogForm';
 import KanbanBoard from '@/components/tasks/KanbanBoard';
 import ListView from '@/components/tasks/ListView';
-import { useTaskManager } from '@/hooks/useTaskManager';
+import { useTaskManager } from '@/hooks/task-manager'; // Updated import path
 import {
   Dialog,
   DialogContent,
