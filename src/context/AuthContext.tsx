@@ -74,20 +74,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string) => {
     try {
+      // First check if the user has confirmed their email
+      const { data: userData, error: userError } = await supabase.auth.getUserByEmail(email);
+      
+      if (userError) {
+        console.error('Error checking user:', userError.message);
+      }
+      
+      // Attempt to sign in
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
-        throw error;
+        // Provide more specific error messages based on the error code
+        if (error.message.includes('Email not confirmed')) {
+          throw new Error('Please check your email and confirm your account before logging in.');
+        } else if (error.message.includes('Invalid login credentials')) {
+          throw new Error('Invalid email or password. Please check your credentials and try again.');
+        } else {
+          throw error;
+        }
       }
 
       toast({
         title: "Signed in successfully",
         description: `Welcome back, ${data.user?.email}!`,
       });
+      
+      // Add a console log to help with debugging
+      console.log('Login successful:', data);
+      
     } catch (error: any) {
+      console.error('Login error:', error);
       toast({
         title: "Error signing in",
         description: error.message,

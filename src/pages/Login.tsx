@@ -1,19 +1,54 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { supabase } from '@/lib/supabase';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const { signIn } = useAuth();
+  const [confirmationNeeded, setConfirmationNeeded] = useState(false);
+  const { signIn, user } = useAuth();
   const navigate = useNavigate();
+
+  // If user is already logged in, redirect to dashboard
+  useEffect(() => {
+    if (user) {
+      navigate('/');
+    }
+  }, [user, navigate]);
+
+  const handleResendConfirmation = async () => {
+    if (!email) {
+      setError('Please enter your email address');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      setError('');
+      setConfirmationNeeded(true);
+    } catch (err: any) {
+      setError(err.message || 'Failed to resend confirmation email');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,9 +57,15 @@ const Login = () => {
 
     try {
       await signIn(email, password);
-      navigate('/');
+      // Navigate happens in the useEffect when user state changes
     } catch (err: any) {
-      setError(err.message || 'Failed to sign in');
+      const errorMessage = err.message || 'Failed to sign in';
+      setError(errorMessage);
+      
+      // Check if error indicates email confirmation is needed
+      if (errorMessage.includes('confirm') || errorMessage.includes('not confirmed')) {
+        setConfirmationNeeded(true);
+      }
     } finally {
       setLoading(false);
     }
@@ -47,7 +88,25 @@ const Login = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
-              {error && <div className="bg-destructive/15 text-destructive text-sm p-2 rounded-md">{error}</div>}
+              {error && (
+                <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md">
+                  {error}
+                  {confirmationNeeded && (
+                    <div className="mt-2">
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm"
+                        className="w-full"
+                        onClick={handleResendConfirmation}
+                        disabled={loading}
+                      >
+                        Resend confirmation email
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
               
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
