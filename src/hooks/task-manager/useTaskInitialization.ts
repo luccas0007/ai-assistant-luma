@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
 import { initializeTaskSystem, fetchUserTasks } from '@/utils/taskDatabaseUtils';
-import { saveColumns } from '@/utils/columnUtils';
 import { Task, Column } from '@/types/task';
 
 /**
@@ -15,7 +14,7 @@ export const useTaskInitialization = (
   setColumns: React.Dispatch<React.SetStateAction<Column[]>>,
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
   setError: React.Dispatch<React.SetStateAction<string | null>>,
-  columns: Column[]
+  activeProject: any | null
 ) => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -61,24 +60,16 @@ export const useTaskInitialization = (
     init();
   }, [user, toast, setIsLoading, setError]);
 
-  // Initialize columns if needed
-  useEffect(() => {
-    if (columns && columns.length === 0) {
-      // Initialize with default columns if none exist
-      const defaultColumns = [
-        { id: 'todo', title: 'To Do' },
-        { id: 'in-progress', title: 'In Progress' },
-        { id: 'done', title: 'Done' }
-      ];
-      setColumns(defaultColumns);
-      saveColumns(defaultColumns);
-    }
-  }, [columns, setColumns]);
-
-  // Fetch tasks from Supabase
+  // Fetch tasks from Supabase when activeProject changes
   useEffect(() => {
     if (!user) {
       navigate('/login');
+      return;
+    }
+
+    if (!activeProject) {
+      // Clear tasks when no project is selected
+      setTasks([]);
       return;
     }
 
@@ -87,15 +78,15 @@ export const useTaskInitialization = (
       setError(null);
       
       try {
-        console.log('Fetching tasks for user:', user.id);
-        const { data, error, errorMessage } = await fetchUserTasks(user.id);
+        console.log('Fetching tasks for project:', activeProject.id);
+        const { data, error, errorMessage } = await fetchUserTasks(user.id, activeProject.id);
         
         if (error) {
           console.error('Error fetching tasks:', errorMessage || error.message);
           setError(errorMessage || 'Failed to fetch tasks');
           toast({
             title: 'Error fetching tasks',
-            description: errorMessage || 'There was a problem loading your projects. Please try again.',
+            description: errorMessage || 'There was a problem loading your tasks. Please try again.',
             variant: 'destructive'
           });
           
@@ -125,7 +116,7 @@ export const useTaskInitialization = (
     };
 
     loadTasks();
-  }, [user, navigate, toast, setTasks, setIsLoading, setError]);
+  }, [user, navigate, toast, setTasks, setIsLoading, setError, activeProject]);
 };
 
 export default useTaskInitialization;

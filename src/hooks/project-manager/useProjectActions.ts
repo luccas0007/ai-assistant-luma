@@ -1,201 +1,253 @@
 
+import { useState, useCallback } from 'react';
+import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Project } from '@/types/project';
-import { useAuth } from '@/context/AuthContext';
-import { 
-  createProject as apiCreateProject, 
-  updateProject as apiUpdateProject, 
-  deleteProject as apiDeleteProject, 
-} from '@/utils/projectOperations';
+import { fetchUserProjects, createProject, updateProject, deleteProject } from '@/utils/projectOperations';
+import { createDefaultColumns } from '@/utils/columnOperations';
 
 /**
- * Hook for project action handlers
+ * Hook for project-related actions
  */
 export const useProjectActions = (
-  projects: Project[],
   setProjects: React.Dispatch<React.SetStateAction<Project[]>>,
   setActiveProject: React.Dispatch<React.SetStateAction<Project | null>>,
-  setProjectDialogOpen: React.Dispatch<React.SetStateAction<boolean>>,
-  setEditingProject: React.Dispatch<React.SetStateAction<Project | null>>,
-  setError: React.Dispatch<React.SetStateAction<string | null>>,
-  setIsProcessing: React.Dispatch<React.SetStateAction<boolean>>
+  setIsLoadingProjects: React.Dispatch<React.SetStateAction<boolean>>,
+  setProjectError: React.Dispatch<React.SetStateAction<string | null>>,
 ) => {
-  const { toast } = useToast();
+  const [isProcessing, setIsProcessing] = useState(false);
   const { user } = useAuth();
-
-  const handleCreateProject = async (name: string, description?: string) => {
-    if (!user) {
-      const errorMessage = 'Authentication required to create projects';
-      setError(errorMessage);
+  const { toast } = useToast();
+  
+  // Load all projects for the current user
+  const loadProjects = useCallback(async () => {
+    if (!user) return { success: false, error: new Error('User not authenticated') };
+    
+    setIsLoadingProjects(true);
+    setProjectError(null);
+    
+    try {
+      const { data, error, errorMessage } = await fetchUserProjects(user.id);
       
+      if (error) {
+        setProjectError(errorMessage || 'Error loading projects');
+        toast({
+          title: 'Error',
+          description: errorMessage || 'Could not load projects. Please try again.',
+          variant: 'destructive'
+        });
+        return { success: false, error };
+      }
+      
+      setProjects(data || []);
+      return { success: true, projects: data };
+    } catch (error: any) {
+      const errorMsg = error.message || 'An unexpected error occurred';
+      
+      setProjectError(errorMsg);
+      toast({
+        title: 'Error loading projects',
+        description: errorMsg,
+        variant: 'destructive'
+      });
+      
+      return { success: false, error };
+    } finally {
+      setIsLoadingProjects(false);
+    }
+  }, [user, setProjects, setIsLoadingProjects, setProjectError, toast]);
+  
+  // Create a new project
+  const handleCreateProject = useCallback(async (name: string, description?: string) => {
+    if (!user) {
       toast({
         title: 'Authentication required',
-        description: 'Please log in to create projects',
+        description: 'You must be logged in to create a project',
         variant: 'destructive'
       });
-      return;
+      return false;
     }
-
+    
+    setIsProcessing(true);
+    
     try {
-      console.log("Creating project with data:", { name, description });
-      setError(null);
-      setIsProcessing(true);
-      
       // Create the project
-      const { data, error, errorMessage } = await apiCreateProject(user.id, name, description);
+      const { data, error, errorMessage } = await createProject(user.id, name, description);
       
       if (error) {
-        console.error('Project creation error details:', error);
-        setError(errorMessage || 'Error creating project');
-        
+        setProjectError(errorMessage || 'Error creating project');
         toast({
-          title: 'Error creating project',
-          description: errorMessage || 'Failed to create project',
-          variant: 'destructive'
-        });
-        return null;
-      }
-
-      if (!data || data.length === 0) {
-        const msg = 'Project was created but no data was returned';
-        setError(msg);
-        
-        toast({
-          title: 'Project creation issue',
-          description: msg + '. Refreshing may be needed.',
-          variant: 'destructive'
-        });
-        return null;
-      }
-
-      console.log("Project created successfully:", data);
-      setProjects(prev => [...prev, ...data]);
-      toast({
-        title: 'Project created',
-        description: 'Your project has been created successfully.'
-      });
-      setProjectDialogOpen(false);
-      
-      // Return the newly created project
-      return data[0] as Project;
-    } catch (error: any) {
-      console.error('Error creating project:', error);
-      const errorMessage = error.message || 'An unexpected error occurred';
-      setError(errorMessage);
-      
-      toast({
-        title: 'Error creating project',
-        description: errorMessage,
-        variant: 'destructive'
-      });
-      return null;
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleUpdateProject = async (updatedProject: Project) => {
-    try {
-      setError(null);
-      setIsProcessing(true);
-      const { error, errorMessage } = await apiUpdateProject(updatedProject);
-
-      if (error) {
-        setError(errorMessage || 'Error updating project');
-        toast({
-          title: 'Error updating project',
-          description: errorMessage || 'Failed to update project',
+          title: 'Error',
+          description: errorMessage || 'Could not create project. Please try again.',
           variant: 'destructive'
         });
         return false;
       }
-
-      setProjects(projects.map(project => 
-        project.id === updatedProject.id ? updatedProject : project
-      ));
       
-      // If this was the active project, update it
-      setActiveProject(current => 
-        current?.id === updatedProject.id ? updatedProject : current
+      if (!data) {
+        setProjectError('No project data returned');
+        toast({
+          title: 'Error',
+          description: 'Could not create project. No data returned.',
+          variant: 'destructive'
+        });
+        return false;
+      }
+      
+      const newProject = data[0];
+      
+      // Create default columns for the new project
+      await createDefaultColumns(newProject.id);
+      
+      // Update projects list
+      setProjects(prevProjects => [...prevProjects, newProject]);
+      
+      // Set as active project
+      setActiveProject(newProject);
+      
+      toast({
+        title: 'Project created',
+        description: `"${name}" has been created successfully`
+      });
+      
+      return true;
+    } catch (error: any) {
+      const errorMsg = error.message || 'An unexpected error occurred';
+      
+      setProjectError(errorMsg);
+      toast({
+        title: 'Error creating project',
+        description: errorMsg,
+        variant: 'destructive'
+      });
+      
+      return false;
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [user, setProjects, setActiveProject, setProjectError, toast]);
+  
+  // Update an existing project
+  const handleUpdateProject = useCallback(async (project: Project) => {
+    if (!user) {
+      toast({
+        title: 'Authentication required',
+        description: 'You must be logged in to update a project',
+        variant: 'destructive'
+      });
+      return false;
+    }
+    
+    setIsProcessing(true);
+    
+    try {
+      const { success, error, errorMessage } = await updateProject(project);
+      
+      if (!success) {
+        setProjectError(errorMessage || 'Error updating project');
+        toast({
+          title: 'Error',
+          description: errorMessage || 'Could not update project. Please try again.',
+          variant: 'destructive'
+        });
+        return false;
+      }
+      
+      // Update projects list
+      setProjects(prevProjects => 
+        prevProjects.map(p => p.id === project.id ? project : p)
+      );
+      
+      // Update active project if needed
+      setActiveProject(prevActive => 
+        prevActive && prevActive.id === project.id ? project : prevActive
       );
       
       toast({
         title: 'Project updated',
-        description: 'Your project has been updated successfully.'
+        description: `"${project.name}" has been updated successfully`
       });
-      setEditingProject(null);
-      setProjectDialogOpen(false);
+      
       return true;
     } catch (error: any) {
-      console.error('Error updating project:', error);
-      const errorMessage = error.message || 'An unexpected error occurred';
-      setError(errorMessage);
+      const errorMsg = error.message || 'An unexpected error occurred';
       
+      setProjectError(errorMsg);
       toast({
         title: 'Error updating project',
-        description: errorMessage,
+        description: errorMsg,
         variant: 'destructive'
       });
+      
       return false;
     } finally {
       setIsProcessing(false);
     }
-  };
-
-  const handleDeleteProject = async (id: string) => {
+  }, [user, setProjects, setActiveProject, setProjectError, toast]);
+  
+  // Delete a project
+  const handleDeleteProject = useCallback(async (projectId: string) => {
+    if (!user) {
+      toast({
+        title: 'Authentication required',
+        description: 'You must be logged in to delete a project',
+        variant: 'destructive'
+      });
+      return false;
+    }
+    
+    setIsProcessing(true);
+    
     try {
-      setError(null);
-      setIsProcessing(true);
-      const { error, errorMessage } = await apiDeleteProject(id);
-
-      if (error) {
-        setError(errorMessage || 'Error deleting project');
+      const { success, error, errorMessage } = await deleteProject(projectId);
+      
+      if (!success) {
+        setProjectError(errorMessage || 'Error deleting project');
         toast({
-          title: 'Error deleting project',
-          description: errorMessage || 'Failed to delete project',
+          title: 'Error',
+          description: errorMessage || 'Could not delete project. Please try again.',
           variant: 'destructive'
         });
         return false;
       }
-
-      setProjects(projects.filter(project => project.id !== id));
       
-      // If this was the active project, set active to null or the first available project
-      setActiveProject(current => {
-        if (current?.id === id) {
-          // Find another project to set as active
-          const remainingProjects = projects.filter(p => p.id !== id);
-          return remainingProjects.length > 0 ? remainingProjects[0] : null;
-        }
-        return current;
-      });
+      // Update projects list
+      setProjects(prevProjects => 
+        prevProjects.filter(p => p.id !== projectId)
+      );
+      
+      // Clear active project if it was deleted
+      setActiveProject(prevActive => 
+        prevActive && prevActive.id === projectId ? null : prevActive
+      );
       
       toast({
         title: 'Project deleted',
-        description: 'Your project has been deleted successfully.'
+        description: 'Project has been deleted successfully'
       });
+      
       return true;
     } catch (error: any) {
-      console.error('Error deleting project:', error);
-      const errorMessage = error.message || 'An unexpected error occurred';
-      setError(errorMessage);
+      const errorMsg = error.message || 'An unexpected error occurred';
       
+      setProjectError(errorMsg);
       toast({
         title: 'Error deleting project',
-        description: errorMessage,
+        description: errorMsg,
         variant: 'destructive'
       });
+      
       return false;
     } finally {
       setIsProcessing(false);
     }
-  };
-
+  }, [user, setProjects, setActiveProject, setProjectError, toast]);
+  
   return {
+    isProcessing,
+    loadProjects,
     handleCreateProject,
     handleUpdateProject,
     handleDeleteProject
   };
 };
-
-export default useProjectActions;

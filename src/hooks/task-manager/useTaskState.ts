@@ -1,6 +1,7 @@
 
 import { useState, useCallback } from 'react';
 import { Task, Column } from '@/types/task';
+import { Project } from '@/types/project';
 
 /**
  * Hook for managing the state of the task manager
@@ -16,6 +17,7 @@ export const useTaskState = () => {
   const [columnDialogOpen, setColumnDialogOpen] = useState(false);
   const [newColumnTitle, setNewColumnTitle] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [activeProject, setActiveProject] = useState<Project | null>(null);
 
   // Create a callback to prevent unnecessary re-renders
   const updateTasks = useCallback((newTasks: Task[] | ((prevTasks: Task[]) => Task[])) => {
@@ -43,6 +45,10 @@ export const useTaskState = () => {
     // Column state
     columns,
     setColumns,
+    
+    // Project state
+    activeProject,
+    setActiveProject,
     
     // UI state
     isLoading,

@@ -1,7 +1,7 @@
 
 import { useToast } from '@/hooks/use-toast';
 import { Column } from '@/types/task';
-import { saveColumns } from '@/utils/columnUtils';
+import { createColumn } from '@/utils/columnOperations';
 
 /**
  * Hook for column action handlers
@@ -13,11 +13,12 @@ export const useColumnActions = (
   setNewColumnTitle: React.Dispatch<React.SetStateAction<string>>,
   setColumnDialogOpen: React.Dispatch<React.SetStateAction<boolean>>,
   setIsProcessing: React.Dispatch<React.SetStateAction<boolean>>,
-  setError: React.Dispatch<React.SetStateAction<string | null>>
+  setError: React.Dispatch<React.SetStateAction<string | null>>,
+  activeProject: any | null
 ) => {
   const { toast } = useToast();
 
-  const handleAddColumn = () => {
+  const handleAddColumn = async () => {
     try {
       setIsProcessing(true);
       
@@ -26,31 +27,35 @@ export const useColumnActions = (
         return;
       }
       
-      // Create column id from title (lowercase, remove spaces)
-      const columnId = newColumnTitle.toLowerCase().replace(/\s+/g, '-');
-      
-      // Check if column with this id already exists
-      if (columns.some(col => col.id === columnId)) {
+      // Skip if no active project
+      if (!activeProject) {
         toast({
-          title: 'Column already exists',
-          description: 'A column with a similar name already exists.',
+          title: 'No project selected',
+          description: 'Please select a project first',
           variant: 'destructive'
         });
         return;
       }
       
-      // Create the new column
-      const newColumn: Column = {
-        id: columnId,
-        title: newColumnTitle
-      };
+      // Check if column with this title already exists
+      if (columns.some(col => col.title.toLowerCase() === newColumnTitle.toLowerCase())) {
+        toast({
+          title: 'Column already exists',
+          description: 'A column with this name already exists.',
+          variant: 'destructive'
+        });
+        return;
+      }
       
-      // Update columns
-      const updatedColumns = [...columns, newColumn];
-      setColumns(updatedColumns);
+      // Create the column in the database
+      const { success, data, errorMessage } = await createColumn(activeProject.id, newColumnTitle);
       
-      // Save to localStorage
-      saveColumns(updatedColumns);
+      if (!success || !data) {
+        throw new Error(errorMessage || 'Failed to create column');
+      }
+      
+      // Update columns in state
+      setColumns(prevColumns => [...prevColumns, data]);
       
       // Reset form and close dialog
       setNewColumnTitle('');
