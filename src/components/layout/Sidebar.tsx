@@ -1,129 +1,207 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { 
-  Calendar, 
-  Mail, 
-  MessageSquare, 
-  Check, 
+import { NavLink } from 'react-router-dom';
+import {
+  Home,
   Mic,
-  Bell
+  Calendar as CalendarIcon,
+  Mail,
+  MessageSquare,
+  Check,
+  Bell,
+  FolderKanban,
+  List
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { Separator } from '@/components/ui/separator';
+import { useAuth } from '@/context/AuthContext';
 
 interface SidebarProps {
   isOpen: boolean;
   toggleSidebar: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
-  const isMobile = useIsMobile();
-  
-  const menuItems = [
-    { icon: <Calendar className="h-5 w-5" />, label: 'Calendar', path: '/calendar' },
-    { icon: <Mail className="h-5 w-5" />, label: 'Email', path: '/email' },
-    { icon: <MessageSquare className="h-5 w-5" />, label: 'Messages', path: '/messages' },
-    { icon: <Check className="h-5 w-5" />, label: 'Tasks', path: '/tasks' },
-    { icon: <Bell className="h-5 w-5" />, label: 'Notifications', path: '/notifications' }
-  ];
+const menuItems = [
+  {
+    title: 'Dashboard',
+    icon: Home,
+    path: '/',
+  },
+  {
+    title: 'Voice Command',
+    icon: Mic,
+    path: '/voice-command',
+  },
+  {
+    title: 'Calendar',
+    icon: CalendarIcon,
+    path: '/calendar',
+  },
+  {
+    title: 'Email',
+    icon: Mail,
+    path: '/email',
+  },
+  {
+    title: 'Messages',
+    icon: MessageSquare,
+    path: '/messages',
+  },
+  {
+    title: 'Tasks',
+    icon: Check,
+    path: '/tasks',
+  },
+  {
+    title: 'Task Manager',
+    icon: FolderKanban,
+    path: '/task-manager',
+  },
+  {
+    title: 'Notifications',
+    icon: Bell,
+    path: '/notifications',
+  },
+];
 
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
+  const { user, signOut } = useAuth();
+  
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+  
   return (
-    <>
-      {/* Mobile overlay */}
-      {isMobile && isOpen && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-40" 
-          onClick={toggleSidebar}
-        />
+    <div
+      className={cn(
+        'fixed left-0 top-0 z-40 h-screen bg-card transition-all duration-300 border-r',
+        isOpen ? 'w-64' : 'w-20'
       )}
-      
-      {/* Sidebar */}
-      <aside className={`
-        fixed top-0 left-0 z-50 h-full bg-sidebar
-        transition-all duration-300 ease-in-out
-        ${isMobile ? (isOpen ? 'w-64 translate-x-0' : 'w-0 -translate-x-full') : 'w-64'}
-        ${!isMobile && !isOpen ? 'w-20' : ''}
-      `}>
-        <div className="flex flex-col h-full">
-          {/* Sidebar header */}
-          <div className="p-4 flex items-center justify-between border-b border-sidebar-border">
-            {(!isMobile || isOpen) && (
-              <Link to="/" className={`font-semibold text-sidebar-foreground ${!isMobile && !isOpen ? 'hidden' : ''}`}>
-                <span className="gradient-text">AI</span> Assistant
-              </Link>
+    >
+      <div className="flex h-full flex-col">
+        <div className="flex h-14 items-center justify-between px-4">
+          <div
+            className={cn(
+              'flex items-center transition-all',
+              isOpen ? 'justify-between w-full' : 'justify-center'
             )}
-            {!isMobile && (
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="ml-auto"
-                onClick={toggleSidebar}
-              >
-                {isOpen ? (
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-left">
-                    <path d="m15 18-6-6 6-6"/>
-                  </svg>
-                ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-right">
-                    <path d="m9 18 6-6-6-6"/>
-                  </svg>
-                )}
-              </Button>
-            )}
-          </div>
-          
-          {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-            {menuItems.map((item, i) => (
-              <Link 
-                key={i} 
-                to={item.path}
-                className={`
-                  flex items-center p-3 rounded-md hover:bg-sidebar-accent
-                  transition-colors group text-sidebar-foreground
-                `}
-              >
-                <span className={`${isOpen || isMobile ? 'mr-3' : 'mx-auto'}`}>
-                  {item.icon}
-                </span>
-                {(isOpen || isMobile) && <span>{item.label}</span>}
-                {!isOpen && !isMobile && (
-                  <div className="absolute left-20 rounded-md px-2 py-1 ml-6 bg-sidebar-primary text-sidebar-primary-foreground
-                  scale-0 group-hover:scale-100 transition-all duration-100 origin-left">
-                    {item.label}
-                  </div>
-                )}
-              </Link>
-            ))}
-          </nav>
-          
-          {/* Voice command button */}
-          <div className="p-4 border-t border-sidebar-border">
-            <Link to="/voice-command">
-              <Button 
-                className={`
-                  w-full group relative flex items-center justify-center
-                  bg-gradient-to-r from-assistant-blue to-assistant-purple hover:from-assistant-purple hover:to-assistant-blue
-                  text-white transition-all duration-300
-                  ${!isOpen && !isMobile ? 'p-2 aspect-square' : 'py-3'}
-                `}
-              >
-                <Mic className={`h-5 w-5 ${isOpen || isMobile ? 'mr-2' : ''}`} />
-                {(isOpen || isMobile) && <span>Voice Command</span>}
-                {!isOpen && !isMobile && (
-                  <div className="absolute left-full rounded-md px-2 py-1 ml-6 bg-black text-white
-                  scale-0 group-hover:scale-100 transition-all duration-100 origin-left whitespace-nowrap">
-                    Voice Command
-                  </div>
-                )}
-              </Button>
-            </Link>
+          >
+            {isOpen && <span className="text-lg font-semibold">Luma</span>}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleSidebar}
+              className={cn(!isOpen && 'rotate-180')}
+            >
+              {isOpen ? (
+                <ChevronLeft className="h-5 w-5" />
+              ) : (
+                <ChevronRight className="h-5 w-5" />
+              )}
+            </Button>
           </div>
         </div>
-      </aside>
-    </>
+        
+        <div className="flex-1 overflow-auto py-2">
+          <nav className="grid gap-1 px-2">
+            {menuItems.map((item) => (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                className={({ isActive }) =>
+                  cn(
+                    'flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors',
+                    isActive
+                      ? 'bg-accent text-accent-foreground'
+                      : 'hover:bg-accent/50',
+                    !isOpen && 'justify-center'
+                  )
+                }
+              >
+                <item.icon className="h-5 w-5" />
+                {isOpen && <span>{item.title}</span>}
+              </NavLink>
+            ))}
+          </nav>
+        </div>
+        
+        <div className="mt-auto px-2 py-4">
+          <Separator className="mb-4" />
+          {user && (
+            <div
+              className={cn(
+                'flex items-center gap-2 rounded-md py-2',
+                isOpen ? 'px-3' : 'justify-center'
+              )}
+            >
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={user.user_metadata?.avatar_url} />
+                <AvatarFallback>
+                  {user.email?.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              {isOpen && (
+                <div className="flex flex-1 flex-col overflow-hidden">
+                  <div className="text-sm font-medium line-clamp-1">
+                    {user.user_metadata?.name || user.email}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-auto justify-start px-0 text-xs text-muted-foreground"
+                    onClick={handleSignOut}
+                  >
+                    Sign out
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 };
+
+// Chevron components
+const ChevronLeft = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <path d="m15 18-6-6 6-6" />
+  </svg>
+);
+
+const ChevronRight = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <path d="m9 18 6-6-6-6" />
+  </svg>
+);
 
 export default Sidebar;

@@ -11,6 +11,7 @@ import Calendar from "./pages/Calendar";
 import Email from "./pages/Email";
 import Messages from "./pages/Messages";
 import Tasks from "./pages/Tasks";
+import TaskManager from "./pages/TaskManager";
 import Notifications from "./pages/Notifications";
 import NotFound from "./pages/NotFound";
 import React from "react";
@@ -55,6 +56,7 @@ const App = () => (
                 <Route path="email" element={<Email />} />
                 <Route path="messages" element={<Messages />} />
                 <Route path="tasks" element={<Tasks />} />
+                <Route path="task-manager" element={<TaskManager />} />
                 <Route path="notifications" element={<Notifications />} />
               </Route>
               <Route path="*" element={<NotFound />} />
