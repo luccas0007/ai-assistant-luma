@@ -72,7 +72,7 @@ const contacts: Contact[] = [
   {
     id: 5,
     name: 'Michael Brown',
-    lastMessage: 'How's the project coming along?',
+    lastMessage: 'How\'s the project coming along?',
     timestamp: 'Sat',
     unread: 0,
     status: 'online'
