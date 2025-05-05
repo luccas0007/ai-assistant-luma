@@ -2,7 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 
 /**
- * Optional: Define a lightweight error type for Supabase errors
+ * Define a lightweight error type for Supabase errors
  */
 type SupabaseError = { message?: string; [key: string]: any };
 
@@ -30,7 +30,7 @@ export const setupTaskDatabase = async () => {
       console.log('Tasks table does not exist, creating...');
 
       // Create tasks table with proper schema
-      const { error: createError } = await supabase.rpc('create_tasks_table', {});
+      const { error: createError } = await supabase.rpc('create_tasks_table'); // ← Removed {}
 
       if (createError) {
         console.error('Error creating tasks table:', createError);
@@ -43,12 +43,11 @@ export const setupTaskDatabase = async () => {
 
       console.log('Tasks table created successfully');
     } else if (checkError) {
-      // Some other error occurred when checking for the table
       console.error('Error checking for tasks table:', checkError);
       return {
         success: false,
         error: checkError,
-        errorMessage: `Error checking for tasks table: ${typedError.message}`,
+        errorMessage: `Error checking for tasks table: ${(checkError as SupabaseError).message}`,
       };
     } else {
       console.log('Tasks table already exists');
@@ -84,13 +83,11 @@ export const setupTaskStorage = async () => {
       };
     }
 
-    // Check if our task-attachments bucket exists
-    const bucketExists = buckets.some(bucket => bucket.name === 'task-attachments');
+    const bucketExists = buckets.some((bucket: { name: string }) => bucket.name === 'task-attachments');
 
     if (!bucketExists) {
       console.log('Creating task-attachments bucket');
 
-      // Create the bucket
       const { error: createError } = await supabase.storage.createBucket('task-attachments', {
         public: false,
         fileSizeLimit: 10485760, // 10MB
