@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -19,6 +18,7 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import { initializeDatabase } from "./lib/supabase";
+import { setupTaskDatabase } from "./utils/taskDatabaseUtils";
 
 const queryClient = new QueryClient();
 
@@ -28,7 +28,16 @@ const DatabaseInitializer = () => {
     const init = async () => {
       try {
         console.log("Initializing database on app startup...");
-        await initializeDatabase();
+        
+        // Use setupTaskDatabase instead of just initializeDatabase
+        // to ensure tasks table is properly created
+        const { success, error } = await setupTaskDatabase();
+        
+        if (!success) {
+          console.error("Database initialization failed:", error);
+        } else {
+          console.log("Database initialization successful");
+        }
       } catch (error) {
         console.error("Error initializing database:", error);
       }

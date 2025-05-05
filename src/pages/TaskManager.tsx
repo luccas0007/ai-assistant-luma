@@ -55,8 +55,8 @@ const TaskManager = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold mb-1">Task Manager</h1>
-          <p className="text-muted-foreground">Organize your tasks with kanban or list view</p>
+          <h1 className="text-3xl font-bold mb-1">Projects</h1>
+          <p className="text-muted-foreground">Organize your projects with kanban or list view</p>
         </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center space-x-2">
@@ -90,7 +90,7 @@ const TaskManager = () => {
               }
             }}>
               <Plus className="h-4 w-4 mr-1" />
-              Add Task
+              Add Project
             </Button>
           </div>
         </div>
@@ -99,13 +99,13 @@ const TaskManager = () => {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-lg font-medium">
-            {viewMode === 'kanban' ? 'Kanban Board' : 'Task List'}
+            {viewMode === 'kanban' ? 'Project Board' : 'Project List'}
           </CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
             <div className="flex justify-center items-center h-64">
-              <p>Loading tasks...</p>
+              <p>Loading projects...</p>
             </div>
           ) : (
             <DragDropContext onDragEnd={handleDragEnd}>

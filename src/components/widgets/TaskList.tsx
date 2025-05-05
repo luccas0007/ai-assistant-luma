@@ -73,7 +73,7 @@ const TaskList: React.FC = () => {
   return (
     <Card className="h-full">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-lg font-medium">Tasks</CardTitle>
+        <CardTitle className="text-lg font-medium">Projects</CardTitle>
         <Check className="h-5 w-5 text-muted-foreground" />
       </CardHeader>
       <CardContent className="space-y-4">
