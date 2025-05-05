@@ -10,12 +10,14 @@ import { createDefaultColumns } from '@/utils/columnOperations';
  * Hook for project-related actions
  */
 export const useProjectActions = (
+  projects: Project[],
   setProjects: React.Dispatch<React.SetStateAction<Project[]>>,
   setActiveProject: React.Dispatch<React.SetStateAction<Project | null>>,
-  setIsLoadingProjects: React.Dispatch<React.SetStateAction<boolean>>,
+  setProjectDialogOpen: React.Dispatch<React.SetStateAction<boolean>>,
+  setEditingProject: React.Dispatch<React.SetStateAction<Project | null>>,
   setProjectError: React.Dispatch<React.SetStateAction<string | null>>,
+  setIsProcessingProject: React.Dispatch<React.SetStateAction<boolean>>
 ) => {
-  const [isProcessing, setIsProcessing] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
   
@@ -23,7 +25,7 @@ export const useProjectActions = (
   const loadProjects = useCallback(async () => {
     if (!user) return { success: false, error: new Error('User not authenticated') };
     
-    setIsLoadingProjects(true);
+    setIsProcessingProject(true);
     setProjectError(null);
     
     try {
@@ -53,9 +55,9 @@ export const useProjectActions = (
       
       return { success: false, error };
     } finally {
-      setIsLoadingProjects(false);
+      setIsProcessingProject(false);
     }
-  }, [user, setProjects, setIsLoadingProjects, setProjectError, toast]);
+  }, [user, setProjects, setIsProcessingProject, setProjectError, toast]);
   
   // Create a new project
   const handleCreateProject = useCallback(async (name: string, description?: string) => {
@@ -65,10 +67,10 @@ export const useProjectActions = (
         description: 'You must be logged in to create a project',
         variant: 'destructive'
       });
-      return false;
+      return null;
     }
     
-    setIsProcessing(true);
+    setIsProcessingProject(true);
     
     try {
       // Create the project
@@ -81,7 +83,7 @@ export const useProjectActions = (
           description: errorMessage || 'Could not create project. Please try again.',
           variant: 'destructive'
         });
-        return false;
+        return null;
       }
       
       if (!data) {
@@ -91,7 +93,7 @@ export const useProjectActions = (
           description: 'Could not create project. No data returned.',
           variant: 'destructive'
         });
-        return false;
+        return null;
       }
       
       const newProject = data[0];
@@ -110,7 +112,7 @@ export const useProjectActions = (
         description: `"${name}" has been created successfully`
       });
       
-      return true;
+      return newProject;
     } catch (error: any) {
       const errorMsg = error.message || 'An unexpected error occurred';
       
@@ -121,11 +123,11 @@ export const useProjectActions = (
         variant: 'destructive'
       });
       
-      return false;
+      return null;
     } finally {
-      setIsProcessing(false);
+      setIsProcessingProject(false);
     }
-  }, [user, setProjects, setActiveProject, setProjectError, toast]);
+  }, [user, setProjects, setActiveProject, setProjectError, setIsProcessingProject, toast]);
   
   // Update an existing project
   const handleUpdateProject = useCallback(async (project: Project) => {
@@ -138,7 +140,7 @@ export const useProjectActions = (
       return false;
     }
     
-    setIsProcessing(true);
+    setIsProcessingProject(true);
     
     try {
       const { success, error, errorMessage } = await updateProject(project);
@@ -181,9 +183,9 @@ export const useProjectActions = (
       
       return false;
     } finally {
-      setIsProcessing(false);
+      setIsProcessingProject(false);
     }
-  }, [user, setProjects, setActiveProject, setProjectError, toast]);
+  }, [user, setProjects, setActiveProject, setProjectError, setIsProcessingProject, toast]);
   
   // Delete a project
   const handleDeleteProject = useCallback(async (projectId: string) => {
@@ -196,7 +198,7 @@ export const useProjectActions = (
       return false;
     }
     
-    setIsProcessing(true);
+    setIsProcessingProject(true);
     
     try {
       const { success, error, errorMessage } = await deleteProject(projectId);
@@ -239,15 +241,17 @@ export const useProjectActions = (
       
       return false;
     } finally {
-      setIsProcessing(false);
+      setIsProcessingProject(false);
     }
-  }, [user, setProjects, setActiveProject, setProjectError, toast]);
+  }, [user, setProjects, setActiveProject, setProjectError, setIsProcessingProject, toast]);
   
   return {
-    isProcessing,
+    isProcessing: false, // Not used directly in this hook, but included for backward compatibility
     loadProjects,
     handleCreateProject,
     handleUpdateProject,
     handleDeleteProject
   };
 };
+
+export default useProjectActions;

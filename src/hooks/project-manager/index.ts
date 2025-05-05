@@ -9,9 +9,7 @@ import { useProjectState } from './useProjectState';
 import { useProjectActions } from './useProjectActions';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { loadColumns, defaultColumns, saveColumns } from '@/utils/columnUtils';
 import { fetchUserTasks } from '@/utils/taskDatabaseUtils';
-import { fetchUserProjects } from '@/utils/projectOperations';
 import { Project } from '@/types/project';
 import { Task } from '@/types/task';
 
@@ -34,14 +32,6 @@ export const useProjectManager = () => {
   
   // Track if we've finished initial loading
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
-  
-  // Initialize columns from local storage on component mount
-  useEffect(() => {
-    const loadedColumns = loadColumns();
-    if (loadedColumns.length > 0) {
-      taskState.setColumns(loadedColumns);
-    }
-  }, [taskState.setColumns]);
   
   // Project-related actions
   const {
@@ -82,7 +72,8 @@ export const useProjectManager = () => {
     taskState.setNewColumnTitle,
     taskState.setColumnDialogOpen,
     taskState.setIsProcessing,
-    taskState.setError
+    taskState.setError,
+    taskState.activeProject
   );
   
   // Drag and drop functionality
@@ -158,7 +149,7 @@ export const useProjectManager = () => {
     };
     
     loadProjects();
-  }, [user]);
+  }, [user, handleCreateProject, projectState, setSearchParams, toast]);
   
   // Load tasks for active project
   useEffect(() => {
@@ -182,11 +173,6 @@ export const useProjectManager = () => {
         }
         
         taskState.setTasks(data as Task[]);
-        
-        // Set default columns when switching to a new project
-        // This ensures each project has its own set of default columns
-        taskState.setColumns(defaultColumns);
-        saveColumns(defaultColumns);
       } catch (error: any) {
         taskState.setError(`Error loading tasks: ${error.message}`);
         toast({
@@ -200,16 +186,12 @@ export const useProjectManager = () => {
     };
     
     loadTasks();
-  }, [user, projectState.activeProject, initialLoadComplete]);
+  }, [user, projectState.activeProject, initialLoadComplete, toast, taskState]);
   
   // Function to change the active project
   const setActiveProject = (project: Project) => {
     projectState.setActiveProject(project);
     setSearchParams({ project: project.id });
-    
-    // Reset columns to defaults when changing projects
-    taskState.setColumns(defaultColumns);
-    saveColumns(defaultColumns);
   };
   
   // Function to refresh tasks

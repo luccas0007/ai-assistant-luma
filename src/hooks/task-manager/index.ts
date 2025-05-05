@@ -114,7 +114,7 @@ export const useTaskManager = () => {
       toast({
         title: "No project selected",
         description: "Please select a project first",
-        variant: "warning"
+        variant: "destructive"
       });
       return;
     }
