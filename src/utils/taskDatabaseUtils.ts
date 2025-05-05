@@ -40,7 +40,7 @@ export const setupTaskDatabase = async () => {
             title: 'System Initialization',
             description: 'This is a temporary record to ensure the tasks table exists',
             status: 'todo',
-            priority: 'medium',
+            priority: 'medium' as string, // Cast as string to fix type issue
             completed: false,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()

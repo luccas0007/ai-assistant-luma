@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTaskState } from '../task-manager/useTaskState';
@@ -13,6 +12,7 @@ import { loadColumns } from '@/utils/columnUtils';
 import { fetchUserTasks } from '@/utils/taskDatabaseUtils';
 import { fetchUserProjects } from '@/utils/projectOperations';
 import { Project } from '@/types/project';
+import { Task } from '@/types/task';
 
 /**
  * Main hook for the project manager functionality with multiple boards
@@ -227,7 +227,8 @@ export const useProjectManager = () => {
           variant: "destructive"
         });
       } else {
-        taskState.setTasks(data || []);
+        // Cast the returned data to Task[] to ensure type compatibility
+        taskState.setTasks(data as Task[] || []);
         taskState.setError(null);
         toast({
           title: "Refreshed",
@@ -261,7 +262,7 @@ export const useProjectManager = () => {
       }
       
       return {
-        tasks: data,
+        tasks: data as Task[],
         error: null
       };
     } catch (error: any) {

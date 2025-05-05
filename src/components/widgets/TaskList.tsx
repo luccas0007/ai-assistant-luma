@@ -37,7 +37,8 @@ const TaskList: React.FC = () => {
         if (error) {
           setError(error);
         } else {
-          setTasks(tasks);
+          // Cast the returned tasks to the Task type to ensure compatibility
+          setTasks(tasks as Task[]);
         }
       } catch (err: any) {
         setError(err.message || 'Failed to load tasks');

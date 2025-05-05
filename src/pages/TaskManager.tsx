@@ -58,6 +58,7 @@ const TaskManager = () => {
     activeProject,
     isLoadingProjects,
     projectError,
+    setProjectError, // This was missing in the reference
     projectDialogOpen,
     setProjectDialogOpen,
     editingProject,

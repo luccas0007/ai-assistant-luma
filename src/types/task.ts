@@ -5,13 +5,14 @@ export interface Task {
   title: string;
   description: string | null;
   status: string;
-  priority: 'high' | 'medium' | 'low';
+  priority: string; // Changed from enum to string to match database
   due_date: string | null;
   completed: boolean;
   attachment_url: string | null;
   created_at: string;
   updated_at: string;
   project_id: string | null;
+  attachment_path?: string | null; // Added to match the database schema
 }
 
 export interface Column {
