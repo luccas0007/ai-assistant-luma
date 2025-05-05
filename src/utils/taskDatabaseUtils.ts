@@ -9,22 +9,16 @@ export const setupTaskDatabase = async () => {
   try {
     console.log('Setting up task database...');
     
-    // Instead of using RPC or complex SQL, we'll just try to create the tasks
-    // through direct queries and check for existence first
-    
     // Check if tasks table exists by trying to query it
     const { error: checkError } = await supabase
       .from('tasks')
       .select('count')
       .limit(1);
     
-    if (checkError && checkError.message.includes('does not exist')) {
-      console.log('Tasks table does not exist, creating it...');
+    if (checkError) {
+      console.log('Tasks table does not exist or other error occurred:', checkError.message);
       
-      // Create the tasks table using direct SQL queries
-      // Note: This requires appropriate permissions on the Supabase project
-      // If this fails, the user may need to create the table manually in the Supabase dashboard
-      
+      // Try to create the tasks table using direct SQL queries
       // Since we can't execute arbitrary SQL easily, we'll use the REST API 
       // to insert a record and let Supabase create the table for us
       try {
@@ -44,24 +38,19 @@ export const setupTaskDatabase = async () => {
           .from('tasks')
           .insert(testTask);
           
-        if (insertError && !insertError.message.includes('does not exist')) {
-          console.error('Error creating tasks table:', insertError);
+        if (insertError) {
+          console.error('Error creating tasks table:', insertError.message);
+        } else {
+          // Try to remove the test task
+          await supabase
+            .from('tasks')
+            .delete()
+            .eq('title', '_test_task_creation');
         }
-        
-        // Try to remove the test task
-        await supabase
-          .from('tasks')
-          .delete()
-          .eq('title', '_test_task_creation');
-          
       } catch (error) {
         console.error('Error in table creation process:', error);
       }
     }
-    
-    // Don't try to create storage buckets automatically
-    // This often fails due to RLS policies and requires admin config
-    // Instead, we'll use a fallback approach without attachments if needed
     
     console.log('Task database setup complete');
     return { success: true };

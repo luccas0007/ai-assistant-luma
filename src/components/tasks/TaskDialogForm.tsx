@@ -28,7 +28,6 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
-import { supabase } from '@/lib/supabase';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 
@@ -82,6 +81,8 @@ const TaskDialogForm: React.FC<TaskDialogFormProps> = ({
     e.preventDefault();
     
     try {
+      console.log("Preparing task data for submission");
+      
       const taskData = {
         ...task,
         title,
@@ -91,6 +92,8 @@ const TaskDialogForm: React.FC<TaskDialogFormProps> = ({
         due_date: dueDate ? dueDate.toISOString() : null,
         attachment_url: attachmentURL
       };
+      
+      console.log("Task data for save:", taskData);
       
       onSave(taskData);
     } catch (error: any) {
@@ -111,7 +114,7 @@ const TaskDialogForm: React.FC<TaskDialogFormProps> = ({
     
     // Skip file uploads for simplicity
     // Just set a placeholder URL to indicate there was an attachment
-    setAttachmentURL(`https://placeholder.com/${file.name}`);
+    setAttachmentURL(`attachment-placeholder-${file.name}`);
     toast({
       title: 'File reference created',
       description: 'Attachment reference added (actual upload disabled)'
@@ -209,7 +212,6 @@ const TaskDialogForm: React.FC<TaskDialogFormProps> = ({
                       setCalendarOpen(false);
                     }}
                     initialFocus
-                    className="p-3 pointer-events-auto"
                   />
                 </PopoverContent>
               </Popover>
@@ -222,7 +224,7 @@ const TaskDialogForm: React.FC<TaskDialogFormProps> = ({
                   <div className="flex items-center">
                     <Paperclip className="h-4 w-4 mr-2" />
                     <span className="text-sm truncate max-w-[250px]">
-                      {attachmentURL.split('/').pop()}
+                      {attachmentURL.split('-').pop()}
                     </span>
                   </div>
                   <Button

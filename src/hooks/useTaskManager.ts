@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DropResult } from 'react-beautiful-dnd';
@@ -46,15 +45,20 @@ export const useTaskManager = () => {
 
   // Load columns from local storage
   useEffect(() => {
-    setColumns(loadColumns());
-  }, []);
-
-  // Save columns to local storage when they change
-  useEffect(() => {
-    if (columns.length > 0) {
-      saveColumns(columns);
+    const loadedColumns = loadColumns();
+    if (loadedColumns.length === 0) {
+      // Initialize with default columns if none exist
+      const defaultColumns = [
+        { id: 'todo', title: 'To Do' },
+        { id: 'in-progress', title: 'In Progress' },
+        { id: 'done', title: 'Done' }
+      ];
+      setColumns(defaultColumns);
+      saveColumns(defaultColumns);
+    } else {
+      setColumns(loadedColumns);
     }
-  }, [columns]);
+  }, []);
 
   // Fetch tasks from Supabase
   useEffect(() => {
@@ -80,9 +84,11 @@ export const useTaskManager = () => {
         console.error('Error fetching tasks:', error.message);
         toast({
           title: 'Error fetching tasks',
-          description: error.message,
+          description: error.message || 'Failed to load your tasks',
           variant: 'destructive'
         });
+        // Set empty tasks array to prevent undefined errors
+        setTasks([]);
       } finally {
         setIsLoading(false);
       }
@@ -92,9 +98,18 @@ export const useTaskManager = () => {
   }, [user, navigate, toast]);
 
   const handleCreateTask = async (newTask: Omit<Task, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
-    if (!user) return;
+    if (!user) {
+      toast({
+        title: 'Authentication required',
+        description: 'Please log in to create tasks',
+        variant: 'destructive'
+      });
+      return;
+    }
 
     try {
+      console.log("Creating task with data:", newTask);
+      
       // Clear any previous errors
       const { data, error } = await createTask(user.id, newTask);
       
@@ -103,15 +118,7 @@ export const useTaskManager = () => {
         let errorMessage = 'An error occurred while creating the task';
         
         if (error.message) {
-          if (error.message.includes('violates foreign key constraint')) {
-            errorMessage = 'User authentication error. Please log out and log back in.';
-          } else if (error.message.includes('does not exist')) {
-            errorMessage = 'Database table not found. The system will try to recreate it.';
-            // Try to set up the database again
-            await setupTaskDatabase();
-          } else {
-            errorMessage = `Error: ${error.message}`;
-          }
+          errorMessage = `Error: ${error.message}`;
         }
         
         toast({
@@ -128,10 +135,15 @@ export const useTaskManager = () => {
           description: 'Task was created but no data was returned. Refreshing may be needed.',
           variant: 'destructive'
         });
+        // Reload tasks to ensure we have the latest data
+        const { data: refreshedTasks } = await fetchUserTasks(user.id);
+        setTasks(refreshedTasks);
+        setTaskDialogOpen(false);
         return;
       }
 
-      setTasks([...(data || []), ...(tasks || [])]);
+      console.log("Task created successfully:", data);
+      setTasks(prev => [...data, ...prev]);
       toast({
         title: 'Task created',
         description: 'Your task has been created successfully.'
@@ -284,7 +296,7 @@ export const useTaskManager = () => {
     newColumnTitle,
     setNewColumnTitle,
     handleCreateTask,
-    handleUpdateTask, 
+    handleUpdateTask: updateTask, 
     handleDeleteTask,
     handleDragEnd,
     handleAddColumn

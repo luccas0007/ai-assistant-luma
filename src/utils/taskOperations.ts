@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase';
 import { Task } from '@/types/task';
 import { setupTaskDatabase } from './taskDatabaseUtils';
@@ -11,8 +10,11 @@ export const createTask = async (
   newTask: Omit<Task, 'id' | 'user_id' | 'created_at' | 'updated_at'>
 ) => {
   try {
+    console.log('Creating task for user:', userId);
+    console.log('Task data:', newTask);
+
     // First ensure the database is set up
-    const setupResult = await setupTaskDatabase();
+    await setupTaskDatabase();
     
     // Prepare the task data
     const taskData = {
@@ -28,6 +30,8 @@ export const createTask = async (
       updated_at: new Date().toISOString()
     };
     
+    console.log('Submitting task data:', taskData);
+    
     // Insert the task with proper error handling
     const { data, error } = await supabase
       .from('tasks')
@@ -36,28 +40,10 @@ export const createTask = async (
 
     if (error) {
       console.error('Error in task creation:', error);
-      
-      if (error.message && error.message.includes('does not exist')) {
-        // Try to create the table again and retry
-        await setupTaskDatabase();
-        
-        // Retry the insert
-        const retryResult = await supabase
-          .from('tasks')
-          .insert(taskData)
-          .select();
-          
-        if (retryResult.error) {
-          console.error('Error in retry task creation:', retryResult.error);
-          return { data: null, error: retryResult.error };
-        }
-        
-        return { data: retryResult.data, error: null };
-      }
-      
       return { data: null, error };
     }
 
+    console.log('Task created successfully:', data);
     return { data, error: null };
   } catch (error: any) {
     console.error('Error creating task:', error);
