@@ -34,7 +34,8 @@ export const useTaskManager = () => {
     state.setTasks,
     state.setTaskDialogOpen,
     state.setEditingTask,
-    state.setError
+    state.setError,
+    state.setIsProcessing
   );
   
   // Column-related actions
@@ -43,7 +44,9 @@ export const useTaskManager = () => {
     state.setColumns,
     state.newColumnTitle,
     state.setNewColumnTitle,
-    state.setColumnDialogOpen
+    state.setColumnDialogOpen,
+    state.setIsProcessing,
+    state.setError
   );
   
   // Drag and drop functionality

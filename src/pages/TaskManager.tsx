@@ -3,9 +3,11 @@ import React from 'react';
 import { 
   ListFilter, 
   Plus, 
+  Loader,
   LayoutGrid, 
   List as ListIcon,
-  AlertCircle
+  AlertCircle,
+  RefreshCw
 } from 'lucide-react';
 import { DragDropContext } from 'react-beautiful-dnd';
 
@@ -36,6 +38,7 @@ const TaskManager = () => {
     isLoading,
     error,
     setError,
+    isProcessing,
     viewMode,
     setViewMode,
     taskDialogOpen,
@@ -81,7 +84,7 @@ const TaskManager = () => {
             </ToggleGroup>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setColumnDialogOpen(true)}>
+            <Button variant="outline" onClick={() => setColumnDialogOpen(true)} disabled={isProcessing}>
               <Plus className="h-4 w-4 mr-1" />
               Add Column
             </Button>
@@ -97,7 +100,7 @@ const TaskManager = () => {
                   variant: "destructive"
                 });
               }
-            }}>
+            }} disabled={isProcessing}>
               <Plus className="h-4 w-4 mr-1" />
               Add Project
             </Button>
@@ -112,12 +115,15 @@ const TaskManager = () => {
           <AlertDescription>
             <div className="flex flex-col gap-2">
               <p>{error}</p>
-              <Button variant="outline" size="sm" className="self-start" onClick={handleRetry}>
-                Retry
-              </Button>
-              <Button variant="outline" size="sm" className="self-start" onClick={() => setError(null)}>
-                Dismiss
-              </Button>
+              <div className="flex gap-2 mt-2">
+                <Button variant="outline" size="sm" className="self-start" onClick={handleRetry}>
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Retry
+                </Button>
+                <Button variant="outline" size="sm" className="self-start" onClick={() => setError(null)}>
+                  Dismiss
+                </Button>
+              </div>
             </div>
           </AlertDescription>
         </Alert>
@@ -131,7 +137,8 @@ const TaskManager = () => {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="flex justify-center items-center h-64">
+            <div className="flex flex-col justify-center items-center h-64 gap-4">
+              <Loader className="h-8 w-8 animate-spin text-primary" />
               <p>Loading projects...</p>
             </div>
           ) : (
@@ -196,7 +203,8 @@ const TaskManager = () => {
             <Button variant="outline" onClick={() => setColumnDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleAddColumn} disabled={!newColumnTitle.trim()}>
+            <Button onClick={handleAddColumn} disabled={!newColumnTitle.trim() || isProcessing}>
+              {isProcessing ? <Loader className="h-4 w-4 mr-2 animate-spin" /> : null}
               Add Column
             </Button>
           </DialogFooter>

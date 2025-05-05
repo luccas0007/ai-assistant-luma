@@ -110,7 +110,7 @@ export const useTaskInitialization = (
           setTasks([]);
         } else {
           console.log(`Successfully loaded ${data.length} tasks`);
-          setTasks(data);
+          setTasks(data || []);
         }
       } catch (error: any) {
         console.error('Error in task loading process:', error.message);

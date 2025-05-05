@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase';
 import { Task } from '@/types/task';
 
@@ -15,7 +14,9 @@ export const setupTaskDatabase = async () => {
       .select('id')
       .limit(1);
     
-    if (queryError && queryError.message.includes('does not exist')) {
+    // Check for the error correctly without assuming error.message exists
+    if (queryError) {
+      const errorMessage = queryError.message || 'Unknown error';
       console.log('Tasks table does not exist, creating it...');
       
       // Execute SQL to create the tasks table directly
@@ -56,7 +57,7 @@ export const setupTaskDatabase = async () => {
             completed: false
           });
         
-        if (insertError && !insertError.message.includes('already exists')) {
+        if (insertError) {
           console.error('Failed to create tasks table:', insertError);
           return { success: false, error: insertError };
         } else {
@@ -71,10 +72,6 @@ export const setupTaskDatabase = async () => {
       } else {
         console.log('Tasks table created through RPC');
       }
-    } else if (queryError) {
-      // Some other error occurred during the check
-      console.error('Error checking tasks table:', queryError);
-      return { success: false, error: queryError };
     } else {
       console.log('Tasks table already exists');
     }

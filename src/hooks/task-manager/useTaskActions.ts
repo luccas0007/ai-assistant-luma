@@ -9,7 +9,6 @@ import {
   deleteTask as apiDeleteTask, 
   updateTaskStatus as apiUpdateTaskStatus,
   uploadTaskAttachment as apiUploadTaskAttachment,
-  deleteTaskAttachment as apiDeleteTaskAttachment
 } from '@/utils/taskOperations';
 
 /**
@@ -20,7 +19,8 @@ export const useTaskActions = (
   setTasks: React.Dispatch<React.SetStateAction<Task[]>>,
   setTaskDialogOpen: React.Dispatch<React.SetStateAction<boolean>>,
   setEditingTask: React.Dispatch<React.SetStateAction<Task | null>>,
-  setError: React.Dispatch<React.SetStateAction<string | null>>
+  setError: React.Dispatch<React.SetStateAction<string | null>>,
+  setIsProcessing: React.Dispatch<React.SetStateAction<boolean>>
 ) => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -42,8 +42,9 @@ export const useTaskActions = (
     try {
       console.log("Creating task with data:", newTask);
       setError(null);
+      setIsProcessing(true);
       
-      // Clear any previous errors
+      // Create the task
       const { data, error, errorMessage } = await apiCreateTask(user.id, newTask);
       
       if (error) {
@@ -87,12 +88,15 @@ export const useTaskActions = (
         description: errorMessage,
         variant: 'destructive'
       });
+    } finally {
+      setIsProcessing(false);
     }
   };
 
   const handleUpdateTask = async (updatedTask: Task) => {
     try {
       setError(null);
+      setIsProcessing(true);
       const { error, errorMessage } = await apiUpdateTask(updatedTask);
 
       if (error) {
@@ -122,12 +126,15 @@ export const useTaskActions = (
         description: errorMessage,
         variant: 'destructive'
       });
+    } finally {
+      setIsProcessing(false);
     }
   };
 
   const handleDeleteTask = async (id: string) => {
     try {
       setError(null);
+      setIsProcessing(true);
       const { error, errorMessage } = await apiDeleteTask(id);
 
       if (error) {
@@ -155,12 +162,15 @@ export const useTaskActions = (
         description: errorMessage,
         variant: 'destructive'
       });
+    } finally {
+      setIsProcessing(false);
     }
   };
 
   const handleUpdateTaskStatus = async (taskId: string, newStatus: string) => {
     try {
       setError(null);
+      setIsProcessing(true);
       const { error, errorMessage } = await apiUpdateTaskStatus(taskId, newStatus);
 
       if (error) {
@@ -179,6 +189,8 @@ export const useTaskActions = (
       const errorMessage = error.message || 'An unexpected error occurred';
       setError(errorMessage);
       return { success: false, error, errorMessage };
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -197,6 +209,7 @@ export const useTaskActions = (
 
     try {
       setError(null);
+      setIsProcessing(true);
       const { data, error, errorMessage } = await apiUploadTaskAttachment(user.id, file);
 
       if (error) {
@@ -232,6 +245,8 @@ export const useTaskActions = (
       });
       
       return { success: false, url: null, errorMessage };
+    } finally {
+      setIsProcessing(false);
     }
   };
 

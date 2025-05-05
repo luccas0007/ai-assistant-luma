@@ -15,6 +15,7 @@ export const useTaskState = () => {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [columnDialogOpen, setColumnDialogOpen] = useState(false);
   const [newColumnTitle, setNewColumnTitle] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
 
   return {
     // Task state
@@ -32,6 +33,8 @@ export const useTaskState = () => {
     setError,
     viewMode,
     setViewMode,
+    isProcessing,
+    setIsProcessing,
     
     // Task dialog state
     taskDialogOpen,
