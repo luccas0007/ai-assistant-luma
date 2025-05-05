@@ -8,13 +8,14 @@ import { useToast } from '@/hooks/use-toast';
  */
 export const setupTaskDatabase = async () => {
   try {
-    // Check if tasks table exists, create if not
+    // Try to query tasks table to check if it exists
     const { error: tasksExistError } = await supabase
       .from('tasks')
-      .select('*')
+      .select('count')
       .limit(1);
       
     if (tasksExistError && tasksExistError.message.includes('does not exist')) {
+      console.log('Tasks table does not exist. Creating it now.');
       // Create tasks table
       const { error: createError } = await supabase.rpc('create_tasks_table');
       if (createError) {
@@ -72,20 +73,9 @@ export const setupTaskDatabase = async () => {
  */
 export const fetchUserTasks = async (userId: string) => {
   try {
-    // First check if table exists
-    const { data: tablesData, error: tablesError } = await supabase
-      .from('information_schema.tables')
-      .select('table_name')
-      .eq('table_name', 'tasks')
-      .eq('table_schema', 'public');
-      
-    if (tablesError) {
-      console.error('Error checking if table exists:', tablesError);
-      return { data: [], error: tablesError };
-    }
-    
-    // If table exists, fetch tasks
-    if (tablesData && tablesData.length > 0) {
+    // Direct query to the tasks table
+    // First check if table exists by trying to query it
+    try {
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
@@ -93,13 +83,22 @@ export const fetchUserTasks = async (userId: string) => {
         .order('created_at', { ascending: false });
 
       if (error) {
+        if (error.message.includes('does not exist')) {
+          // Table doesn't exist yet
+          await setupTaskDatabase();
+          return { data: [], error: null };
+        }
         return { data: [], error };
       }
 
       return { data: data || [], error: null };
-    } else {
-      // Table doesn't exist yet, just return empty tasks
-      return { data: [], error: null };
+    } catch (error: any) {
+      if (error.message.includes('does not exist')) {
+        // Table doesn't exist yet
+        await setupTaskDatabase();
+        return { data: [], error: null };
+      }
+      throw error;
     }
   } catch (error: any) {
     console.error('Error fetching tasks:', error.message);

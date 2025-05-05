@@ -27,8 +27,22 @@ export const useTaskManager = () => {
   // Initialize database if needed
   useEffect(() => {
     if (!user) return;
-    setupTaskDatabase();
-  }, [user]);
+    
+    const initDb = async () => {
+      try {
+        await setupTaskDatabase();
+      } catch (error: any) {
+        console.error('Error setting up database:', error.message);
+        toast({
+          title: 'Database setup error',
+          description: 'Could not initialize database. Please try again later.',
+          variant: 'destructive'
+        });
+      }
+    };
+    
+    initDb();
+  }, [user, toast]);
 
   // Load columns from local storage
   useEffect(() => {
@@ -52,6 +66,9 @@ export const useTaskManager = () => {
     const loadTasks = async () => {
       setIsLoading(true);
       try {
+        // First make sure the database is set up
+        await setupTaskDatabase();
+        
         const { data, error } = await fetchUserTasks(user.id);
         
         if (error) {
@@ -182,6 +199,12 @@ export const useTaskManager = () => {
       if (error) {
         throw error;
       }
+      
+      // Success toast
+      toast({
+        title: 'Task moved',
+        description: `Task moved to ${columns.find(c => c.id === destination.droppableId)?.title || destination.droppableId}`
+      });
     } catch (error: any) {
       console.error('Error updating task status:', error.message);
       toast({

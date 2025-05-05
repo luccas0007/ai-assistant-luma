@@ -1,6 +1,7 @@
 
 import { supabase } from '@/lib/supabase';
 import { Task } from '@/types/task';
+import { setupTaskDatabase } from './taskDatabaseUtils';
 
 /**
  * Creates a new task in the database
@@ -10,17 +11,7 @@ export const createTask = async (
   newTask: Omit<Task, 'id' | 'user_id' | 'created_at' | 'updated_at'>
 ) => {
   try {
-    // Check if table exists first
-    const { data: tablesData, error: tablesError } = await supabase
-      .from('information_schema.tables')
-      .select('table_name')
-      .eq('table_name', 'tasks')
-      .eq('table_schema', 'public');
-      
-    if (tablesError || !tablesData || tablesData.length === 0) {
-      throw new Error('Tasks table does not exist. Please refresh the page to create it.');
-    }
-    
+    // Try to create the task directly
     const { data, error } = await supabase
       .from('tasks')
       .insert({
@@ -38,6 +29,31 @@ export const createTask = async (
       .select();
 
     if (error) {
+      // If table doesn't exist, create it first and then retry
+      if (error.message.includes('does not exist')) {
+        await setupTaskDatabase();
+        // Retry inserting the task
+        const { data: retryData, error: retryError } = await supabase
+          .from('tasks')
+          .insert({
+            user_id: userId,
+            title: newTask.title,
+            description: newTask.description,
+            due_date: newTask.due_date,
+            status: newTask.status || 'todo',
+            priority: newTask.priority,
+            completed: newTask.completed || false,
+            attachment_url: newTask.attachment_url,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .select();
+          
+        if (retryError) {
+          throw retryError;
+        }
+        return { data: retryData, error: null };
+      }
       throw error;
     }
 
