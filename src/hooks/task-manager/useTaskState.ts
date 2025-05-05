@@ -1,7 +1,6 @@
 
 import { useState } from 'react';
 import { Task, Column } from '@/types/task';
-import { loadColumns } from '@/utils/columnUtils';
 
 /**
  * Hook for managing the state of the task manager
@@ -10,6 +9,7 @@ export const useTaskState = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [columns, setColumns] = useState<Column[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -28,6 +28,8 @@ export const useTaskState = () => {
     // UI state
     isLoading,
     setIsLoading,
+    error,
+    setError,
     viewMode,
     setViewMode,
     
@@ -44,3 +46,5 @@ export const useTaskState = () => {
     setNewColumnTitle,
   };
 };
+
+export default useTaskState;

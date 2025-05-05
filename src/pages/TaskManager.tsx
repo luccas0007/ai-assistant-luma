@@ -1,9 +1,11 @@
+
 import React from 'react';
 import { 
   ListFilter, 
   Plus, 
   LayoutGrid, 
-  List as ListIcon
+  List as ListIcon,
+  AlertCircle
 } from 'lucide-react';
 import { DragDropContext } from 'react-beautiful-dnd';
 
@@ -12,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import TaskDialog from '@/components/tasks/TaskDialog';
 import KanbanBoard from '@/components/tasks/KanbanBoard';
 import ListView from '@/components/tasks/ListView';
@@ -31,6 +34,8 @@ const TaskManager = () => {
     tasks,
     columns,
     isLoading,
+    error,
+    setError,
     viewMode,
     setViewMode,
     taskDialogOpen,
@@ -45,10 +50,15 @@ const TaskManager = () => {
     handleUpdateTask,
     handleDeleteTask,
     handleDragEnd,
-    handleAddColumn
+    handleAddColumn,
+    handleUploadAttachment
   } = useTaskManager();
   
   const { toast } = useToast();
+
+  const handleRetry = () => {
+    window.location.reload();
+  };
 
   return (
     <div className="space-y-6">
@@ -94,6 +104,24 @@ const TaskManager = () => {
           </div>
         </div>
       </div>
+
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>
+            <div className="flex flex-col gap-2">
+              <p>{error}</p>
+              <Button variant="outline" size="sm" className="self-start" onClick={handleRetry}>
+                Retry
+              </Button>
+              <Button variant="outline" size="sm" className="self-start" onClick={() => setError(null)}>
+                Dismiss
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
 
       <Card>
         <CardHeader className="pb-3">
@@ -142,6 +170,7 @@ const TaskManager = () => {
           setEditingTask(null);
         }}
         onSave={editingTask ? handleUpdateTask : handleCreateTask}
+        onUploadAttachment={handleUploadAttachment}
         task={editingTask}
         columns={columns}
       />

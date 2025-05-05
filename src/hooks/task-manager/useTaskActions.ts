@@ -7,7 +7,9 @@ import {
   createTask as apiCreateTask, 
   updateTask as apiUpdateTask, 
   deleteTask as apiDeleteTask, 
-  updateTaskStatus as apiUpdateTaskStatus 
+  updateTaskStatus as apiUpdateTaskStatus,
+  uploadTaskAttachment as apiUploadTaskAttachment,
+  deleteTaskAttachment as apiDeleteTaskAttachment
 } from '@/utils/taskOperations';
 
 /**
@@ -18,6 +20,7 @@ export const useTaskActions = (
   setTasks: React.Dispatch<React.SetStateAction<Task[]>>,
   setTaskDialogOpen: React.Dispatch<React.SetStateAction<boolean>>,
   setEditingTask: React.Dispatch<React.SetStateAction<Task | null>>,
+  setError: React.Dispatch<React.SetStateAction<string | null>>
 ) => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -25,6 +28,9 @@ export const useTaskActions = (
 
   const handleCreateTask = async (newTask: Partial<Task>) => {
     if (!user) {
+      const errorMessage = 'Authentication required to create tasks';
+      setError(errorMessage);
+      
       toast({
         title: 'Authentication required',
         description: 'Please log in to create tasks',
@@ -35,30 +41,30 @@ export const useTaskActions = (
 
     try {
       console.log("Creating task with data:", newTask);
+      setError(null);
       
       // Clear any previous errors
-      const { data, error } = await apiCreateTask(user.id, newTask);
+      const { data, error, errorMessage } = await apiCreateTask(user.id, newTask);
       
       if (error) {
         console.error('Task creation error details:', error);
-        let errorMessage = 'An error occurred while creating the task';
-        
-        if (error.message) {
-          errorMessage = `Error: ${error.message}`;
-        }
+        setError(errorMessage || 'Error creating task');
         
         toast({
           title: 'Error creating task',
-          description: errorMessage,
+          description: errorMessage || 'Failed to create task',
           variant: 'destructive'
         });
-        throw error;
+        return;
       }
 
       if (!data || data.length === 0) {
+        const msg = 'Task was created but no data was returned';
+        setError(msg);
+        
         toast({
           title: 'Task creation issue',
-          description: 'Task was created but no data was returned. Refreshing may be needed.',
+          description: msg + '. Refreshing may be needed.',
           variant: 'destructive'
         });
         return;
@@ -73,9 +79,12 @@ export const useTaskActions = (
       setTaskDialogOpen(false);
     } catch (error: any) {
       console.error('Error creating task:', error);
+      const errorMessage = error.message || 'An unexpected error occurred';
+      setError(errorMessage);
+      
       toast({
         title: 'Error creating task',
-        description: error.message || 'An error occurred while creating the task',
+        description: errorMessage,
         variant: 'destructive'
       });
     }
@@ -83,10 +92,17 @@ export const useTaskActions = (
 
   const handleUpdateTask = async (updatedTask: Task) => {
     try {
-      const { error } = await apiUpdateTask(updatedTask);
+      setError(null);
+      const { error, errorMessage } = await apiUpdateTask(updatedTask);
 
       if (error) {
-        throw error;
+        setError(errorMessage || 'Error updating task');
+        toast({
+          title: 'Error updating task',
+          description: errorMessage || 'Failed to update task',
+          variant: 'destructive'
+        });
+        return;
       }
 
       setTasks(tasks.map(task => task.id === updatedTask.id ? updatedTask : task));
@@ -97,10 +113,13 @@ export const useTaskActions = (
       setEditingTask(null);
       setTaskDialogOpen(false);
     } catch (error: any) {
-      console.error('Error updating task:', error.message);
+      console.error('Error updating task:', error);
+      const errorMessage = error.message || 'An unexpected error occurred';
+      setError(errorMessage);
+      
       toast({
         title: 'Error updating task',
-        description: error.message,
+        description: errorMessage,
         variant: 'destructive'
       });
     }
@@ -108,10 +127,17 @@ export const useTaskActions = (
 
   const handleDeleteTask = async (id: string) => {
     try {
-      const { error } = await apiDeleteTask(id);
+      setError(null);
+      const { error, errorMessage } = await apiDeleteTask(id);
 
       if (error) {
-        throw error;
+        setError(errorMessage || 'Error deleting task');
+        toast({
+          title: 'Error deleting task',
+          description: errorMessage || 'Failed to delete task',
+          variant: 'destructive'
+        });
+        return;
       }
 
       setTasks(tasks.filter(task => task.id !== id));
@@ -120,10 +146,13 @@ export const useTaskActions = (
         description: 'Your task has been deleted successfully.'
       });
     } catch (error: any) {
-      console.error('Error deleting task:', error.message);
+      console.error('Error deleting task:', error);
+      const errorMessage = error.message || 'An unexpected error occurred';
+      setError(errorMessage);
+      
       toast({
         title: 'Error deleting task',
-        description: error.message,
+        description: errorMessage,
         variant: 'destructive'
       });
     }
@@ -131,10 +160,12 @@ export const useTaskActions = (
 
   const handleUpdateTaskStatus = async (taskId: string, newStatus: string) => {
     try {
-      const { error } = await apiUpdateTaskStatus(taskId, newStatus);
+      setError(null);
+      const { error, errorMessage } = await apiUpdateTaskStatus(taskId, newStatus);
 
       if (error) {
-        throw error;
+        setError(errorMessage || 'Error updating task status');
+        return { success: false, error, errorMessage };
       }
       
       // Update local state
@@ -144,8 +175,63 @@ export const useTaskActions = (
       
       return { success: true };
     } catch (error: any) {
-      console.error('Error updating task status:', error.message);
-      return { success: false, error };
+      console.error('Error updating task status:', error);
+      const errorMessage = error.message || 'An unexpected error occurred';
+      setError(errorMessage);
+      return { success: false, error, errorMessage };
+    }
+  };
+
+  const handleUploadAttachment = async (file: File) => {
+    if (!user) {
+      const errorMessage = 'Authentication required to upload files';
+      setError(errorMessage);
+      
+      toast({
+        title: 'Authentication required',
+        description: 'Please log in to upload files',
+        variant: 'destructive'
+      });
+      return { success: false, url: null, errorMessage };
+    }
+
+    try {
+      setError(null);
+      const { data, error, errorMessage } = await apiUploadTaskAttachment(user.id, file);
+
+      if (error) {
+        setError(errorMessage || 'Error uploading file');
+        toast({
+          title: 'Upload failed',
+          description: errorMessage || 'Failed to upload file',
+          variant: 'destructive'
+        });
+        return { success: false, url: null, errorMessage };
+      }
+
+      toast({
+        title: 'File uploaded',
+        description: 'Attachment has been uploaded successfully.'
+      });
+      
+      return { 
+        success: true, 
+        url: data?.url || null,
+        path: data?.path || null,
+        errorMessage: null 
+      };
+    } catch (error: any) {
+      console.error('Error uploading file:', error);
+      const errorMessage = error.message || 'An unexpected error occurred';
+      setError(errorMessage);
+      
+      toast({
+        title: 'Upload failed',
+        description: errorMessage,
+        variant: 'destructive'
+      });
+      
+      return { success: false, url: null, errorMessage };
     }
   };
 
@@ -153,6 +239,9 @@ export const useTaskActions = (
     handleCreateTask,
     handleUpdateTask,
     handleDeleteTask,
-    handleUpdateTaskStatus
+    handleUpdateTaskStatus,
+    handleUploadAttachment
   };
 };
+
+export default useTaskActions;

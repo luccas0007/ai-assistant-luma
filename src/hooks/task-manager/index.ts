@@ -27,12 +27,14 @@ export const useTaskManager = () => {
     handleCreateTask,
     handleUpdateTask,
     handleDeleteTask,
-    handleUpdateTaskStatus
+    handleUpdateTaskStatus,
+    handleUploadAttachment
   } = useTaskActions(
     state.tasks,
     state.setTasks,
     state.setTaskDialogOpen,
-    state.setEditingTask
+    state.setEditingTask,
+    state.setError
   );
   
   // Column-related actions
@@ -57,6 +59,7 @@ export const useTaskManager = () => {
     state.setTasks,
     state.setColumns,
     state.setIsLoading,
+    state.setError,
     state.columns
   );
   
@@ -66,6 +69,9 @@ export const useTaskManager = () => {
     handleUpdateTask,
     handleDeleteTask,
     handleDragEnd,
-    handleAddColumn
+    handleAddColumn,
+    handleUploadAttachment
   };
 };
+
+export default useTaskManager;

@@ -1,76 +1,144 @@
 
 import React, { useState } from 'react';
-import { Paperclip, Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Paperclip, X, Upload, FileText, Link as LinkIcon } from 'lucide-react';
 
 interface AttachmentFieldProps {
   attachmentURL: string | null;
   setAttachmentURL: (url: string | null) => void;
+  onFileUpload?: (file: File) => Promise<void>;
 }
 
-const AttachmentField: React.FC<AttachmentFieldProps> = ({ 
-  attachmentURL, 
-  setAttachmentURL 
+const AttachmentField: React.FC<AttachmentFieldProps> = ({
+  attachmentURL,
+  setAttachmentURL,
+  onFileUpload
 }) => {
-  const [fileUploading, setFileUploading] = useState(false);
-  const { toast } = useToast();
+  const [isUploading, setIsUploading] = useState(false);
+  const [urlInput, setUrlInput] = useState('');
+  const [urlInputVisible, setUrlInputVisible] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !onFileUpload) return;
     
-    const file = files[0];
-    
-    // Skip file uploads for simplicity
-    // Just set a placeholder URL to indicate there was an attachment
-    setAttachmentURL(`attachment-placeholder-${file.name}`);
-    toast({
-      title: 'File reference created',
-      description: 'Attachment reference added (actual upload disabled)'
-    });
+    try {
+      setIsUploading(true);
+      await onFileUpload(file);
+    } catch (error) {
+      console.error('File upload error:', error);
+    } finally {
+      setIsUploading(false);
+      // Clear the file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
   };
-  
+
   const handleRemoveAttachment = () => {
     setAttachmentURL(null);
   };
 
+  const handleUrlSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (urlInput.trim()) {
+      setAttachmentURL(urlInput);
+      setUrlInput('');
+      setUrlInputVisible(false);
+    }
+  };
+
+  const handleUrlButtonClick = () => {
+    setUrlInputVisible(!urlInputVisible);
+    if (!urlInputVisible) {
+      setUrlInput(attachmentURL || '');
+    }
+  };
+
   return (
     <div className="grid gap-2">
-      <Label htmlFor="attachment">Attachment (Placeholder - No actual upload)</Label>
+      <Label>Attachment</Label>
+      
       {attachmentURL ? (
-        <div className="flex items-center justify-between border rounded-md p-2">
-          <div className="flex items-center">
-            <Paperclip className="h-4 w-4 mr-2" />
-            <span className="text-sm truncate max-w-[250px]">
-              {attachmentURL.split('-').pop()}
-            </span>
-          </div>
-          <Button
-            type="button"
-            size="icon"
-            variant="ghost"
-            onClick={handleRemoveAttachment}
+        <div className="flex items-center gap-2 p-2 border rounded-md">
+          <FileText className="h-4 w-4 text-blue-500" />
+          <a
+            href={attachmentURL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-blue-500 hover:underline flex-1 truncate"
           >
-            <Trash2 className="h-4 w-4" />
+            {attachmentURL.split('/').pop() || 'Attached file'}
+          </a>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleRemoveAttachment}
+            type="button"
+            className="h-8 w-8 rounded-full"
+          >
+            <X className="h-4 w-4" />
           </Button>
         </div>
       ) : (
-        <div className="flex items-center justify-center border border-dashed rounded-md p-4">
-          <label className="cursor-pointer text-center">
-            <Paperclip className="h-4 w-4 mx-auto mb-2" />
-            <span className="text-sm text-muted-foreground block">
-              {fileUploading ? 'Processing...' : 'Click to attach reference (not actual file)'}
-            </span>
-            <input
-              type="file"
-              className="hidden"
-              onChange={handleFileUpload}
-              disabled={fileUploading}
-            />
-          </label>
+        <div className="flex items-center gap-2">
+          <Input
+            type="file"
+            className="hidden"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            accept="image/*,.pdf,.doc,.docx,.txt"
+            disabled={isUploading}
+          />
+          
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+          >
+            {isUploading ? (
+              <>
+                <Upload className="h-4 w-4 mr-2 animate-spin" />
+                Uploading...
+              </>
+            ) : (
+              <>
+                <Paperclip className="h-4 w-4 mr-2" />
+                Upload File
+              </>
+            )}
+          </Button>
+          
+          <Button
+            type="button"
+            variant={urlInputVisible ? "default" : "outline"}
+            size="icon"
+            onClick={handleUrlButtonClick}
+          >
+            <LinkIcon className="h-4 w-4" />
+          </Button>
         </div>
+      )}
+      
+      {urlInputVisible && !attachmentURL && (
+        <form onSubmit={handleUrlSubmit} className="flex gap-2 mt-2">
+          <Input
+            type="url"
+            placeholder="Enter attachment URL"
+            value={urlInput}
+            onChange={(e) => setUrlInput(e.target.value)}
+            className="flex-1"
+          />
+          <Button type="submit" disabled={!urlInput.trim()}>
+            Add
+          </Button>
+        </form>
       )}
     </div>
   );

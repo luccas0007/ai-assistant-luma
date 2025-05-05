@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -17,26 +18,35 @@ import React, { useEffect } from "react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import { initializeDatabase } from "./lib/supabase";
-import { setupTaskDatabase } from "./utils/taskDatabaseUtils";
+import { initializeTaskSystem } from "./utils/taskDatabaseUtils";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 // Initialize database when app loads
 const DatabaseInitializer = () => {
+  const { user } = useAuth();
+  
   useEffect(() => {
     const init = async () => {
       try {
         console.log("Initializing database on app startup...");
         
-        // Use setupTaskDatabase instead of just initializeDatabase
-        // to ensure tasks table is properly created
-        const { success, error } = await setupTaskDatabase();
-        
-        if (!success) {
-          console.error("Database initialization failed:", error);
-        } else {
-          console.log("Database initialization successful");
+        // Only try to initialize the database if a user is logged in
+        if (user) {
+          const { success, error } = await initializeTaskSystem();
+          
+          if (!success) {
+            console.error("Database initialization failed:", error);
+          } else {
+            console.log("Database initialization successful");
+          }
         }
       } catch (error) {
         console.error("Error initializing database:", error);
@@ -44,7 +54,7 @@ const DatabaseInitializer = () => {
     };
     
     init();
-  }, []);
+  }, [user]);
   
   return null;
 };
@@ -70,7 +80,6 @@ const App = () => (
       <AuthProvider>
         <BrowserRouter>
           <TooltipProvider>
-            <DatabaseInitializer />
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
@@ -85,7 +94,12 @@ const App = () => (
                 <Route path="email" element={<Email />} />
                 <Route path="messages" element={<Messages />} />
                 <Route path="tasks" element={<Tasks />} />
-                <Route path="task-manager" element={<TaskManager />} />
+                <Route path="task-manager" element={
+                  <>
+                    <DatabaseInitializer />
+                    <TaskManager />
+                  </>
+                } />
                 <Route path="notifications" element={<Notifications />} />
               </Route>
               <Route path="*" element={<NotFound />} />
