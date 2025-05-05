@@ -1,5 +1,9 @@
-
 import { supabase } from '@/integrations/supabase/client';
+
+/**
+ * Optional: Define a lightweight error type for Supabase errors
+ */
+type SupabaseError = { message?: string; [key: string]: any };
 
 /**
  * Sets up the task database tables
@@ -7,53 +11,55 @@ import { supabase } from '@/integrations/supabase/client';
 export const setupTaskDatabase = async () => {
   try {
     console.log('Setting up task database tables');
-    
+
     // Check if the tasks table already exists
     const { error: checkError } = await supabase
       .from('tasks')
       .select('id')
       .limit(1);
-    
+
+    const typedError = checkError as SupabaseError;
+
     // If we get a specific error about relation not existing, create the tables
     if (
-      checkError && 
-      typeof checkError.message === 'string' && 
-      checkError.message.includes('relation "tasks" does not exist')
+      typedError &&
+      typeof typedError.message === 'string' &&
+      typedError.message.includes('relation "tasks" does not exist')
     ) {
       console.log('Tasks table does not exist, creating...');
-      
+
       // Create tasks table with proper schema
       const { error: createError } = await supabase.rpc('create_tasks_table');
-      
+
       if (createError) {
         console.error('Error creating tasks table:', createError);
-        return { 
-          success: false, 
+        return {
+          success: false,
           error: createError,
-          errorMessage: `Failed to create tasks table: ${createError.message}` 
+          errorMessage: `Failed to create tasks table: ${createError.message}`,
         };
       }
-      
+
       console.log('Tasks table created successfully');
     } else if (checkError) {
       // Some other error occurred when checking for the table
       console.error('Error checking for tasks table:', checkError);
-      return { 
-        success: false, 
+      return {
+        success: false,
         error: checkError,
-        errorMessage: `Error checking for tasks table: ${checkError.message}` 
+        errorMessage: `Error checking for tasks table: ${typedError.message}`,
       };
     } else {
       console.log('Tasks table already exists');
     }
-    
+
     return { success: true, error: null, errorMessage: null };
   } catch (error: any) {
     console.error('Error in setupTaskDatabase:', error);
-    return { 
-      success: false, 
+    return {
+      success: false,
       error,
-      errorMessage: `Unexpected error setting up task database: ${error.message}` 
+      errorMessage: `Unexpected error setting up task database: ${error.message}`,
     };
   }
 };
@@ -64,56 +70,52 @@ export const setupTaskDatabase = async () => {
 export const setupTaskStorage = async () => {
   try {
     console.log('Setting up task storage buckets');
-    
+
     // Check if the storage bucket exists
-    const { data: buckets, error: listError } = await supabase
-      .storage
-      .listBuckets();
-    
+    const { data: buckets, error: listError } = await supabase.storage.listBuckets();
+
     if (listError) {
       console.error('Error listing storage buckets:', listError);
-      return { 
-        success: false, 
+      return {
+        success: false,
         error: listError,
-        errorMessage: `Failed to list storage buckets: ${listError.message}` 
+        errorMessage: `Failed to list storage buckets: ${listError.message}`,
       };
     }
-    
+
     // Check if our task-attachments bucket exists
     const bucketExists = buckets.some(bucket => bucket.name === 'task-attachments');
-    
+
     if (!bucketExists) {
       console.log('Creating task-attachments bucket');
-      
+
       // Create the bucket
-      const { error: createError } = await supabase
-        .storage
-        .createBucket('task-attachments', {
-          public: false,
-          fileSizeLimit: 10485760, // 10MB
-        });
-      
+      const { error: createError } = await supabase.storage.createBucket('task-attachments', {
+        public: false,
+        fileSizeLimit: 10485760, // 10MB
+      });
+
       if (createError) {
         console.error('Error creating task-attachments bucket:', createError);
-        return { 
-          success: false, 
+        return {
+          success: false,
           error: createError,
-          errorMessage: `Failed to create storage bucket: ${createError.message}` 
+          errorMessage: `Failed to create storage bucket: ${createError.message}`,
         };
       }
-      
+
       console.log('task-attachments bucket created successfully');
     } else {
       console.log('task-attachments bucket already exists');
     }
-    
+
     return { success: true, error: null, errorMessage: null };
   } catch (error: any) {
     console.error('Error in setupTaskStorage:', error);
-    return { 
-      success: false, 
+    return {
+      success: false,
       error,
-      errorMessage: `Unexpected error setting up task storage: ${error.message}` 
+      errorMessage: `Unexpected error setting up task storage: ${error.message}`,
     };
   }
 };
