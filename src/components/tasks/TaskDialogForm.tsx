@@ -10,7 +10,8 @@ import {
   DialogContent, 
   DialogFooter, 
   DialogHeader, 
-  DialogTitle 
+  DialogTitle,
+  DialogDescription 
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -29,6 +30,7 @@ import {
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { supabase } from '@/lib/supabase';
 import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
 
 interface TaskDialogFormProps {
   isOpen: boolean;
@@ -53,6 +55,7 @@ const TaskDialogForm: React.FC<TaskDialogFormProps> = ({
   const [attachmentURL, setAttachmentURL] = useState<string | null>(null);
   const [fileUploading, setFileUploading] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const { toast } = useToast();
 
   // Reset form when dialog opens or task changes
   useEffect(() => {
@@ -66,12 +69,14 @@ const TaskDialogForm: React.FC<TaskDialogFormProps> = ({
     } else {
       setTitle('');
       setDescription('');
-      setStatus('todo');
+      // Find first column or default to todo
+      const firstColumn = columns.length > 0 ? columns[0].id : 'todo';
+      setStatus(firstColumn);
       setPriority('medium');
       setAttachmentURL(null);
       setDueDate(undefined);
     }
-  }, [task, isOpen]);
+  }, [task, isOpen, columns]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,6 +106,29 @@ const TaskDialogForm: React.FC<TaskDialogFormProps> = ({
     setFileUploading(true);
     
     try {
+      // Check if bucket exists first
+      const { data: bucketsData, error: bucketsError } = await supabase.storage.listBuckets();
+      
+      if (bucketsError) {
+        console.error('Error checking buckets:', bucketsError);
+        throw new Error('Could not verify storage buckets');
+      }
+      
+      const bucketExists = bucketsData?.some(b => b.name === 'task-attachments');
+      
+      // Create bucket if it doesn't exist
+      if (!bucketExists) {
+        const { error: createError } = await supabase.storage.createBucket('task-attachments', {
+          public: true
+        });
+        
+        if (createError) {
+          console.error('Error creating bucket:', createError);
+          throw new Error('Could not create storage bucket');
+        }
+      }
+      
+      // Upload file
       const { error: uploadError, data } = await supabase.storage
         .from('task-attachments')
         .upload(filePath, file);
@@ -114,8 +142,17 @@ const TaskDialogForm: React.FC<TaskDialogFormProps> = ({
         .getPublicUrl(filePath);
         
       setAttachmentURL(publicUrl);
-    } catch (error) {
+      toast({
+        title: 'File uploaded',
+        description: 'Attachment added successfully'
+      });
+    } catch (error: any) {
       console.error('Error uploading file:', error);
+      toast({
+        title: 'Upload failed',
+        description: error.message || 'Failed to upload attachment',
+        variant: 'destructive'
+      });
     } finally {
       setFileUploading(false);
     }
@@ -128,11 +165,14 @@ const TaskDialogForm: React.FC<TaskDialogFormProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-[500px]">
+        <DialogHeader>
+          <DialogTitle>{task ? 'Edit Task' : 'Create Task'}</DialogTitle>
+          <DialogDescription>
+            Fill out the form below to {task ? 'update' : 'create'} a task.
+          </DialogDescription>
+        </DialogHeader>
+        
         <form onSubmit={handleSubmit}>
-          <DialogHeader>
-            <DialogTitle>{task ? 'Edit Task' : 'Create Task'}</DialogTitle>
-          </DialogHeader>
-          
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="title">Title</Label>

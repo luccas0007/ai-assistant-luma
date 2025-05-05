@@ -17,3 +17,10 @@ export interface Column {
   id: string;
   title: string;
 }
+
+export interface TaskState {
+  tasks: Task[];
+  columns: Column[];
+  isLoading: boolean;
+  error: string | null;
+}
