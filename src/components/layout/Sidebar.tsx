@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
@@ -55,7 +54,7 @@ const menuItems = [
     path: '/tasks',
   },
   {
-    title: 'Task Manager',
+    title: 'Project Manager',
     icon: FolderKanban,
     path: '/task-manager',
   },
