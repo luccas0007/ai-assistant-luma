@@ -141,8 +141,10 @@ export const useAuthOperations = (
 
   const updateProfile = async (updates: any) => {
     try {
-      const { user } = await supabase.auth.getUser();
-      if (!user) {
+      // Fixed: Using getUser() instead of getUserByEmail()
+      const { data, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !data.user) {
         throw new Error('User not found');
       }
 
@@ -152,14 +154,14 @@ export const useAuthOperations = (
           ...updates,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', user.id);
+        .eq('id', data.user.id);
 
       if (error) {
         throw error;
       }
 
       // Refresh profile data
-      fetchProfile(user.id);
+      fetchProfile(data.user.id);
 
       toast({
         title: "Profile updated",
