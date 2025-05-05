@@ -1,0 +1,118 @@
+
+import { supabase } from '@/lib/supabase';
+import { Task } from '@/types/task';
+
+/**
+ * Creates a new task in the database
+ */
+export const createTask = async (
+  userId: string,
+  newTask: Omit<Task, 'id' | 'user_id' | 'created_at' | 'updated_at'>
+) => {
+  try {
+    // Check if table exists first
+    const { data: tablesData, error: tablesError } = await supabase
+      .from('information_schema.tables')
+      .select('table_name')
+      .eq('table_name', 'tasks')
+      .eq('table_schema', 'public');
+      
+    if (tablesError || !tablesData || tablesData.length === 0) {
+      throw new Error('Tasks table does not exist. Please refresh the page to create it.');
+    }
+    
+    const { data, error } = await supabase
+      .from('tasks')
+      .insert({
+        user_id: userId,
+        title: newTask.title,
+        description: newTask.description,
+        due_date: newTask.due_date,
+        status: newTask.status || 'todo',
+        priority: newTask.priority,
+        completed: newTask.completed || false,
+        attachment_url: newTask.attachment_url,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .select();
+
+    if (error) {
+      throw error;
+    }
+
+    return { data, error: null };
+  } catch (error) {
+    console.error('Error creating task:', error);
+    return { data: null, error };
+  }
+};
+
+/**
+ * Updates an existing task in the database
+ */
+export const updateTask = async (updatedTask: Task) => {
+  try {
+    const { error } = await supabase
+      .from('tasks')
+      .update({
+        ...updatedTask,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', updatedTask.id);
+
+    if (error) {
+      throw error;
+    }
+
+    return { success: true, error: null };
+  } catch (error) {
+    console.error('Error updating task:', error);
+    return { success: false, error };
+  }
+};
+
+/**
+ * Deletes a task from the database
+ */
+export const deleteTask = async (id: string) => {
+  try {
+    const { error } = await supabase
+      .from('tasks')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      throw error;
+    }
+
+    return { success: true, error: null };
+  } catch (error) {
+    console.error('Error deleting task:', error);
+    return { success: false, error };
+  }
+};
+
+/**
+ * Updates the status of a task (used for drag-and-drop)
+ */
+export const updateTaskStatus = async (taskId: string, newStatus: string) => {
+  try {
+    const { error } = await supabase
+      .from('tasks')
+      .update({
+        status: newStatus,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', taskId);
+
+    if (error) {
+      throw error;
+    }
+
+    return { success: true, error: null };
+  } catch (error) {
+    console.error('Error updating task status:', error);
+    return { success: false, error };
+  }
+};
