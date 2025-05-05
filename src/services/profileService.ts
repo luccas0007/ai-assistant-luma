@@ -2,12 +2,11 @@
 import { supabase } from '@/integrations/supabase/client';
 import { createClient } from '@supabase/supabase-js';
 
-// Create a typed client just for profiles - this avoids type errors
-// while maintaining functionality
+// Create a client specifically for working with profiles
 const SUPABASE_URL = "https://kksxzbcvosofafpkstow.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtrc3h6YmN2b3NvZmFmcGtzdG93Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY0NzU3MzcsImV4cCI6MjA2MjA1MTczN30.vFyv-n7xymV41xu7qyBskGKeMP8I8psg7vV0q1bta-w";
 
-// We use any typing here to bypass the type issues until a proper profiles table is created
+// We use a non-typed client to avoid type issues until the types are properly synchronized
 const profilesClient = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
 export const fetchProfileById = async (userId: string) => {

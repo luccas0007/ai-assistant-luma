@@ -1,6 +1,12 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { createClient } from '@supabase/supabase-js';
 import { Task } from '@/types/task';
+
+// Create an untyped client for storage operations
+const SUPABASE_URL = "https://kksxzbcvosofafpkstow.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtrc3h6YmN2b3NvZmFmcGtzdG93Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY0NzU3MzcsImV4cCI6MjA2MjA1MTczN30.vFyv-n7xymV41xu7qyBskGKeMP8I8psg7vV0q1bta-w";
+const storageClient = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
 /**
  * Sets up the database tables for tasks using raw SQL
@@ -79,13 +85,9 @@ export const setupTaskDatabase = async () => {
  */
 export const setupTaskStorage = async () => {
   try {
-    // For storage operations, we'll use a separate client without explicit typing
-    // to avoid the type issues
-    const SUPABASE_URL = "https://kksxzbcvosofafpkstow.supabase.co";
-    const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtrc3h6YmN2b3NvZmFmcGtzdG93Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY0NzU3MzcsImV4cCI6MjA2MjA1MTczN30.vFyv-n7xymV41xu7qyBskGKeMP8I8psg7vV0q1bta-w";
+    console.log('Setting up task storage...');
     
-    const storageClient = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
-    
+    // For storage operations, use the untyped client
     const { data: buckets, error: listError } = await storageClient.storage.listBuckets();
     
     const taskBucketName = 'task-attachments';
