@@ -6,6 +6,9 @@ import { useTaskActions } from './useTaskActions';
 import { useColumnActions } from './useColumnActions';
 import { useDragAndDrop } from './useDragAndDrop';
 import { useTaskInitialization } from './useTaskInitialization';
+import { fetchUserTasks } from '@/utils/taskDatabaseUtils';
+import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 /**
  * Main hook for the task manager functionality
@@ -13,6 +16,8 @@ import { useTaskInitialization } from './useTaskInitialization';
 export const useTaskManager = () => {
   // Get all state from the state hook
   const state = useTaskState();
+  const { user } = useAuth();
+  const { toast } = useToast();
   
   // Initialize columns from local storage on component mount
   useEffect(() => {
@@ -66,6 +71,50 @@ export const useTaskManager = () => {
     state.columns
   );
   
+  // Function to refresh tasks
+  const refreshTasks = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to view your tasks",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    state.setIsLoading(true);
+    state.setError(null);
+    
+    try {
+      const { data, error, errorMessage } = await fetchUserTasks(user.id);
+      
+      if (error) {
+        state.setError(errorMessage || "Failed to refresh tasks");
+        toast({
+          title: "Refresh failed",
+          description: errorMessage || "Could not load your projects. Please try again.",
+          variant: "destructive"
+        });
+      } else {
+        state.setTasks(data || []);
+        state.setError(null);
+        toast({
+          title: "Refreshed",
+          description: `Loaded ${data.length} projects successfully`
+        });
+      }
+    } catch (error: any) {
+      state.setError(`Error refreshing: ${error.message}`);
+      toast({
+        title: "Error",
+        description: error.message || "An unexpected error occurred",
+        variant: "destructive"
+      });
+    } finally {
+      state.setIsLoading(false);
+    }
+  };
+  
   return {
     ...state,
     handleCreateTask,
@@ -73,7 +122,8 @@ export const useTaskManager = () => {
     handleDeleteTask,
     handleDragEnd,
     handleAddColumn,
-    handleUploadAttachment
+    handleUploadAttachment,
+    refreshTasks
   };
 };
 

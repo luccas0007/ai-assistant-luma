@@ -31,13 +31,9 @@ export const useTaskInitialization = (
         setError(null);
         
         console.log('Initializing task system...');
-        const { success, error } = await initializeTaskSystem();
+        const { success, errorMessage } = await initializeTaskSystem();
         
-        if (!success) {
-          const errorMessage = error instanceof Error 
-            ? error.message 
-            : 'Failed to initialize task system';
-            
+        if (!success && errorMessage) {
           console.error('Task system initialization failed:', errorMessage);
           setError(errorMessage);
           toast({
@@ -49,11 +45,12 @@ export const useTaskInitialization = (
           console.log('Task system initialized successfully');
         }
       } catch (error: any) {
-        console.error('Error initializing task system:', error.message);
-        setError(`Initialization error: ${error.message}`);
+        console.error('Error initializing task system:', error);
+        const errorMsg = error.message || 'Unknown error occurred';
+        setError(`Initialization error: ${errorMsg}`);
         toast({
           title: 'System initialization error',
-          description: error.message,
+          description: errorMsg,
           variant: 'destructive'
         });
       } finally {
@@ -66,7 +63,7 @@ export const useTaskInitialization = (
 
   // Initialize columns if needed
   useEffect(() => {
-    if (columns.length === 0) {
+    if (columns && columns.length === 0) {
       // Initialize with default columns if none exist
       const defaultColumns = [
         { id: 'todo', title: 'To Do' },
@@ -91,18 +88,14 @@ export const useTaskInitialization = (
       
       try {
         console.log('Fetching tasks for user:', user.id);
-        const { data, error } = await fetchUserTasks(user.id);
+        const { data, error, errorMessage } = await fetchUserTasks(user.id);
         
         if (error) {
-          const errorMessage = error instanceof Error 
-            ? error.message 
-            : 'Failed to fetch tasks';
-            
-          console.error('Error fetching tasks:', errorMessage);
-          setError(errorMessage);
+          console.error('Error fetching tasks:', errorMessage || error.message);
+          setError(errorMessage || 'Failed to fetch tasks');
           toast({
             title: 'Error fetching tasks',
-            description: errorMessage,
+            description: errorMessage || 'There was a problem loading your projects. Please try again.',
             variant: 'destructive'
           });
           
@@ -111,13 +104,16 @@ export const useTaskInitialization = (
         } else {
           console.log(`Successfully loaded ${data.length} tasks`);
           setTasks(data || []);
+          // Clear any existing errors if the fetch was successful
+          setError(null);
         }
       } catch (error: any) {
-        console.error('Error in task loading process:', error.message);
-        setError(`Loading error: ${error.message}`);
+        console.error('Error in task loading process:', error);
+        const errorMsg = error.message || 'Unknown error occurred';
+        setError(`Loading error: ${errorMsg}`);
         toast({
           title: 'Error loading tasks',
-          description: error.message,
+          description: errorMsg,
           variant: 'destructive'
         });
         

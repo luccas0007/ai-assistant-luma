@@ -54,13 +54,18 @@ const TaskManager = () => {
     handleDeleteTask,
     handleDragEnd,
     handleAddColumn,
-    handleUploadAttachment
+    handleUploadAttachment,
+    refreshTasks // We'll add this to the hook
   } = useTaskManager();
   
   const { toast } = useToast();
 
   const handleRetry = () => {
-    window.location.reload();
+    refreshTasks();
+    toast({
+      title: "Retrying",
+      description: "Attempting to reconnect to the database..."
+    });
   };
 
   return (
@@ -84,7 +89,7 @@ const TaskManager = () => {
             </ToggleGroup>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setColumnDialogOpen(true)} disabled={isProcessing}>
+            <Button variant="outline" onClick={() => setColumnDialogOpen(true)} disabled={isProcessing || isLoading}>
               <Plus className="h-4 w-4 mr-1" />
               Add Column
             </Button>
@@ -100,7 +105,7 @@ const TaskManager = () => {
                   variant: "destructive"
                 });
               }
-            }} disabled={isProcessing}>
+            }} disabled={isProcessing || isLoading}>
               <Plus className="h-4 w-4 mr-1" />
               Add Project
             </Button>
@@ -142,30 +147,51 @@ const TaskManager = () => {
               <p>Loading projects...</p>
             </div>
           ) : (
-            <DragDropContext onDragEnd={handleDragEnd}>
-              {viewMode === 'kanban' ? (
-                <KanbanBoard 
-                  tasks={tasks} 
-                  columns={columns} 
-                  onEditTask={setEditingTask} 
-                  onDeleteTask={handleDeleteTask}
-                />
-              ) : (
-                <ListView 
-                  tasks={tasks} 
-                  columns={columns} 
-                  onEditTask={setEditingTask} 
-                  onDeleteTask={handleDeleteTask}
-                  onStatusChange={(taskId, newStatus) => {
-                    const taskToUpdate = tasks.find(t => t.id === taskId);
-                    if (taskToUpdate) {
-                      const updatedTask = {...taskToUpdate, status: newStatus};
-                      handleUpdateTask(updatedTask);
-                    }
-                  }}
-                />
-              )}
-            </DragDropContext>
+            tasks && tasks.length === 0 && !error ? (
+              <div className="flex flex-col justify-center items-center h-64 gap-4 text-center">
+                <div className="rounded-full bg-primary/10 p-6">
+                  <Plus className="h-8 w-8 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-medium mb-1">No projects yet</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Create your first project to get started
+                  </p>
+                  <Button onClick={() => {
+                    setEditingTask(null);
+                    setTaskDialogOpen(true);
+                  }}>
+                    <Plus className="h-4 w-4 mr-1" />
+                    Create Project
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <DragDropContext onDragEnd={handleDragEnd}>
+                {viewMode === 'kanban' ? (
+                  <KanbanBoard 
+                    tasks={tasks} 
+                    columns={columns} 
+                    onEditTask={setEditingTask} 
+                    onDeleteTask={handleDeleteTask}
+                  />
+                ) : (
+                  <ListView 
+                    tasks={tasks} 
+                    columns={columns} 
+                    onEditTask={setEditingTask} 
+                    onDeleteTask={handleDeleteTask}
+                    onStatusChange={(taskId, newStatus) => {
+                      const taskToUpdate = tasks.find(t => t.id === taskId);
+                      if (taskToUpdate) {
+                        const updatedTask = {...taskToUpdate, status: newStatus};
+                        handleUpdateTask(updatedTask);
+                      }
+                    }}
+                  />
+                )}
+              </DragDropContext>
+            )
           )}
         </CardContent>
       </Card>
