@@ -8,13 +8,14 @@ import { useToast } from '@/hooks/use-toast';
  */
 export const setupTaskDatabase = async () => {
   try {
+    console.log('Setting up task database...');
     // Try to query tasks table to check if it exists
     const { error: tasksExistError } = await supabase
       .from('tasks')
       .select('count')
       .limit(1);
       
-    if (tasksExistError && tasksExistError.message.includes('does not exist')) {
+    if (tasksExistError && tasksExistError.message && tasksExistError.message.includes('does not exist')) {
       console.log('Tasks table does not exist. Creating it now.');
       // Create tasks table
       const { error: createError } = await supabase.rpc('create_tasks_table');
@@ -63,6 +64,7 @@ export const setupTaskDatabase = async () => {
       console.error('Error checking/creating storage bucket:', error);
     }
     
+    console.log('Task database setup complete');
   } catch (error) {
     console.error('Error setting up database:', error);
   }

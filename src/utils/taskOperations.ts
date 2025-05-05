@@ -29,8 +29,9 @@ export const createTask = async (
       .select();
 
     if (error) {
-      // If table doesn't exist, create it first and then retry
-      if (error.message.includes('does not exist')) {
+      // Check if the error message exists before trying to read includes
+      if (error.message && error.message.includes('does not exist')) {
+        // If table doesn't exist, create it first and then retry
         await setupTaskDatabase();
         // Retry inserting the task
         const { data: retryData, error: retryError } = await supabase
