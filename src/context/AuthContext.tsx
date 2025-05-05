@@ -73,20 +73,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string) => {
     try {
-      // First check if the user has confirmed their email
-      const { data: userData, error: userError } = await supabase.auth.getUserByEmail(email);
+      console.log('Attempting to sign in with email:', email);
       
-      if (userError) {
-        console.error('Error checking user:', userError.message);
-      }
-      
-      // Attempt to sign in
+      // Attempt to sign in directly without the getUserByEmail check
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
+        console.error('Sign in error:', error.message);
+        
         // Provide more specific error messages based on the error code
         if (error.message.includes('Email not confirmed')) {
           throw new Error('Please check your email and confirm your account before logging in.');
@@ -102,7 +99,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: `Welcome back, ${data.user?.email}!`,
       });
       
-      // Add a console log to help with debugging
       console.log('Login successful:', data);
       
     } catch (error: any) {
