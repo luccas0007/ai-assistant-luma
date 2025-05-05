@@ -5,7 +5,7 @@ export interface Task {
   title: string;
   description: string | null;
   status: string;
-  priority: string; // Changed from enum to string to match database
+  priority: string; // Using string type to match database
   due_date: string | null;
   completed: boolean;
   attachment_url: string | null;

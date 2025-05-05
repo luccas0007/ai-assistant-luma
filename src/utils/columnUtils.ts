@@ -3,9 +3,8 @@ import { Column } from '@/types/task';
 
 // Default columns for the Kanban board
 export const defaultColumns: Column[] = [
-  { id: 'ideas', title: 'Idea Dump' },
   { id: 'todo', title: 'To Do' },
-  { id: 'inprogress', title: 'In Progress' },
+  { id: 'in-progress', title: 'In Progress' },
   { id: 'done', title: 'Done' }
 ];
 

@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTaskState } from '../task-manager/useTaskState';
@@ -8,7 +9,7 @@ import { useProjectState } from './useProjectState';
 import { useProjectActions } from './useProjectActions';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { loadColumns } from '@/utils/columnUtils';
+import { loadColumns, defaultColumns, saveColumns } from '@/utils/columnUtils';
 import { fetchUserTasks } from '@/utils/taskDatabaseUtils';
 import { fetchUserProjects } from '@/utils/projectOperations';
 import { Project } from '@/types/project';
@@ -180,7 +181,12 @@ export const useProjectManager = () => {
           return;
         }
         
-        taskState.setTasks(data);
+        taskState.setTasks(data as Task[]);
+        
+        // Set default columns when switching to a new project
+        // This ensures each project has its own set of default columns
+        taskState.setColumns(defaultColumns);
+        saveColumns(defaultColumns);
       } catch (error: any) {
         taskState.setError(`Error loading tasks: ${error.message}`);
         toast({
@@ -200,6 +206,10 @@ export const useProjectManager = () => {
   const setActiveProject = (project: Project) => {
     projectState.setActiveProject(project);
     setSearchParams({ project: project.id });
+    
+    // Reset columns to defaults when changing projects
+    taskState.setColumns(defaultColumns);
+    saveColumns(defaultColumns);
   };
   
   // Function to refresh tasks

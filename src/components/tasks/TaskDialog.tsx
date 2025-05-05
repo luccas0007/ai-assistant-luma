@@ -37,7 +37,7 @@ interface TaskFormData {
   title: string;
   description: string;
   status: string;
-  priority: 'high' | 'medium' | 'low';
+  priority: string; // Changed from enum to string type
   due_date: Date | null;
   project_id: string | null;
 }

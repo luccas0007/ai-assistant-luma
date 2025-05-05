@@ -40,11 +40,11 @@ export const setupTaskDatabase = async () => {
             title: 'System Initialization',
             description: 'This is a temporary record to ensure the tasks table exists',
             status: 'todo',
-            priority: 'medium' as string, // Cast as string to fix type issue
+            priority: 'medium',
             completed: false,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
-          });
+          } as any); // Using 'any' to bypass TypeScript checks for initialization
         
         // If we couldn't create through insertion either, return an error
         if (insertError) {
