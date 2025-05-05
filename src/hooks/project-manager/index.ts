@@ -10,6 +10,7 @@ import { useProjectActions } from './useProjectActions';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { fetchUserTasks } from '@/utils/taskDatabaseUtils';
+import { fetchUserProjects } from '@/utils/projectOperations';
 import { Project } from '@/types/project';
 import { Task } from '@/types/task';
 
