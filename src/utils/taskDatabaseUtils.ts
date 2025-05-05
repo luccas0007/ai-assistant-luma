@@ -123,9 +123,9 @@ export const setupTaskStorage = async () => {
 /**
  * Fetches tasks for the current user with proper error handling
  */
-export const fetchUserTasks = async (userId: string) => {
+export const fetchUserTasks = async (userId: string, projectId?: string) => {
   try {
-    console.log('Fetching tasks for user:', userId);
+    console.log('Fetching tasks for user:', userId, projectId ? `and project: ${projectId}` : '');
     
     // First check if we need to initialize
     const setupResult = await setupTaskDatabase();
@@ -133,12 +133,19 @@ export const fetchUserTasks = async (userId: string) => {
     // Even if setup fails, we should still try to fetch existing tasks
     // as the setup might have failed for reasons other than table non-existence
     
-    // Query tasks with robust error handling
-    const { data, error } = await supabase
+    // Start building the query
+    let query = supabase
       .from('tasks')
       .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
+      .eq('user_id', userId);
+    
+    // Add project filter if provided
+    if (projectId) {
+      query = query.eq('project_id', projectId);
+    }
+    
+    // Execute the query
+    const { data, error } = await query.order('created_at', { ascending: false });
     
     if (error) {
       console.error('Error fetching tasks:', error);

@@ -11,6 +11,7 @@ export interface Task {
   attachment_url: string | null;
   created_at: string;
   updated_at: string;
+  project_id: string | null;
 }
 
 export interface Column {

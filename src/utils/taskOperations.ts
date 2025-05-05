@@ -38,6 +38,7 @@ export const createTask = async (
       due_date: newTask.due_date || null,
       completed: newTask.completed || false,
       attachment_url: newTask.attachment_url || null,
+      project_id: newTask.project_id || null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };

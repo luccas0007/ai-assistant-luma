@@ -36,6 +36,33 @@ export type Database = {
         }
         Relationships: []
       }
+      projects: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          owner_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          owner_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tasks: {
         Row: {
           attachment_path: string | null
@@ -46,6 +73,7 @@ export type Database = {
           due_date: string | null
           id: string
           priority: string
+          project_id: string | null
           status: string
           title: string
           updated_at: string
@@ -60,6 +88,7 @@ export type Database = {
           due_date?: string | null
           id?: string
           priority?: string
+          project_id?: string | null
           status?: string
           title: string
           updated_at?: string
@@ -74,12 +103,21 @@ export type Database = {
           due_date?: string | null
           id?: string
           priority?: string
+          project_id?: string | null
           status?: string
           title?: string
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
