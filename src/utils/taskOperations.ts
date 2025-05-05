@@ -2,6 +2,12 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Task } from '@/types/task';
 import { initializeTaskSystem } from './taskDatabaseUtils';
+import { createClient } from '@supabase/supabase-js';
+
+// Create an untyped client for storage operations to avoid type issues
+const SUPABASE_URL = "https://kksxzbcvosofafpkstow.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtrc3h6YmN2b3NvZmFmcGtzdG93Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY0NzU3MzcsImV4cCI6MjA2MjA1MTczN30.vFyv-n7xymV41xu7qyBskGKeMP8I8psg7vV0q1bta-w";
+const storageClient = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
 /**
  * Creates a new task in the database
@@ -178,7 +184,8 @@ export const uploadTaskAttachment = async (userId: string, file: File) => {
     const bucketName = 'task-attachments';
     const filePath = `${userId}/${Date.now()}_${file.name}`;
     
-    const { data, error } = await supabase.storage
+    // Use the untyped client for storage operations
+    const { data, error } = await storageClient.storage
       .from(bucketName)
       .upload(filePath, file);
     
@@ -192,7 +199,7 @@ export const uploadTaskAttachment = async (userId: string, file: File) => {
     }
     
     // Get the public URL for the uploaded file
-    const { data: { publicUrl } } = supabase.storage
+    const { data: { publicUrl } } = storageClient.storage
       .from(bucketName)
       .getPublicUrl(filePath);
     
@@ -218,7 +225,8 @@ export const deleteTaskAttachment = async (filePath: string) => {
   try {
     const bucketName = 'task-attachments';
     
-    const { error } = await supabase.storage
+    // Use the untyped client for storage operations
+    const { error } = await storageClient.storage
       .from(bucketName)
       .remove([filePath]);
     
