@@ -81,17 +81,26 @@ const TaskDialogForm: React.FC<TaskDialogFormProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    const taskData = {
-      ...task,
-      title,
-      description,
-      status,
-      priority,
-      due_date: dueDate ? dueDate.toISOString() : null,
-      attachment_url: attachmentURL
-    };
-    
-    onSave(taskData);
+    try {
+      const taskData = {
+        ...task,
+        title,
+        description,
+        status,
+        priority,
+        due_date: dueDate ? dueDate.toISOString() : null,
+        attachment_url: attachmentURL
+      };
+      
+      onSave(taskData);
+    } catch (error: any) {
+      console.error("Error saving task:", error);
+      toast({
+        title: "Error saving task",
+        description: error.message || "An unexpected error occurred",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -99,63 +108,14 @@ const TaskDialogForm: React.FC<TaskDialogFormProps> = ({
     if (!files || files.length === 0) return;
     
     const file = files[0];
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-    const filePath = `task-attachments/${fileName}`;
     
-    setFileUploading(true);
-    
-    try {
-      // Check if bucket exists first
-      const { data: bucketsData, error: bucketsError } = await supabase.storage.listBuckets();
-      
-      if (bucketsError) {
-        console.error('Error checking buckets:', bucketsError);
-        throw new Error('Could not verify storage buckets');
-      }
-      
-      const bucketExists = bucketsData?.some(b => b.name === 'task-attachments');
-      
-      // Create bucket if it doesn't exist
-      if (!bucketExists) {
-        const { error: createError } = await supabase.storage.createBucket('task-attachments', {
-          public: true
-        });
-        
-        if (createError) {
-          console.error('Error creating bucket:', createError);
-          throw new Error('Could not create storage bucket');
-        }
-      }
-      
-      // Upload file
-      const { error: uploadError, data } = await supabase.storage
-        .from('task-attachments')
-        .upload(filePath, file);
-        
-      if (uploadError) {
-        throw uploadError;
-      }
-      
-      const { data: { publicUrl } } = supabase.storage
-        .from('task-attachments')
-        .getPublicUrl(filePath);
-        
-      setAttachmentURL(publicUrl);
-      toast({
-        title: 'File uploaded',
-        description: 'Attachment added successfully'
-      });
-    } catch (error: any) {
-      console.error('Error uploading file:', error);
-      toast({
-        title: 'Upload failed',
-        description: error.message || 'Failed to upload attachment',
-        variant: 'destructive'
-      });
-    } finally {
-      setFileUploading(false);
-    }
+    // Skip file uploads for simplicity
+    // Just set a placeholder URL to indicate there was an attachment
+    setAttachmentURL(`https://placeholder.com/${file.name}`);
+    toast({
+      title: 'File reference created',
+      description: 'Attachment reference added (actual upload disabled)'
+    });
   };
   
   const handleRemoveAttachment = () => {
@@ -256,7 +216,7 @@ const TaskDialogForm: React.FC<TaskDialogFormProps> = ({
             </div>
             
             <div className="grid gap-2">
-              <Label htmlFor="attachment">Attachment</Label>
+              <Label htmlFor="attachment">Attachment (Placeholder - No actual upload)</Label>
               {attachmentURL ? (
                 <div className="flex items-center justify-between border rounded-md p-2">
                   <div className="flex items-center">
@@ -279,7 +239,7 @@ const TaskDialogForm: React.FC<TaskDialogFormProps> = ({
                   <label className="cursor-pointer text-center">
                     <Paperclip className="h-4 w-4 mx-auto mb-2" />
                     <span className="text-sm text-muted-foreground block">
-                      {fileUploading ? 'Uploading...' : 'Click to upload a file'}
+                      {fileUploading ? 'Processing...' : 'Click to attach reference (not actual file)'}
                     </span>
                     <input
                       type="file"

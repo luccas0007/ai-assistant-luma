@@ -24,6 +24,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { useToast } from '@/hooks/use-toast';
+import { Toaster } from '@/components/ui/toaster';
 
 const TaskManager = () => {
   const {
@@ -46,6 +48,8 @@ const TaskManager = () => {
     handleDragEnd,
     handleAddColumn
   } = useTaskManager();
+  
+  const { toast } = useToast();
 
   return (
     <div className="space-y-6">
@@ -72,7 +76,19 @@ const TaskManager = () => {
               <Plus className="h-4 w-4 mr-1" />
               Add Column
             </Button>
-            <Button onClick={() => { setEditingTask(null); setTaskDialogOpen(true); }}>
+            <Button onClick={() => { 
+              try {
+                setEditingTask(null); 
+                setTaskDialogOpen(true);
+              } catch (error) {
+                console.error("Error opening task dialog:", error);
+                toast({
+                  title: "Error",
+                  description: "Could not open task dialog. Please try again.",
+                  variant: "destructive"
+                });
+              }
+            }}>
               <Plus className="h-4 w-4 mr-1" />
               Add Task
             </Button>
@@ -158,6 +174,9 @@ const TaskManager = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      {/* Make sure we have the Toaster component */}
+      <Toaster />
     </div>
   );
 };
