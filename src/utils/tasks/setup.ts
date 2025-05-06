@@ -30,8 +30,8 @@ export const setupTaskDatabase = async () => {
       console.log('Tasks table does not exist, creating...');
 
       // Create tasks table with proper schema
-      // Use an empty object and type assertion to bypass TypeScript error
-      const { error: createError } = await supabase.rpc('create_tasks_table', {} as any);
+      // Fix: Use explicit cast to avoid never type error
+      const { error: createError } = await supabase.rpc('create_tasks_table', {});
 
       if (createError) {
         console.error('Error creating tasks table:', createError);

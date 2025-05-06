@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -278,7 +279,7 @@ export const useProjectActions = (
     } finally {
       setIsProcessingProject(false);
     }
-  }, [user, setProjects, setActiveProject, setProjectError, setIsProcessingProject, toast, deleteProject]);
+  }, [user, setProjects, setActiveProject, setProjectError, setIsProcessingProject, toast]);
   
   return {
     isProcessing: false, // Not used directly in this hook, but included for backward compatibility

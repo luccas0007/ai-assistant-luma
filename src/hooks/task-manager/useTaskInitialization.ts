@@ -80,14 +80,20 @@ export const useTaskInitialization = (
       setError(null);
       
       try {
-        // Step 1: Load columns first
+        // Step 1: Load columns first - this is crucial for new projects
         console.log('Fetching columns for project:', activeProject.id);
-        const { data: columnsData, error: columnsError, errorMessage: columnsErrorMessage } = 
+        const { data: columnsData, success: columnsSuccess, error: columnsError, errorMessage: columnsErrorMessage } = 
           await fetchProjectColumns(activeProject.id);
         
         if (columnsError) {
           console.error('Error fetching columns:', columnsErrorMessage || columnsError.message);
-          // Continue loading tasks even if columns fail
+          setError(columnsErrorMessage || 'Failed to fetch columns');
+          toast({
+            title: 'Error fetching columns',
+            description: columnsErrorMessage || 'There was a problem loading columns for this project.',
+            variant: 'destructive'
+          });
+          // Don't return early, try to fetch tasks anyway
         } else {
           console.log(`Successfully loaded ${columnsData?.length || 0} columns`);
           setColumns(columnsData || []);

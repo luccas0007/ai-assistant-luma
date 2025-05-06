@@ -34,7 +34,7 @@ export const fetchUserTasks = async (userId: string, projectId?: string, columnI
       query = query.eq('column_id', columnId);
     }
     
-    // Execute the query with a plain response type
+    // Execute the query with a specific type annotation to avoid deep type instantiation
     const response = await query.order('created_at', { ascending: false });
     const { data, error } = response;
     

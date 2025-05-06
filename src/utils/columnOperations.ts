@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Column } from '@/types/task';
 
@@ -44,7 +45,7 @@ export const createDefaultColumns = async (projectId: string) => {
       user_id: userId
     }));
     
-    // Use a plain object type to avoid deep type instantiation
+    // Fixed: Use explicit response type
     const { data, error } = await supabase
       .from('columns')
       .insert(columnsToInsert)
@@ -98,13 +99,15 @@ export const fetchProjectColumns = async (projectId: string) => {
       };
     }
     
-    // Use a plain object for query response to avoid deep type instantiation
-    const { data, error } = await supabase
+    // Fixed: Use explicit response type to avoid deep type instantiation
+    const response = await supabase
       .from('columns')
       .select('*')
       .eq('project_id', projectId)
       .eq('user_id', userId)
       .order('position', { ascending: true });
+    
+    const { data, error } = response;
     
     if (error) {
       console.error('Error fetching columns:', error);
@@ -117,7 +120,7 @@ export const fetchProjectColumns = async (projectId: string) => {
     }
     
     // Transform to match Column type in the application with type safety
-    const columns: Column[] = (data || []).map(col => ({
+    const columns: Column[] = (data || []).map((col: any) => ({
       id: col.id,
       title: col.title
     }));
@@ -135,7 +138,7 @@ export const fetchProjectColumns = async (projectId: string) => {
           success: true,
           error: null,
           errorMessage: null,
-          data: (defaultColumnsData || []).map(col => ({
+          data: (defaultColumnsData || []).map((col: any) => ({
             id: col.id,
             title: col.title
           }))
