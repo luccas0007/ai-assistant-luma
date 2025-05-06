@@ -108,7 +108,7 @@ export const createColumn = async (projectId: string, title: string): Promise<Co
 /**
  * Deletes a column and its associated tasks
  */
-export const deleteColumn = async (columnId: string): Promise<ColumnOperationResponse> => {
+export const deleteColumn = async (columnId: string): Promise<ColumnOperationResponse<null>> => {
   try {
     console.log('Deleting column:', columnId);
     
@@ -126,13 +126,11 @@ export const deleteColumn = async (columnId: string): Promise<ColumnOperationRes
     }
     
     // First, delete any tasks associated with this column
-    const tasksResult: SupabaseQueryResult<any> = await supabase
+    const { error: tasksError } = await supabase
       .from('tasks')
       .delete()
       .eq('column_id', columnId)
       .eq('user_id', userId);
-    
-    const { error: tasksError } = tasksResult;
     
     if (tasksError) {
       console.error('Error deleting column tasks:', tasksError);
@@ -140,13 +138,11 @@ export const deleteColumn = async (columnId: string): Promise<ColumnOperationRes
     }
     
     // Now delete the column
-    const deleteResult: SupabaseQueryResult<any> = await supabase
+    const { error } = await supabase
       .from('columns')
       .delete()
       .eq('id', columnId)
       .eq('user_id', userId);
-    
-    const { error } = deleteResult;
     
     if (error) {
       console.error('Error deleting column:', error);
