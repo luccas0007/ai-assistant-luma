@@ -123,7 +123,7 @@ export const fetchProjectColumns = async (projectId: string) => {
           success: true,
           error: null,
           errorMessage: null,
-          data: defaultColumns.map(col => ({
+          data: defaultColumns.map((col: any) => ({
             id: col.id,
             title: col.title
           }))
