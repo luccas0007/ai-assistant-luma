@@ -82,7 +82,8 @@ export const useTaskInitialization = (
       try {
         // Step 1: Load columns first
         console.log('Fetching columns for project:', activeProject.id);
-        const { data: columnsData, error: columnsError, errorMessage: columnsErrorMessage } = await fetchProjectColumns(activeProject.id);
+        const { data: columnsData, error: columnsError, errorMessage: columnsErrorMessage } = 
+          await fetchProjectColumns(activeProject.id);
         
         if (columnsError) {
           console.error('Error fetching columns:', columnsErrorMessage || columnsError.message);
@@ -94,7 +95,8 @@ export const useTaskInitialization = (
         
         // Step 2: Load tasks
         console.log('Fetching tasks for project:', activeProject.id);
-        const { data: tasksData, error: tasksError, errorMessage: tasksErrorMessage } = await fetchUserTasks(user.id, activeProject.id);
+        const { data: tasksData, error: tasksError, errorMessage: tasksErrorMessage } = 
+          await fetchUserTasks(user.id, activeProject.id);
         
         if (tasksError) {
           console.error('Error fetching tasks:', tasksErrorMessage || tasksError.message);

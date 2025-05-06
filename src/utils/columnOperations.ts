@@ -1,6 +1,14 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Column } from '@/types/task';
+
+// Define a proper type for the database column object
+interface ColumnData {
+  id: string;
+  title: string;
+  position: number;
+  project_id: string;
+  user_id: string;
+}
 
 /**
  * Creates default columns for a new project
@@ -106,7 +114,7 @@ export const fetchProjectColumns = async (projectId: string) => {
     }
     
     // Transform to match Column type in the application
-    const columns: Column[] = data.map(col => ({
+    const columns: Column[] = data.map((col: ColumnData) => ({
       id: col.id,
       title: col.title
     }));
@@ -116,14 +124,14 @@ export const fetchProjectColumns = async (projectId: string) => {
     // If no columns found, create default columns automatically
     if (columns.length === 0) {
       console.log('No columns found, creating default columns');
-      const { data: defaultColumns, success } = await createDefaultColumns(projectId);
+      const { data: defaultColumnsData, success } = await createDefaultColumns(projectId);
       
-      if (success && defaultColumns) {
+      if (success && defaultColumnsData) {
         return {
           success: true,
           error: null,
           errorMessage: null,
-          data: defaultColumns.map((col: any) => ({
+          data: defaultColumnsData.map((col: ColumnData) => ({
             id: col.id,
             title: col.title
           }))
@@ -229,6 +237,73 @@ export const createColumn = async (projectId: string, title: string) => {
       success: false, 
       error, 
       errorMessage: `Unexpected error creating column: ${error.message}`,
+      data: null
+    };
+  }
+};
+
+/**
+ * Deletes a column and its associated tasks
+ */
+export const deleteColumn = async (columnId: string) => {
+  try {
+    console.log('Deleting column:', columnId);
+    
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData.user?.id;
+    
+    if (!userId) {
+      console.error('No authenticated user found when deleting column');
+      return { 
+        success: false, 
+        error: new Error('No authenticated user found'), 
+        errorMessage: 'Authentication required to delete column',
+        data: null
+      };
+    }
+    
+    // First, delete any tasks associated with this column
+    const { error: tasksError } = await supabase
+      .from('tasks')
+      .delete()
+      .eq('column_id', columnId)
+      .eq('user_id', userId);
+    
+    if (tasksError) {
+      console.error('Error deleting column tasks:', tasksError);
+      // Continue with column deletion despite error
+    }
+    
+    // Now delete the column
+    const { error } = await supabase
+      .from('columns')
+      .delete()
+      .eq('id', columnId)
+      .eq('user_id', userId);
+    
+    if (error) {
+      console.error('Error deleting column:', error);
+      return { 
+        success: false, 
+        error, 
+        errorMessage: `Failed to delete column: ${error.message}`,
+        data: null
+      };
+    }
+    
+    console.log('Column deleted successfully');
+    return { 
+      success: true, 
+      error: null, 
+      errorMessage: null, 
+      data: null 
+    };
+  } catch (error: any) {
+    console.error('Error in deleteColumn:', error);
+    return { 
+      success: false, 
+      error, 
+      errorMessage: `Unexpected error deleting column: ${error.message}`,
       data: null
     };
   }

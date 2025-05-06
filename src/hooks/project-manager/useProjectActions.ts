@@ -205,6 +205,36 @@ export const useProjectActions = (
     setIsProcessingProject(true);
     
     try {
+      // First, check if we need to manually clean up related data
+      // This ensures we don't have orphaned columns or tasks
+      try {
+        // Delete related tasks
+        const { error: tasksDeleteError } = await supabase
+          .from('tasks')
+          .delete()
+          .eq('project_id', projectId);
+          
+        if (tasksDeleteError) {
+          console.error('Error deleting project tasks:', tasksDeleteError);
+          // Continue with deletion despite error
+        }
+        
+        // Delete related columns
+        const { error: columnsDeleteError } = await supabase
+          .from('columns')
+          .delete()
+          .eq('project_id', projectId);
+          
+        if (columnsDeleteError) {
+          console.error('Error deleting project columns:', columnsDeleteError);
+          // Continue with deletion despite error
+        }
+      } catch (cleanupError: any) {
+        console.error('Error cleaning up project data:', cleanupError);
+        // Continue with project deletion despite cleanup errors
+      }
+      
+      // Now delete the project itself
       const { success, error, errorMessage } = await deleteProject(projectId);
       
       if (!success) {
@@ -247,7 +277,7 @@ export const useProjectActions = (
     } finally {
       setIsProcessingProject(false);
     }
-  }, [user, setProjects, setActiveProject, setProjectError, setIsProcessingProject, toast]);
+  }, [user, setProjects, setActiveProject, setProjectError, setIsProcessingProject, toast, deleteProject]);
   
   return {
     isProcessing: false, // Not used directly in this hook, but included for backward compatibility

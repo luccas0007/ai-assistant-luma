@@ -39,6 +39,7 @@ export const createTask = async (
       completed: newTask.completed || false,
       attachment_url: newTask.attachment_url || null,
       project_id: newTask.project_id || null,
+      column_id: newTask.column_id || null, // Include column_id
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };

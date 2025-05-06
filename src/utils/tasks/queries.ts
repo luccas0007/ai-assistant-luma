@@ -6,9 +6,11 @@ import { setupTaskDatabase } from './setup';
 /**
  * Fetches tasks for the current user with proper error handling
  */
-export const fetchUserTasks = async (userId: string, projectId?: string) => {
+export const fetchUserTasks = async (userId: string, projectId?: string, columnId?: string) => {
   try {
-    console.log('Fetching tasks for user:', userId, projectId ? `and project: ${projectId}` : '');
+    console.log('Fetching tasks for user:', userId, 
+      projectId ? `and project: ${projectId}` : '',
+      columnId ? `and column: ${columnId}` : '');
     
     // First check if we need to initialize
     const setupResult = await setupTaskDatabase();
@@ -25,6 +27,11 @@ export const fetchUserTasks = async (userId: string, projectId?: string) => {
     // Add project filter if provided
     if (projectId) {
       query = query.eq('project_id', projectId);
+    }
+    
+    // Add column filter if provided
+    if (columnId) {
+      query = query.eq('column_id', columnId);
     }
     
     // Execute the query
