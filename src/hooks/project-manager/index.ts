@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+
+import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTaskState } from '../task-manager/useTaskState';
 import { useTaskActions } from '../task-manager/useTaskActions';
@@ -6,29 +7,23 @@ import { useColumnActions } from '../task-manager/useColumnActions';
 import { useDragAndDrop } from '../task-manager/useDragAndDrop';
 import { useProjectState } from './useProjectState';
 import { useProjectActions } from './useProjectActions';
-import { useAuth } from '@/context/AuthContext';
-import { useToast } from '@/hooks/use-toast';
-import { fetchUserTasks } from '@/utils/taskDatabaseUtils';
-import { fetchUserProjects } from '@/utils/projectOperations';
+import { useProjectInitialization } from './useProjectInitialization';
+import { useTaskInitialization } from './useTaskInitialization';
+import { useTaskSync } from './useTaskSync';
 import { Project } from '@/types/project';
-import { Task } from '@/types/task';
 
 /**
  * Main hook for the project manager functionality with multiple boards
  */
 export const useProjectManager = () => {
-  // URL parameters to track active project
+  // URL parameters for tracking active project
   const [searchParams, setSearchParams] = useSearchParams();
-  const projectIdFromUrl = searchParams.get('project');
   
   // Get project state from the project state hook
   const projectState = useProjectState();
   
   // Get task state from the task state hook
   const taskState = useTaskState();
-  
-  const { user } = useAuth();
-  const { toast } = useToast();
   
   // Track if we've finished initial loading
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
@@ -84,185 +79,38 @@ export const useProjectManager = () => {
     handleUpdateTaskStatus
   );
   
-  // Load projects
-  useEffect(() => {
-    if (!user) return;
-    
-    const loadProjects = async () => {
-      projectState.setIsLoadingProjects(true);
-      projectState.setProjectError(null);
-      
-      try {
-        const { data, error, message } = await fetchUserProjects(user.id);
-        
-        if (error) {
-          projectState.setProjectError(message || 'Failed to load projects');
-          toast({
-            title: 'Error loading projects',
-            description: message || 'Failed to load your projects',
-            variant: 'destructive'
-          });
-          return;
-        }
-        
-        if (data.length === 0) {
-          // Create a default project if none exists
-          const defaultProject = await handleCreateProject('Default Project', 'Your default project board');
-          
-          if (defaultProject) {
-            projectState.setProjects([defaultProject]);
-            projectState.setActiveProject(defaultProject);
-            
-            // Update URL
-            setSearchParams({ project: defaultProject.id });
-          }
-        } else {
-          projectState.setProjects(data);
-          
-          // Set active project from URL or use first project
-          if (projectIdFromUrl) {
-            const projectFromUrl = data.find(p => p.id === projectIdFromUrl);
-            if (projectFromUrl) {
-              projectState.setActiveProject(projectFromUrl);
-            } else {
-              // Invalid project ID in URL, set first project as active
-              projectState.setActiveProject(data[0]);
-              setSearchParams({ project: data[0].id });
-            }
-          } else {
-            // No project ID in URL, set first project as active
-            projectState.setActiveProject(data[0]);
-            setSearchParams({ project: data[0].id });
-          }
-        }
-      } catch (error: any) {
-        projectState.setProjectError(`Error loading projects: ${error.message}`);
-        toast({
-          title: 'Error',
-          description: error.message || 'An unexpected error occurred',
-          variant: 'destructive'
-        });
-      } finally {
-        projectState.setIsLoadingProjects(false);
-        setInitialLoadComplete(true);
-      }
-    };
-    
-    loadProjects();
-  }, [user, handleCreateProject, projectState, setSearchParams, toast]);
+  // Initialize projects
+  useProjectInitialization(
+    projectState.setProjects,
+    projectState.setActiveProject,
+    projectState.setProjectError, 
+    projectState.setIsLoadingProjects,
+    handleCreateProject,
+    setInitialLoadComplete
+  );
   
-  // Load tasks for active project
-  useEffect(() => {
-    if (!user || !projectState.activeProject || !initialLoadComplete) return;
-    
-    const loadTasks = async () => {
-      taskState.setIsLoading(true);
-      taskState.setError(null);
-      
-      try {
-        const { data, error, message } = await fetchUserTasks(user.id, projectState.activeProject.id);
-        
-        if (error) {
-          taskState.setError(message || 'Failed to load tasks');
-          toast({
-            title: 'Error loading tasks',
-            description: message || 'Failed to load tasks for this project',
-            variant: 'destructive'
-          });
-          return;
-        }
-        
-        taskState.setTasks(data as Task[]);
-      } catch (error: any) {
-        taskState.setError(`Error loading tasks: ${error.message}`);
-        toast({
-          title: 'Error',
-          description: error.message || 'An unexpected error occurred',
-          variant: 'destructive'
-        });
-      } finally {
-        taskState.setIsLoading(false);
-      }
-    };
-    
-    loadTasks();
-  }, [user, projectState.activeProject, initialLoadComplete, toast, taskState]);
+  // Initialize tasks
+  useTaskInitialization(
+    projectState.activeProject,
+    initialLoadComplete,
+    taskState.setTasks,
+    taskState.setIsLoading,
+    taskState.setError
+  );
+  
+  // Task synchronization functions
+  const { refreshTasks, loadAllTasks } = useTaskSync(
+    projectState.activeProject,
+    taskState.tasks,
+    taskState.setTasks,
+    taskState.setIsLoading,
+    taskState.setError
+  );
   
   // Function to change the active project
   const setActiveProject = (project: Project) => {
     projectState.setActiveProject(project);
     setSearchParams({ project: project.id });
-  };
-  
-  // Function to refresh tasks
-  const refreshTasks = async () => {
-    if (!user || !projectState.activeProject) {
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to view your tasks",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    taskState.setIsLoading(true);
-    taskState.setError(null);
-    
-    try {
-      const { data, error, message } = await fetchUserTasks(user.id, projectState.activeProject.id);
-      
-      if (error) {
-        taskState.setError(message || "Failed to refresh tasks");
-        toast({
-          title: "Refresh failed",
-          description: message || "Could not load your projects. Please try again.",
-          variant: "destructive"
-        });
-      } else {
-        // Cast the returned data to Task[] to ensure type compatibility
-        taskState.setTasks(data as Task[] || []);
-        taskState.setError(null);
-        toast({
-          title: "Refreshed",
-          description: `Loaded ${data.length} tasks successfully`
-        });
-      }
-    } catch (error: any) {
-      taskState.setError(`Error refreshing: ${error.message}`);
-      toast({
-        title: "Error",
-        description: error.message || "An unexpected error occurred",
-        variant: "destructive"
-      });
-    } finally {
-      taskState.setIsLoading(false);
-    }
-  };
-  
-  // Function to load all tasks for the task sync view
-  const loadAllTasks = async () => {
-    if (!user) return { tasks: [], error: 'Authentication required' };
-    
-    try {
-      const { data, error, message } = await fetchUserTasks(user.id);
-      
-      if (error) {
-        return { 
-          tasks: [], 
-          error: message || 'Failed to load all tasks'
-        };
-      }
-      
-      return {
-        tasks: data as Task[],
-        error: null
-      };
-    } catch (error: any) {
-      return {
-        tasks: [],
-        error: error.message || 'An unexpected error occurred'
-      };
-    }
   };
   
   return {

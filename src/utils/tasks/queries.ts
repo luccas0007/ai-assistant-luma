@@ -1,24 +1,26 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { Task } from '@/types/task';
-import { setupTaskDatabase } from './setup';
 
 /**
- * Fetches tasks for the current user with proper error handling
+ * Fetch tasks for a specific user and optionally for a specific project
  */
-export const fetchUserTasks = async (userId: string, projectId?: string, columnId?: string) => {
+export const fetchUserTasks = async (
+  userId: string, 
+  projectId?: string
+): Promise<{ data: Task[]; error: any; message: string }> => {
+  if (!userId) {
+    return {
+      data: [],
+      error: new Error('User ID is required'),
+      message: 'User ID is required to fetch tasks'
+    };
+  }
+
   try {
-    console.log('Fetching tasks for user:', userId, 
-      projectId ? `and project: ${projectId}` : '',
-      columnId ? `and column: ${columnId}` : '');
+    console.log('Fetching tasks for user:', userId, projectId ? `and project: ${projectId}` : '');
     
-    // First check if we need to initialize
-    const setupResult = await setupTaskDatabase();
-    
-    // Even if setup fails, we should still try to fetch existing tasks
-    // as the setup might have failed for reasons other than table non-existence
-    
-    // Start building the query
+    // Build query
     let query = supabase
       .from('tasks')
       .select('*')
@@ -29,45 +31,33 @@ export const fetchUserTasks = async (userId: string, projectId?: string, columnI
       query = query.eq('project_id', projectId);
     }
     
-    // Add column filter if provided
-    if (columnId) {
-      query = query.eq('column_id', columnId);
-    }
-    
-    // Execute the query
-    const { data, error } = await query.order('created_at', { ascending: false });
+    // Execute query
+    const { data, error } = await query;
     
     if (error) {
       console.error('Error fetching tasks:', error);
-      
-      // Check if this is a permissions issue
-      if (error.message && error.message.includes('permission denied')) {
-        return { 
-          data: [] as Task[], 
-          error,
-          message: 'Database access denied. Please check your permissions or sign in again.' 
-        };
-      }
-      
-      return { 
-        data: [] as Task[], 
+      return {
+        data: [],
         error,
-        message: `Failed to fetch tasks: ${error.message}` 
+        message: `Failed to fetch tasks: ${error.message}`
       };
     }
     
-    console.log(`Successfully fetched ${data?.length || 0} tasks for user`);
-    return { 
-      data: data as Task[] || [], 
-      error: null, 
-      message: null 
+    // Need to explicitly type the result to avoid type issues
+    const typedTasks: Task[] = data as Task[];
+    
+    console.log(`Successfully fetched ${typedTasks.length} tasks`);
+    return {
+      data: typedTasks,
+      error: null,
+      message: 'Successfully fetched tasks'
     };
   } catch (error: any) {
     console.error('Error in fetchUserTasks:', error);
-    return { 
-      data: [] as Task[], 
+    return {
+      data: [],
       error,
-      message: `Unexpected error fetching tasks: ${error.message}` 
+      message: `Unexpected error fetching tasks: ${error.message}`
     };
   }
 };

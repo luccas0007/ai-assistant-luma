@@ -3,33 +3,28 @@ import { setupTaskDatabase } from './setup';
 import { fetchUserTasks } from './queries';
 
 /**
- * Initialize the entire task system (database and storage)
+ * Initialize the task system (database tables and storage)
  */
 export const initializeTaskSystem = async () => {
   try {
-    // Set up database tables
+    // Set up the database tables
     const dbResult = await setupTaskDatabase();
     
-    // If database setup failed, return that error
     if (!dbResult.success) {
-      return { 
-        success: false, 
-        error: dbResult.error, 
-        message: dbResult.message 
-      };
+      console.error('Error setting up task database:', dbResult.message);
+      return { success: false, message: dbResult.message };
     }
     
     console.log('Task system initialized successfully');
-    return { success: true, error: null, message: 'Task system initialized successfully' };
+    return { success: true, message: 'Task system initialized successfully' };
   } catch (error: any) {
-    console.error('Error initializing task system:', error);
+    console.error('Unexpected error in initializeTaskSystem:', error);
     return { 
       success: false, 
-      error,
+      error, 
       message: `Failed to initialize task system: ${error.message}` 
     };
   }
 };
 
-// Re-export all task utility functions for convenient usage
-export { setupTaskDatabase, fetchUserTasks };
+export { fetchUserTasks, setupTaskDatabase };
