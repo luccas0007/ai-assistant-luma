@@ -34,9 +34,8 @@ export const fetchUserTasks = async (userId: string, projectId?: string, columnI
       query = query.eq('column_id', columnId);
     }
     
-    // Execute the query with a specific type annotation to avoid deep type instantiation
-    const response = await query.order('created_at', { ascending: false });
-    const { data, error } = response;
+    // Execute the query with explicit type annotation
+    const { data, error } = await query.order('created_at', { ascending: false });
     
     if (error) {
       console.error('Error fetching tasks:', error);

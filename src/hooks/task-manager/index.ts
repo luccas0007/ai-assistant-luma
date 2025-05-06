@@ -5,8 +5,8 @@ import { useTaskActions } from './useTaskActions';
 import { useColumnActions } from './useColumnActions';
 import { useDragAndDrop } from './useDragAndDrop';
 import { useTaskInitialization } from './useTaskInitialization';
-import { fetchUserTasks } from '@/utils/taskDatabaseUtils';
-import { fetchProjectColumns } from '@/utils/columnOperations';
+import { fetchUserTasks } from '@/utils/tasks/queries';
+import { fetchProjectColumns } from '@/utils/columns';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 

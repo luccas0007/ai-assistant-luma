@@ -1,7 +1,7 @@
 
 import { useToast } from '@/hooks/use-toast';
 import { Column } from '@/types/task';
-import { createColumn } from '@/utils/columnOperations';
+import { createColumn } from '@/utils/columns';
 
 /**
  * Hook for column action handlers

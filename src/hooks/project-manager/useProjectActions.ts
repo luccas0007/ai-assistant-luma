@@ -4,8 +4,8 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Project } from '@/types/project';
 import { fetchUserProjects, createProject, updateProject, deleteProject } from '@/utils/projectOperations';
-import { createDefaultColumns } from '@/utils/columnOperations';
-import { supabase } from '@/integrations/supabase/client'; // Add missing import
+import { createDefaultColumns } from '@/utils/columns';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Hook for project-related actions

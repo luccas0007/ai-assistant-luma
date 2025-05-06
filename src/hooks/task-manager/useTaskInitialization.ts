@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
 import { initializeTaskSystem, fetchUserTasks } from '@/utils/taskDatabaseUtils';
-import { fetchProjectColumns } from '@/utils/columnOperations';
+import { fetchProjectColumns } from '@/utils/columns';
 import { Task, Column } from '@/types/task';
 
 /**
