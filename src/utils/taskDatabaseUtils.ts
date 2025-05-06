@@ -1,12 +1,10 @@
 
-// This file is kept for backward compatibility
-// It re-exports all task utilities from the new modular structure
+// This file will be deprecated. Please use '@/utils/tasks' instead.
+// Re-exports for backward compatibility
 
-import { 
-  setupTaskDatabase, 
-  fetchUserTasks, 
-  initializeTaskSystem 
-} from './tasks';
+import { setupTaskDatabase } from './tasks/setup';
+import { fetchUserTasks } from './tasks/queries';
+import { initializeTaskSystem } from './tasks';
 
 export {
   setupTaskDatabase,

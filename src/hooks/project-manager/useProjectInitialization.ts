@@ -31,13 +31,15 @@ export const useProjectInitialization = (
       setProjectError(null);
       
       try {
-        const { data, error, message } = await fetchUserProjects(user.id);
+        const { data, error, errorMessage } = await fetchUserProjects(user.id);
         
         if (error) {
-          setProjectError(message || 'Failed to load projects');
+          // Fixed: Safely access error messages
+          const errorMsg = errorMessage || (error.message ? error.message : 'Failed to load projects');
+          setProjectError(errorMsg);
           toast({
             title: 'Error loading projects',
-            description: message || 'Failed to load your projects',
+            description: errorMsg,
             variant: 'destructive'
           });
           return;
