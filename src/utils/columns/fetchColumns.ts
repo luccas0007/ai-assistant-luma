@@ -25,23 +25,25 @@ export const fetchProjectColumns = async (projectId: string): Promise<ColumnOper
     }
     
     // Fetch columns from the database
-    // Explicitly typing the column structure to avoid excessive type instantiation
-    type ColumnRecord = {
+    // Define the shape of the columns data from the database
+    interface ColumnData {
       id: string;
       title: string;
       position: number;
       project_id: string;
       user_id: string;
       created_at?: string;
-    };
+    }
 
-    // Use an explicit type annotation for the query result
-    const { data, error } = await supabase
+    // Use a more direct approach with the query to avoid deep type instantiation
+    const result = await supabase
       .from('columns')
       .select('*')
       .eq('project_id', projectId)
       .eq('user_id', userId)
       .order('position', { ascending: true });
+    
+    const { data, error } = result;
     
     if (error) {
       console.error('Error fetching columns:', error);
@@ -53,8 +55,8 @@ export const fetchProjectColumns = async (projectId: string): Promise<ColumnOper
       };
     }
     
-    // Transform to match Column type in the application with explicit casting
-    const columns: Column[] = (data || []).map((col: ColumnRecord) => ({
+    // Transform to match Column type in the application
+    const columns: Column[] = (data || []).map((col) => ({
       id: col.id,
       title: col.title
     }));
@@ -72,7 +74,7 @@ export const fetchProjectColumns = async (projectId: string): Promise<ColumnOper
           success: true,
           error: null,
           errorMessage: null,
-          data: defaultColumnsData.map((col: ColumnRecord) => ({
+          data: defaultColumnsData.map((col) => ({
             id: col.id,
             title: col.title
           }))

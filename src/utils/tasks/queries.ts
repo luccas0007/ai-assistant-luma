@@ -20,8 +20,8 @@ export const fetchUserTasks = async (
   try {
     console.log('Fetching tasks for user:', userId, projectId ? `and project: ${projectId}` : '');
     
-    // Define explicit types for the database records to prevent deep instantiation
-    type TaskRecord = {
+    // Define the shape of task data returned from the database
+    interface TaskRecord {
       id: string;
       user_id: string;
       project_id?: string;
@@ -34,7 +34,7 @@ export const fetchUserTasks = async (
       attachment_url?: string;
       created_at: string;
       updated_at: string;
-    };
+    }
     
     // Build query
     let query = supabase
@@ -47,8 +47,9 @@ export const fetchUserTasks = async (
       query = query.eq('project_id', projectId);
     }
     
-    // Execute query with explicit type annotation
-    const { data, error } = await query;
+    // Execute query - avoid type inference by using a more direct approach
+    const result = await query;
+    const { data, error } = result;
     
     if (error) {
       console.error('Error fetching tasks:', error);
@@ -60,7 +61,7 @@ export const fetchUserTasks = async (
     }
     
     // Explicitly cast the data to the Task type
-    const typedTasks: Task[] = (data || []).map((record: TaskRecord) => ({
+    const typedTasks: Task[] = (data || []).map((record) => ({
       id: record.id,
       title: record.title,
       description: record.description || null,
