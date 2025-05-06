@@ -18,3 +18,9 @@ export interface ColumnData {
   user_id: string;
   created_at?: string;
 }
+
+// Simplified response type for Supabase queries to avoid excessive type instantiation
+export interface SupabaseQueryResult<T> {
+  data: T[] | null;
+  error: any;
+}

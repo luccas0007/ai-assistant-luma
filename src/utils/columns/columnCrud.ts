@@ -1,7 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Column } from '@/types/task';
-import { ColumnOperationResponse } from './types';
+import { Column, ColumnRecord } from '@/types/task';
+import { ColumnOperationResponse, SupabaseQueryResult } from './types';
 
 /**
  * Creates a new column for a project
@@ -24,13 +24,15 @@ export const createColumn = async (projectId: string, title: string): Promise<Co
     }
     
     // Get the highest position to add the new column at the end
-    const { data: existingColumns, error: fetchError } = await supabase
+    const positionResult: SupabaseQueryResult<{ position: number }> = await supabase
       .from('columns')
       .select('position')
       .eq('project_id', projectId)
       .eq('user_id', userId)
       .order('position', { ascending: false })
       .limit(1);
+    
+    const { data: existingColumns, error: fetchError } = positionResult;
     
     if (fetchError) {
       console.error('Error fetching column positions:', fetchError);
@@ -43,10 +45,10 @@ export const createColumn = async (projectId: string, title: string): Promise<Co
     }
     
     // Determine the position for the new column
-    const position = existingColumns.length > 0 ? existingColumns[0].position + 1 : 0;
+    const position = existingColumns && existingColumns.length > 0 ? existingColumns[0].position + 1 : 0;
     
     // Insert the new column
-    const { data, error } = await supabase
+    const insertResult: SupabaseQueryResult<ColumnRecord> = await supabase
       .from('columns')
       .insert({
         project_id: projectId,
@@ -54,7 +56,9 @@ export const createColumn = async (projectId: string, title: string): Promise<Co
         position,
         user_id: userId
       })
-      .select();
+      .select('id, title, position, project_id, user_id, created_at');
+    
+    const { data, error } = insertResult;
     
     if (error) {
       console.error('Error creating column:', error);
@@ -66,9 +70,21 @@ export const createColumn = async (projectId: string, title: string): Promise<Co
       };
     }
     
+    if (!data || data.length === 0) {
+      return {
+        success: false,
+        error: new Error('No data returned after column creation'),
+        errorMessage: 'Column created but no data returned',
+        data: null
+      };
+    }
+    
     const newColumn: Column = {
       id: data[0].id,
-      title: data[0].title
+      title: data[0].title,
+      project_id: data[0].project_id,
+      user_id: data[0].user_id,
+      position: data[0].position
     };
     
     console.log('Column created:', newColumn);
@@ -110,11 +126,13 @@ export const deleteColumn = async (columnId: string): Promise<ColumnOperationRes
     }
     
     // First, delete any tasks associated with this column
-    const { error: tasksError } = await supabase
+    const tasksResult: SupabaseQueryResult<any> = await supabase
       .from('tasks')
       .delete()
       .eq('column_id', columnId)
       .eq('user_id', userId);
+    
+    const { error: tasksError } = tasksResult;
     
     if (tasksError) {
       console.error('Error deleting column tasks:', tasksError);
@@ -122,11 +140,13 @@ export const deleteColumn = async (columnId: string): Promise<ColumnOperationRes
     }
     
     // Now delete the column
-    const { error } = await supabase
+    const deleteResult: SupabaseQueryResult<any> = await supabase
       .from('columns')
       .delete()
       .eq('id', columnId)
       .eq('user_id', userId);
+    
+    const { error } = deleteResult;
     
     if (error) {
       console.error('Error deleting column:', error);

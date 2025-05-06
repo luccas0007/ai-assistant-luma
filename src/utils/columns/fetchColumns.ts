@@ -1,7 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Column } from '@/types/task';
-import { ColumnOperationResponse } from './types';
+import { Column, ColumnRecord } from '@/types/task';
+import { ColumnOperationResponse, SupabaseQueryResult } from './types';
 import { createDefaultColumns } from './defaultColumns';
 
 /**
@@ -24,13 +24,15 @@ export const fetchProjectColumns = async (projectId: string): Promise<ColumnOper
       };
     }
     
-    // Execute query without complex type inference, using destructuring directly
-    const { data, error } = await supabase
+    // Use explicit typing to avoid excessive type instantiation
+    const result: SupabaseQueryResult<ColumnRecord> = await supabase
       .from('columns')
-      .select('id, title')
+      .select('id, title, position, project_id, user_id, created_at')
       .eq('project_id', projectId)
       .eq('user_id', userId)
       .order('position', { ascending: true });
+    
+    const { data, error } = result;
     
     if (error) {
       console.error('Error fetching columns:', error);
@@ -45,7 +47,10 @@ export const fetchProjectColumns = async (projectId: string): Promise<ColumnOper
     // Map to Column type
     const columns: Column[] = (data || []).map((col) => ({
       id: col.id,
-      title: col.title
+      title: col.title,
+      project_id: col.project_id,
+      user_id: col.user_id,
+      position: col.position
     }));
     
     console.log(`Fetched ${columns.length} columns for project`);
@@ -63,7 +68,10 @@ export const fetchProjectColumns = async (projectId: string): Promise<ColumnOper
           errorMessage: null,
           data: defaultColumnsData.map((col) => ({
             id: col.id,
-            title: col.title
+            title: col.title,
+            project_id: col.project_id,
+            user_id: col.user_id,
+            position: col.position
           }))
         };
       }

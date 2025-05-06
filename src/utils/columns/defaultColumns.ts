@@ -1,11 +1,11 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ColumnOperationResponse } from './types';
+import { ColumnData, ColumnOperationResponse, SupabaseQueryResult } from './types';
 
 /**
  * Creates default columns for a new project
  */
-export const createDefaultColumns = async (projectId: string): Promise<ColumnOperationResponse> => {
+export const createDefaultColumns = async (projectId: string): Promise<ColumnOperationResponse<ColumnData[]>> => {
   try {
     console.log('Creating default columns for project:', projectId);
     
@@ -36,10 +36,12 @@ export const createDefaultColumns = async (projectId: string): Promise<ColumnOpe
     }));
     
     // Use explicit typing for the response to avoid deep type instantiation
-    const { data, error } = await supabase
+    const result: SupabaseQueryResult<ColumnData> = await supabase
       .from('columns')
       .insert(columnsToInsert)
-      .select();
+      .select('id, title, position, project_id, user_id, created_at');
+    
+    const { data, error } = result;
     
     if (error) {
       console.error('Error creating default columns:', error);
