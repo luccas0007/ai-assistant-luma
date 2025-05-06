@@ -24,13 +24,15 @@ export const fetchProjectColumns = async (projectId: string): Promise<ColumnOper
       };
     }
     
-    // Use type assertion to avoid deep type instantiation
-    const { data, error } = await supabase
+    // Explicitly type the response to avoid deep type instantiation
+    const response = await supabase
       .from('columns')
       .select('*')
       .eq('project_id', projectId)
       .eq('user_id', userId)
       .order('position', { ascending: true });
+    
+    const { data, error } = response;
     
     if (error) {
       console.error('Error fetching columns:', error);

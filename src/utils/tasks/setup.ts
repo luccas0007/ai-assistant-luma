@@ -2,119 +2,55 @@
 import { supabase } from '@/integrations/supabase/client';
 
 /**
- * Define a lightweight error type for Supabase errors
- */
-type SupabaseError = { message?: string; [key: string]: any };
-
-/**
- * Sets up the task database tables
+ * Setup the database schema for tasks if it doesn't exist
  */
 export const setupTaskDatabase = async () => {
   try {
-    console.log('Setting up task database tables');
-
-    // Check if the tasks table already exists
-    const { error: checkError } = await supabase
+    console.log('Checking if task database setup is needed...');
+    
+    // Check if the tasks table exists
+    const { data: tableExists, error: checkError } = await supabase
       .from('tasks')
       .select('id')
       .limit(1);
-
-    const typedError = checkError as SupabaseError;
-
-    // If we get a specific error about relation not existing, create the tables
-    if (
-      typedError &&
-      typeof typedError.message === 'string' &&
-      typedError.message.includes('relation "tasks" does not exist')
-    ) {
-      console.log('Tasks table does not exist, creating...');
-
-      // Create tasks table with proper schema
-      // Fix: Use explicit typing to avoid never type error
-      const { error: createError } = await supabase.rpc('create_tasks_table');
-
-      if (createError) {
-        console.error('Error creating tasks table:', createError);
-        return {
-          success: false,
-          error: createError,
-          errorMessage: `Failed to create tasks table: ${createError.message}`,
-        };
-      }
-
-      console.log('Tasks table created successfully');
-    } else if (checkError) {
-      console.error('Error checking for tasks table:', checkError);
-      return {
-        success: false,
-        error: checkError,
-        errorMessage: `Error checking for tasks table: ${(checkError as SupabaseError).message}`,
-      };
-    } else {
-      console.log('Tasks table already exists');
+    
+    // If there's no error, the table exists
+    if (!checkError) {
+      console.log('Tasks table exists, no setup needed');
+      return { success: true, message: 'Database already set up' };
     }
-
-    return { success: true, error: null, errorMessage: null };
+    
+    console.log('Error checking tasks table, might need to create it:', checkError.message);
+    
+    // For safety, we'll check if the auth is working before trying to create tables
+    const { data: userSession, error: authError } = await supabase.auth.getSession();
+    
+    if (authError) {
+      console.error('Authentication error:', authError);
+      return { 
+        success: false, 
+        error: authError, 
+        message: 'Auth check failed, cannot set up database' 
+      };
+    }
+    
+    console.log('Auth working, proceeding with database setup');
+    
+    // Instead of trying to create the database schema here,
+    // which might not work due to permissions, just return an error
+    // that instructs the user to run the SQL migration
+    
+    return {
+      success: false,
+      error: new Error('Database tables not found'),
+      message: 'Database tables not found. Please run the SQL migration to create them.'
+    };
   } catch (error: any) {
     console.error('Error in setupTaskDatabase:', error);
-    return {
-      success: false,
-      error,
-      errorMessage: `Unexpected error setting up task database: ${error.message}`,
-    };
-  }
-};
-
-/**
- * Sets up storage buckets for task attachments
- */
-export const setupTaskStorage = async () => {
-  try {
-    console.log('Setting up task storage buckets');
-
-    // Check if the storage bucket exists
-    const { data: buckets, error: listError } = await supabase.storage.listBuckets();
-
-    if (listError) {
-      console.error('Error listing storage buckets:', listError);
-      return {
-        success: false,
-        error: listError,
-        errorMessage: `Failed to list storage buckets: ${listError.message}`,
-      };
-    }
-
-    const bucketExists = buckets.some((bucket: { name: string }) => bucket.name === 'task-attachments');
-
-    if (!bucketExists) {
-      console.log('Creating task-attachments bucket');
-
-      const { error: createError } = await supabase.storage.createBucket('task-attachments', {
-        public: false,
-        fileSizeLimit: 10485760, // 10MB
-      });
-
-      if (createError) {
-        console.error('Error creating task-attachments bucket:', createError);
-        return {
-          success: false,
-          error: createError,
-          errorMessage: `Failed to create storage bucket: ${createError.message}`,
-        };
-      }
-
-      console.log('task-attachments bucket created successfully');
-    } else {
-      console.log('task-attachments bucket already exists');
-    }
-
-    return { success: true, error: null, errorMessage: null };
-  } catch (error: any) {
-    console.error('Error in setupTaskStorage:', error);
-    return {
-      success: false,
-      error,
-      errorMessage: `Unexpected error setting up task storage: ${error.message}`,
+    return { 
+      success: false, 
+      error, 
+      message: `Unexpected error in database setup: ${error.message}` 
     };
   }
 };

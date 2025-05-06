@@ -6,16 +6,9 @@ import {
   createDefaultColumns,
   fetchProjectColumns,
   createColumn,
-  deleteColumn,
-  ColumnOperationResponse,
-  ColumnData
+  deleteColumn
 } from './columns';
 
-export {
-  createDefaultColumns,
-  fetchProjectColumns,
-  createColumn,
-  deleteColumn,
-  ColumnOperationResponse,
-  ColumnData
-};
+// Export types with proper 'export type' syntax for TypeScript modules
+export { createDefaultColumns, fetchProjectColumns, createColumn, deleteColumn };
+export type { ColumnOperationResponse, ColumnData } from './columns/types';
