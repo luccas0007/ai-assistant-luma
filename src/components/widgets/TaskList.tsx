@@ -1,12 +1,10 @@
 
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Check, Loader } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useProjectManager } from '@/hooks/project-manager';
 import { Task } from '@/types/task';
-import { Project } from '@/types/project';
 import TaskSyncList from '@/components/tasks/TaskSyncList';
 
 const TaskList: React.FC = () => {

@@ -6,12 +6,10 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Task } from '@/types/task';
-import { Project } from '@/types/project';
 import { useNavigate } from 'react-router-dom';
 
 interface TaskSyncListProps {
   tasks: Task[];
-  projects: Project[];
   columns: Record<string, string>;
 }
 
@@ -27,14 +25,8 @@ const statusColors: Record<string, string> = {
   done: 'bg-green-100 text-green-800',
 };
 
-const TaskSyncList: React.FC<TaskSyncListProps> = ({ tasks, projects, columns }) => {
+const TaskSyncList: React.FC<TaskSyncListProps> = ({ tasks, columns }) => {
   const navigate = useNavigate();
-  
-  const getProjectName = (projectId: string | null) => {
-    if (!projectId) return 'No Project';
-    const project = projects.find(p => p.id === projectId);
-    return project?.name || 'Unknown Project';
-  };
   
   const getStatusName = (statusId: string) => {
     return columns[statusId] || statusId;
@@ -76,10 +68,6 @@ const TaskSyncList: React.FC<TaskSyncListProps> = ({ tasks, projects, columns })
                   >
                     <ExternalLink className="h-3.5 w-3.5" />
                   </Button>
-                </div>
-                
-                <div className="text-xs text-muted-foreground mb-2">
-                  {getProjectName(task.project_id)}
                 </div>
                 
                 <div className="flex items-center gap-2">
