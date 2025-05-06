@@ -24,16 +24,13 @@ export const fetchProjectColumns = async (projectId: string): Promise<ColumnOper
       };
     }
     
-    // Fetch columns from the database
-    // Perform the query without complex type inference
-    const response = await supabase
+    // Fetch columns from the database using minimal type inference
+    const { data, error } = await supabase
       .from('columns')
       .select('*')
       .eq('project_id', projectId)
       .eq('user_id', userId)
       .order('position', { ascending: true });
-    
-    const { data, error } = response;
     
     if (error) {
       console.error('Error fetching columns:', error);

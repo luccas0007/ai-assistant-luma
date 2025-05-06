@@ -56,7 +56,7 @@ export const fetchUserTasks = async (
       user_id: record.user_id,
       project_id: record.project_id || null,
       attachment_url: record.attachment_url || null,
-      column_id: record.column_id || null, // Include column_id
+      column_id: record.column_id || null, // Include column_id if it exists
       created_at: record.created_at,
       updated_at: record.updated_at
     }));
