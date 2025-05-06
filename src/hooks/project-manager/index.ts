@@ -43,10 +43,7 @@ export const useProjectManager = () => {
     projectState.projects,
     projectState.setProjects,
     projectState.setActiveProject,
-    projectState.setProjectDialogOpen,
-    projectState.setEditingProject,
-    projectState.setProjectError,
-    projectState.setIsProcessingProject
+    projectState.setProjectDialogOpen
   );
   
   // Task-related actions
