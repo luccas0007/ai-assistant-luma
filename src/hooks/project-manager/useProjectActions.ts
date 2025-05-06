@@ -4,6 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Project } from '@/types/project';
 import { fetchUserProjects, createProject, updateProject, deleteProject } from '@/utils/projectOperations';
 import { createDefaultColumns } from '@/utils/columnOperations';
+import { supabase } from '@/integrations/supabase/client'; // Add missing import
 
 /**
  * Hook for project-related actions

@@ -18,7 +18,9 @@ export const fetchUserTasks = async (userId: string, projectId?: string, columnI
     // Even if setup fails, we should still try to fetch existing tasks
     // as the setup might have failed for reasons other than table non-existence
     
-    // Start building the query
+    // Start building the query with a specific type to avoid deep instantiation
+    type TaskQueryResponse = { data: Task[] | null; error: any };
+    
     let query = supabase
       .from('tasks')
       .select('*')
@@ -34,8 +36,8 @@ export const fetchUserTasks = async (userId: string, projectId?: string, columnI
       query = query.eq('column_id', columnId);
     }
     
-    // Execute the query
-    const { data, error } = await query.order('created_at', { ascending: false });
+    // Execute the query with a type assertion to avoid deep instantiation
+    const { data, error } = await query.order('created_at', { ascending: false }) as TaskQueryResponse;
     
     if (error) {
       console.error('Error fetching tasks:', error);

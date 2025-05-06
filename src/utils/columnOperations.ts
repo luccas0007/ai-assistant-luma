@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Column } from '@/types/task';
 
@@ -8,6 +9,7 @@ interface ColumnData {
   position: number;
   project_id: string;
   user_id: string;
+  created_at?: string; // Make optional to match potential API response
 }
 
 /**
@@ -43,10 +45,12 @@ export const createDefaultColumns = async (projectId: string) => {
       user_id: userId
     }));
     
+    // Use a specific type for the response to avoid deep type instantiation
+    type ColumnInsertResponse = { data: ColumnData[] | null; error: any };
     const { data, error } = await supabase
       .from('columns')
       .insert(columnsToInsert)
-      .select();
+      .select() as ColumnInsertResponse;
     
     if (error) {
       console.error('Error creating default columns:', error);
@@ -96,12 +100,14 @@ export const fetchProjectColumns = async (projectId: string) => {
       };
     }
     
+    // Use a specific type for the response to avoid deep type instantiation
+    type ColumnFetchResponse = { data: ColumnData[] | null; error: any };
     const { data, error } = await supabase
       .from('columns')
       .select('*')
       .eq('project_id', projectId)
       .eq('user_id', userId)
-      .order('position', { ascending: true });
+      .order('position', { ascending: true }) as ColumnFetchResponse;
     
     if (error) {
       console.error('Error fetching columns:', error);
@@ -113,8 +119,8 @@ export const fetchProjectColumns = async (projectId: string) => {
       };
     }
     
-    // Transform to match Column type in the application
-    const columns: Column[] = data.map((col: ColumnData) => ({
+    // Transform to match Column type in the application with type safety
+    const columns: Column[] = (data || []).map((col: ColumnData) => ({
       id: col.id,
       title: col.title
     }));
@@ -127,11 +133,12 @@ export const fetchProjectColumns = async (projectId: string) => {
       const { data: defaultColumnsData, success } = await createDefaultColumns(projectId);
       
       if (success && defaultColumnsData) {
+        // Since we just created these columns, we know they have the proper ColumnData structure
         return {
           success: true,
           error: null,
           errorMessage: null,
-          data: defaultColumnsData.map((col: ColumnData) => ({
+          data: (defaultColumnsData as ColumnData[]).map((col: ColumnData) => ({
             id: col.id,
             title: col.title
           }))
