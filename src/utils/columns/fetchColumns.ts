@@ -24,10 +24,10 @@ export const fetchProjectColumns = async (projectId: string): Promise<ColumnOper
       };
     }
     
-    // Fetch columns from the database using minimal type inference
+    // Execute query without complex type inference, using destructuring directly
     const { data, error } = await supabase
       .from('columns')
-      .select('*')
+      .select('id, title')
       .eq('project_id', projectId)
       .eq('user_id', userId)
       .order('position', { ascending: true });
@@ -42,7 +42,7 @@ export const fetchProjectColumns = async (projectId: string): Promise<ColumnOper
       };
     }
     
-    // Transform to match Column type in the application
+    // Map to Column type
     const columns: Column[] = (data || []).map((col) => ({
       id: col.id,
       title: col.title

@@ -24,11 +24,16 @@ export const useColumnActions = (
       
       // Skip if title is empty
       if (!newColumnTitle.trim()) {
+        toast({
+          title: 'Column title required',
+          description: 'Please enter a title for the column',
+          variant: 'destructive'
+        });
         return;
       }
       
       // Skip if no active project
-      if (!activeProject) {
+      if (!activeProject || !activeProject.id) {
         toast({
           title: 'No project selected',
           description: 'Please select a project first',
@@ -36,6 +41,8 @@ export const useColumnActions = (
         });
         return;
       }
+      
+      console.log('Creating column for project:', activeProject.id);
       
       // Check if column with this title already exists
       if (columns.some(col => col.title.toLowerCase() === newColumnTitle.toLowerCase())) {

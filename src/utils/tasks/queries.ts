@@ -31,9 +31,8 @@ export const fetchUserTasks = async (
       query = query.eq('project_id', projectId);
     }
     
-    // Execute query without complex type inference
-    const response = await query;
-    const { data, error } = response;
+    // Execute query
+    const { data, error } = await query;
     
     if (error) {
       console.error('Error fetching tasks:', error);
@@ -44,19 +43,20 @@ export const fetchUserTasks = async (
       };
     }
     
-    // Explicitly cast the data to the Task type
-    const typedTasks: Task[] = (data || []).map((record) => ({
+    // Explicitly cast the data to the Task type, handling possible undefined columns
+    const typedTasks: Task[] = (data || []).map((record: any) => ({
       id: record.id,
       title: record.title,
       description: record.description || null,
       status: record.status,
-      priority: record.priority as any, // Cast to match Task type
+      priority: record.priority,
       due_date: record.due_date ? new Date(record.due_date).toISOString() : null,
       completed: record.completed || false,
       user_id: record.user_id,
       project_id: record.project_id || null,
       attachment_url: record.attachment_url || null,
-      column_id: record.column_id || null, // Include column_id if it exists
+      attachment_path: record.attachment_path || null,
+      column_id: record.column_id || null,
       created_at: record.created_at,
       updated_at: record.updated_at
     }));

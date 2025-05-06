@@ -62,7 +62,14 @@ export const useProjectCreate = (
       
       if (columnsError) {
         console.error('Error creating default columns:', columnsErrorMessage);
+        toast({
+          title: 'Warning',
+          description: 'Project created, but default columns could not be added.',
+          variant: 'destructive'
+        });
         // Continue despite column error, just log it
+      } else {
+        console.log('Default columns created successfully for project:', newProject.id);
       }
       
       // Update projects list

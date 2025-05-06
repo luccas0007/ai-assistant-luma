@@ -3,6 +3,7 @@ import React from 'react';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CardHeader, CardTitle } from '@/components/ui/card';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface TaskBoardHeaderProps {
   title: string;
@@ -27,14 +28,48 @@ const TaskBoardHeader: React.FC<TaskBoardHeaderProps> = ({
         {title}
       </CardTitle>
       <div className="flex gap-2">
-        <Button variant="outline" onClick={onAddColumn} disabled={isProcessing || isLoading}>
-          <Plus className="h-4 w-4 mr-1" />
-          Add Column
-        </Button>
-        <Button onClick={onAddTask} disabled={isProcessing || isLoading || !isProjectSelected}>
-          <Plus className="h-4 w-4 mr-1" />
-          Add Task
-        </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div>
+                <Button 
+                  variant="outline" 
+                  onClick={onAddColumn} 
+                  disabled={isProcessing || isLoading || !isProjectSelected}
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add Column
+                </Button>
+              </div>
+            </TooltipTrigger>
+            {!isProjectSelected && (
+              <TooltipContent>
+                <p>Select a project first</p>
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
+        
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div>
+                <Button 
+                  onClick={onAddTask} 
+                  disabled={isProcessing || isLoading || !isProjectSelected}
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add Task
+                </Button>
+              </div>
+            </TooltipTrigger>
+            {!isProjectSelected && (
+              <TooltipContent>
+                <p>Select a project first</p>
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
       </div>
     </CardHeader>
   );

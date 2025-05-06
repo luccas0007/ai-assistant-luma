@@ -13,7 +13,7 @@ export interface Task {
   updated_at: string;
   project_id: string | null;
   attachment_path?: string | null; // Added to match the database schema
-  column_id?: string | null; // Adding column_id to tie tasks to columns
+  column_id: string | null; // Making this non-optional to match our usage
 }
 
 export interface Column {
