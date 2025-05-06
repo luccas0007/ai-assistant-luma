@@ -15,10 +15,24 @@ export const createDefaultColumns = async (projectId: string) => {
       { title: 'Done', position: 2 }
     ];
     
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData.user?.id;
+    
+    if (!userId) {
+      console.error('No authenticated user found when creating default columns');
+      return { 
+        success: false, 
+        error: new Error('No authenticated user found'), 
+        errorMessage: 'Authentication required to create default columns',
+        data: null
+      };
+    }
+    
     const columnsToInsert = defaultColumns.map(column => ({
       project_id: projectId,
       title: column.title,
-      position: column.position
+      position: column.position,
+      user_id: userId
     }));
     
     const { data, error } = await supabase
@@ -61,10 +75,24 @@ export const fetchProjectColumns = async (projectId: string) => {
   try {
     console.log('Fetching columns for project:', projectId);
     
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData.user?.id;
+    
+    if (!userId) {
+      console.error('No authenticated user found when fetching columns');
+      return { 
+        success: false, 
+        error: new Error('No authenticated user found'), 
+        errorMessage: 'Authentication required to fetch columns',
+        data: null
+      };
+    }
+    
     const { data, error } = await supabase
       .from('columns')
       .select('*')
       .eq('project_id', projectId)
+      .eq('user_id', userId)
       .order('position', { ascending: true });
     
     if (error) {
@@ -84,6 +112,25 @@ export const fetchProjectColumns = async (projectId: string) => {
     }));
     
     console.log(`Fetched ${columns.length} columns for project`);
+    
+    // If no columns found, create default columns automatically
+    if (columns.length === 0) {
+      console.log('No columns found, creating default columns');
+      const { data: defaultColumns, success } = await createDefaultColumns(projectId);
+      
+      if (success && defaultColumns) {
+        return {
+          success: true,
+          error: null,
+          errorMessage: null,
+          data: defaultColumns.map(col => ({
+            id: col.id,
+            title: col.title
+          }))
+        };
+      }
+    }
+    
     return { 
       success: true, 
       error: null, 
@@ -108,11 +155,25 @@ export const createColumn = async (projectId: string, title: string) => {
   try {
     console.log('Creating new column for project:', projectId, title);
     
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData.user?.id;
+    
+    if (!userId) {
+      console.error('No authenticated user found when creating column');
+      return { 
+        success: false, 
+        error: new Error('No authenticated user found'), 
+        errorMessage: 'Authentication required to create column',
+        data: null
+      };
+    }
+    
     // Get the highest position to add the new column at the end
     const { data: existingColumns, error: fetchError } = await supabase
       .from('columns')
       .select('position')
       .eq('project_id', projectId)
+      .eq('user_id', userId)
       .order('position', { ascending: false })
       .limit(1);
     
@@ -135,7 +196,8 @@ export const createColumn = async (projectId: string, title: string) => {
       .insert({
         project_id: projectId,
         title,
-        position
+        position,
+        user_id: userId
       })
       .select();
     

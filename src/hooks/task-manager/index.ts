@@ -72,6 +72,15 @@ export const useTaskManager = () => {
         return;
       }
       
+      if (!user) {
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to view your project columns",
+          variant: "destructive"
+        });
+        return;
+      }
+      
       state.setIsLoading(true);
       
       try {
@@ -97,7 +106,7 @@ export const useTaskManager = () => {
     };
     
     loadColumns();
-  }, [state.activeProject, state.setColumns, state.setError, state.setIsLoading, toast]);
+  }, [state.activeProject, state.setColumns, state.setError, state.setIsLoading, toast, user]);
   
   // Function to refresh tasks
   const refreshTasks = async () => {

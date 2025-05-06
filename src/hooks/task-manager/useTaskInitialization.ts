@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
 import { initializeTaskSystem, fetchUserTasks } from '@/utils/taskDatabaseUtils';
+import { fetchProjectColumns } from '@/utils/columnOperations';
 import { Task, Column } from '@/types/task';
 
 /**
@@ -70,40 +71,54 @@ export const useTaskInitialization = (
     if (!activeProject) {
       // Clear tasks when no project is selected
       setTasks([]);
+      setColumns([]);
       return;
     }
 
-    const loadTasks = async () => {
+    const loadProjectData = async () => {
       setIsLoading(true);
       setError(null);
       
       try {
-        console.log('Fetching tasks for project:', activeProject.id);
-        const { data, error, errorMessage } = await fetchUserTasks(user.id, activeProject.id);
+        // Step 1: Load columns first
+        console.log('Fetching columns for project:', activeProject.id);
+        const { data: columnsData, error: columnsError, errorMessage: columnsErrorMessage } = await fetchProjectColumns(activeProject.id);
         
-        if (error) {
-          console.error('Error fetching tasks:', errorMessage || error.message);
-          setError(errorMessage || 'Failed to fetch tasks');
+        if (columnsError) {
+          console.error('Error fetching columns:', columnsErrorMessage || columnsError.message);
+          // Continue loading tasks even if columns fail
+        } else {
+          console.log(`Successfully loaded ${columnsData?.length || 0} columns`);
+          setColumns(columnsData || []);
+        }
+        
+        // Step 2: Load tasks
+        console.log('Fetching tasks for project:', activeProject.id);
+        const { data: tasksData, error: tasksError, errorMessage: tasksErrorMessage } = await fetchUserTasks(user.id, activeProject.id);
+        
+        if (tasksError) {
+          console.error('Error fetching tasks:', tasksErrorMessage || tasksError.message);
+          setError(tasksErrorMessage || 'Failed to fetch tasks');
           toast({
             title: 'Error fetching tasks',
-            description: errorMessage || 'There was a problem loading your tasks. Please try again.',
+            description: tasksErrorMessage || 'There was a problem loading your tasks. Please try again.',
             variant: 'destructive'
           });
           
           // Set empty tasks array to prevent undefined errors
           setTasks([]);
         } else {
-          console.log(`Successfully loaded ${data.length} tasks`);
-          setTasks(data || []);
+          console.log(`Successfully loaded ${tasksData.length} tasks`);
+          setTasks(tasksData || []);
           // Clear any existing errors if the fetch was successful
           setError(null);
         }
       } catch (error: any) {
-        console.error('Error in task loading process:', error);
+        console.error('Error in project data loading process:', error);
         const errorMsg = error.message || 'Unknown error occurred';
         setError(`Loading error: ${errorMsg}`);
         toast({
-          title: 'Error loading tasks',
+          title: 'Error loading project data',
           description: errorMsg,
           variant: 'destructive'
         });
@@ -115,8 +130,8 @@ export const useTaskInitialization = (
       }
     };
 
-    loadTasks();
-  }, [user, navigate, toast, setTasks, setIsLoading, setError, activeProject]);
+    loadProjectData();
+  }, [user, navigate, toast, setTasks, setColumns, setIsLoading, setError, activeProject]);
 };
 
 export default useTaskInitialization;

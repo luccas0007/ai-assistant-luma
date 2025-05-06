@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -99,7 +98,12 @@ export const useProjectActions = (
       const newProject = data[0];
       
       // Create default columns for the new project
-      await createDefaultColumns(newProject.id);
+      const { success, error: columnsError, errorMessage: columnsErrorMessage } = await createDefaultColumns(newProject.id);
+      
+      if (columnsError) {
+        console.error('Error creating default columns:', columnsErrorMessage);
+        // Continue despite column error, just log it
+      }
       
       // Update projects list
       setProjects(prevProjects => [...prevProjects, newProject]);
