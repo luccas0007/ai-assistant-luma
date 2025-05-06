@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 /**
@@ -29,9 +28,8 @@ export const setupTaskDatabase = async () => {
     ) {
       console.log('Tasks table does not exist, creating...');
 
-      // Create tasks table with proper schema - pass an empty object as params
-      // Use any type to bypass the TypeScript error
-      const { error: createError } = await supabase.rpc('create_tasks_table', {} as any);
+      // Create tasks table with proper schema - use an empty object for params
+      const { error: createError } = await supabase.rpc('create_tasks_table', {} as Record<string, never>);
 
       if (createError) {
         console.error('Error creating tasks table:', createError);

@@ -11,7 +11,6 @@ import TaskSyncList from '@/components/tasks/TaskSyncList';
 
 const TaskList: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
@@ -31,13 +30,11 @@ const TaskList: React.FC = () => {
         return;
       }
       
-      setLoading(true);
       try {
         const { tasks, error } = await loadAllTasks();
         if (error) {
           setError(error);
         } else {
-          // Cast the returned tasks to the Task type to ensure compatibility
           setTasks(tasks as Task[]);
         }
       } catch (err: any) {
@@ -48,12 +45,12 @@ const TaskList: React.FC = () => {
     };
     
     fetchData();
-  }, [user]);
+  }, [user, loadAllTasks]);
   
   return (
     <Card className="h-full">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-lg font-medium">Recent Projects</CardTitle>
+        <CardTitle className="text-lg font-medium">Recent Tasks</CardTitle>
         <Check className="h-5 w-5 text-muted-foreground" />
       </CardHeader>
       <CardContent>
@@ -65,11 +62,14 @@ const TaskList: React.FC = () => {
           <div className="text-center py-4 text-muted-foreground">
             <p>Error loading tasks: {error}</p>
           </div>
+        ) : tasks.length === 0 ? (
+          <div className="text-center py-4 text-muted-foreground">
+            <p>No tasks found</p>
+          </div>
         ) : (
           <TaskSyncList 
             tasks={tasks} 
-            projects={projects} 
-            columns={columnMapping} 
+            columns={columnMapping}
           />
         )}
       </CardContent>
