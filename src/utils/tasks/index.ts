@@ -1,5 +1,5 @@
 
-import { setupTaskDatabase, setupTaskStorage } from './setup';
+import { setupTaskDatabase } from './setup';
 import { fetchUserTasks } from './queries';
 
 /**
@@ -10,38 +10,26 @@ export const initializeTaskSystem = async () => {
     // Set up database tables
     const dbResult = await setupTaskDatabase();
     
-    // Set up storage buckets (even if DB setup failed - they're separate systems)
-    const storageResult = await setupTaskStorage();
-    
-    // If both failed, return combined error
-    if (!dbResult.success && !storageResult.success) {
+    // If database setup failed, return that error
+    if (!dbResult.success) {
       return { 
         success: false, 
-        error: new Error('Multiple initialization failures'),
-        errorMessage: 'Failed to initialize both database and storage. Please check your connection and permissions.' 
+        error: dbResult.error, 
+        message: dbResult.message 
       };
     }
     
-    // If only one failed, return that error
-    if (!dbResult.success) {
-      return { success: false, error: dbResult.error, errorMessage: dbResult.errorMessage };
-    }
-    
-    if (!storageResult.success) {
-      return { success: false, error: storageResult.error, errorMessage: storageResult.errorMessage };
-    }
-    
     console.log('Task system initialized successfully');
-    return { success: true, error: null, errorMessage: null };
+    return { success: true, error: null, message: 'Task system initialized successfully' };
   } catch (error: any) {
     console.error('Error initializing task system:', error);
     return { 
       success: false, 
       error,
-      errorMessage: `Failed to initialize task system: ${error.message}` 
+      message: `Failed to initialize task system: ${error.message}` 
     };
   }
 };
 
 // Re-export all task utility functions for convenient usage
-export { setupTaskDatabase, setupTaskStorage, fetchUserTasks };
+export { setupTaskDatabase, fetchUserTasks };

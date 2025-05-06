@@ -34,9 +34,8 @@ export const fetchUserTasks = async (userId: string, projectId?: string, columnI
       query = query.eq('column_id', columnId);
     }
     
-    // Execute the query with explicit type annotation
-    const response = await query.order('created_at', { ascending: false });
-    const { data, error } = response;
+    // Execute the query
+    const { data, error } = await query.order('created_at', { ascending: false });
     
     if (error) {
       console.error('Error fetching tasks:', error);
@@ -44,27 +43,31 @@ export const fetchUserTasks = async (userId: string, projectId?: string, columnI
       // Check if this is a permissions issue
       if (error.message && error.message.includes('permission denied')) {
         return { 
-          data: [], 
+          data: [] as Task[], 
           error,
-          errorMessage: 'Database access denied. Please check your permissions or sign in again.' 
+          message: 'Database access denied. Please check your permissions or sign in again.' 
         };
       }
       
       return { 
-        data: [], 
+        data: [] as Task[], 
         error,
-        errorMessage: `Failed to fetch tasks: ${error.message}` 
+        message: `Failed to fetch tasks: ${error.message}` 
       };
     }
     
     console.log(`Successfully fetched ${data?.length || 0} tasks for user`);
-    return { data: data || [], error: null, errorMessage: null };
+    return { 
+      data: data as Task[] || [], 
+      error: null, 
+      message: null 
+    };
   } catch (error: any) {
     console.error('Error in fetchUserTasks:', error);
     return { 
-      data: [], 
+      data: [] as Task[], 
       error,
-      errorMessage: `Unexpected error fetching tasks: ${error.message}` 
+      message: `Unexpected error fetching tasks: ${error.message}` 
     };
   }
 };

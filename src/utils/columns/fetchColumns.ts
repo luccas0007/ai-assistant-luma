@@ -24,15 +24,13 @@ export const fetchProjectColumns = async (projectId: string): Promise<ColumnOper
       };
     }
     
-    // Explicitly type the response to avoid deep type instantiation
-    const response = await supabase
+    // Fetch columns from the database
+    const { data, error } = await supabase
       .from('columns')
       .select('*')
       .eq('project_id', projectId)
       .eq('user_id', userId)
       .order('position', { ascending: true });
-    
-    const { data, error } = response;
     
     if (error) {
       console.error('Error fetching columns:', error);
@@ -44,8 +42,8 @@ export const fetchProjectColumns = async (projectId: string): Promise<ColumnOper
       };
     }
     
-    // Transform to match Column type in the application with type safety
-    const columns: Column[] = (data || []).map((col: any) => ({
+    // Transform to match Column type in the application
+    const columns = (data || []).map((col: any) => ({
       id: col.id,
       title: col.title
     }));
@@ -63,7 +61,7 @@ export const fetchProjectColumns = async (projectId: string): Promise<ColumnOper
           success: true,
           error: null,
           errorMessage: null,
-          data: (defaultColumnsData || []).map((col: any) => ({
+          data: defaultColumnsData.map((col: any) => ({
             id: col.id,
             title: col.title
           }))

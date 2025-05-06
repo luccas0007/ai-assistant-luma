@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
-import { initializeTaskSystem, fetchUserTasks } from '@/utils/taskDatabaseUtils';
+import { initializeTaskSystem, fetchUserTasks } from '@/utils/tasks';
 import { fetchProjectColumns } from '@/utils/columns';
 import { Task, Column } from '@/types/task';
 
@@ -31,14 +31,14 @@ export const useTaskInitialization = (
         setError(null);
         
         console.log('Initializing task system...');
-        const { success, errorMessage } = await initializeTaskSystem();
+        const { success, message } = await initializeTaskSystem();
         
-        if (!success && errorMessage) {
-          console.error('Task system initialization failed:', errorMessage);
-          setError(errorMessage);
+        if (!success && message) {
+          console.error('Task system initialization failed:', message);
+          setError(message);
           toast({
             title: 'System initialization error',
-            description: errorMessage,
+            description: message,
             variant: 'destructive'
           });
         } else {
@@ -82,15 +82,15 @@ export const useTaskInitialization = (
       try {
         // Step 1: Load columns first - this is crucial for new projects
         console.log('Fetching columns for project:', activeProject.id);
-        const { data: columnsData, success: columnsSuccess, error: columnsError, errorMessage: columnsErrorMessage } = 
+        const { data: columnsData, success: columnsSuccess, error: columnsError, errorMessage } = 
           await fetchProjectColumns(activeProject.id);
         
         if (columnsError) {
-          console.error('Error fetching columns:', columnsErrorMessage || columnsError.message);
-          setError(columnsErrorMessage || 'Failed to fetch columns');
+          console.error('Error fetching columns:', errorMessage || columnsError.message);
+          setError(errorMessage || 'Failed to fetch columns');
           toast({
             title: 'Error fetching columns',
-            description: columnsErrorMessage || 'There was a problem loading columns for this project.',
+            description: errorMessage || 'There was a problem loading columns for this project.',
             variant: 'destructive'
           });
           // Don't return early, try to fetch tasks anyway
@@ -101,15 +101,15 @@ export const useTaskInitialization = (
         
         // Step 2: Load tasks
         console.log('Fetching tasks for project:', activeProject.id);
-        const { data: tasksData, error: tasksError, errorMessage: tasksErrorMessage } = 
+        const { data: tasksData, error: tasksError, message: tasksMessage } = 
           await fetchUserTasks(user.id, activeProject.id);
         
         if (tasksError) {
-          console.error('Error fetching tasks:', tasksErrorMessage || tasksError.message);
-          setError(tasksErrorMessage || 'Failed to fetch tasks');
+          console.error('Error fetching tasks:', tasksMessage || tasksError.message);
+          setError(tasksMessage || 'Failed to fetch tasks');
           toast({
             title: 'Error fetching tasks',
-            description: tasksErrorMessage || 'There was a problem loading your tasks. Please try again.',
+            description: tasksMessage || 'There was a problem loading your tasks. Please try again.',
             variant: 'destructive'
           });
           
