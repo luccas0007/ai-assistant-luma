@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTaskState } from '../task-manager/useTaskState';
@@ -94,13 +93,13 @@ export const useProjectManager = () => {
       projectState.setProjectError(null);
       
       try {
-        const { data, error, errorMessage } = await fetchUserProjects(user.id);
+        const { data, error, message } = await fetchUserProjects(user.id);
         
         if (error) {
-          projectState.setProjectError(errorMessage || 'Failed to load projects');
+          projectState.setProjectError(message || 'Failed to load projects');
           toast({
             title: 'Error loading projects',
-            description: errorMessage || 'Failed to load your projects',
+            description: message || 'Failed to load your projects',
             variant: 'destructive'
           });
           return;
@@ -161,13 +160,13 @@ export const useProjectManager = () => {
       taskState.setError(null);
       
       try {
-        const { data, error, errorMessage } = await fetchUserTasks(user.id, projectState.activeProject.id);
+        const { data, error, message } = await fetchUserTasks(user.id, projectState.activeProject.id);
         
         if (error) {
-          taskState.setError(errorMessage || 'Failed to load tasks');
+          taskState.setError(message || 'Failed to load tasks');
           toast({
             title: 'Error loading tasks',
-            description: errorMessage || 'Failed to load tasks for this project',
+            description: message || 'Failed to load tasks for this project',
             variant: 'destructive'
           });
           return;
@@ -210,13 +209,13 @@ export const useProjectManager = () => {
     taskState.setError(null);
     
     try {
-      const { data, error, errorMessage } = await fetchUserTasks(user.id, projectState.activeProject.id);
+      const { data, error, message } = await fetchUserTasks(user.id, projectState.activeProject.id);
       
       if (error) {
-        taskState.setError(errorMessage || "Failed to refresh tasks");
+        taskState.setError(message || "Failed to refresh tasks");
         toast({
           title: "Refresh failed",
-          description: errorMessage || "Could not load your projects. Please try again.",
+          description: message || "Could not load your projects. Please try again.",
           variant: "destructive"
         });
       } else {
@@ -245,12 +244,12 @@ export const useProjectManager = () => {
     if (!user) return { tasks: [], error: 'Authentication required' };
     
     try {
-      const { data, error, errorMessage } = await fetchUserTasks(user.id);
+      const { data, error, message } = await fetchUserTasks(user.id);
       
       if (error) {
         return { 
           tasks: [], 
-          error: errorMessage || 'Failed to load all tasks'
+          error: message || 'Failed to load all tasks'
         };
       }
       

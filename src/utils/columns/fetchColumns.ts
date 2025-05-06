@@ -43,7 +43,7 @@ export const fetchProjectColumns = async (projectId: string): Promise<ColumnOper
     }
     
     // Transform to match Column type in the application
-    const columns = (data || []).map((col: any) => ({
+    const columns: Column[] = (data || []).map((col: any) => ({
       id: col.id,
       title: col.title
     }));

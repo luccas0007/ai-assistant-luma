@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { useTaskState } from './useTaskState';
 import { useTaskActions } from './useTaskActions';
@@ -132,13 +131,13 @@ export const useTaskManager = () => {
     state.setError(null);
     
     try {
-      const { data, error, errorMessage } = await fetchUserTasks(user.id, state.activeProject.id);
+      const { data, error, message } = await fetchUserTasks(user.id, state.activeProject.id);
       
       if (error) {
-        state.setError(errorMessage || "Failed to refresh tasks");
+        state.setError(message || "Failed to refresh tasks");
         toast({
           title: "Refresh failed",
-          description: errorMessage || "Could not load your tasks. Please try again.",
+          description: message || "Could not load your tasks. Please try again.",
           variant: "destructive"
         });
       } else {

@@ -4,14 +4,12 @@
 
 import { 
   setupTaskDatabase, 
-  setupTaskStorage, 
   fetchUserTasks, 
   initializeTaskSystem 
 } from './tasks';
 
 export {
   setupTaskDatabase,
-  setupTaskStorage,
   fetchUserTasks,
   initializeTaskSystem
 };
