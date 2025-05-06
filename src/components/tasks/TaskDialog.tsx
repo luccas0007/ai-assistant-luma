@@ -98,6 +98,7 @@ const TaskDialog: React.FC<TaskDialogProps> = ({
       due_date: dueDate ? dueDate.toISOString() : null,
       attachment_url: attachmentURL,
       project_id: projectId,
+      column_id: status, // Use the status as the column_id
     });
   };
 

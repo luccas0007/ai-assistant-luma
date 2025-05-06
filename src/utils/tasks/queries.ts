@@ -20,22 +20,6 @@ export const fetchUserTasks = async (
   try {
     console.log('Fetching tasks for user:', userId, projectId ? `and project: ${projectId}` : '');
     
-    // Define the shape of task data returned from the database
-    interface TaskRecord {
-      id: string;
-      user_id: string;
-      project_id?: string;
-      title: string;
-      description?: string;
-      status: string;
-      priority: string;
-      due_date?: string;
-      completed?: boolean;
-      attachment_url?: string;
-      created_at: string;
-      updated_at: string;
-    }
-    
     // Build query
     let query = supabase
       .from('tasks')
@@ -47,9 +31,9 @@ export const fetchUserTasks = async (
       query = query.eq('project_id', projectId);
     }
     
-    // Execute query - avoid type inference by using a more direct approach
-    const result = await query;
-    const { data, error } = result;
+    // Execute query without complex type inference
+    const response = await query;
+    const { data, error } = response;
     
     if (error) {
       console.error('Error fetching tasks:', error);
@@ -72,6 +56,7 @@ export const fetchUserTasks = async (
       user_id: record.user_id,
       project_id: record.project_id || null,
       attachment_url: record.attachment_url || null,
+      column_id: record.column_id || null, // Include column_id
       created_at: record.created_at,
       updated_at: record.updated_at
     }));
