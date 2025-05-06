@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTaskState } from '../task-manager/useTaskState';
 import { useTaskActions } from '../task-manager/useTaskActions';
@@ -22,11 +22,18 @@ export const useProjectManager = () => {
   // Get project state from the project state hook
   const projectState = useProjectState();
   
-  // Get task state from the task state hook
-  const taskState = useTaskState();
+  // Get task state from the task state hook - pass the active project from project state
+  const taskState = useTaskState(projectState.activeProject);
   
   // Track if we've finished initial loading
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+  
+  // Sync active project between the two state hooks
+  useEffect(() => {
+    if (projectState.activeProject !== taskState.activeProject) {
+      taskState.setActiveProject(projectState.activeProject);
+    }
+  }, [projectState.activeProject, taskState.activeProject, taskState.setActiveProject]);
   
   // Project-related actions
   const {
@@ -110,6 +117,7 @@ export const useProjectManager = () => {
   // Function to change the active project
   const setActiveProject = (project: Project) => {
     projectState.setActiveProject(project);
+    taskState.setActiveProject(project); // Ensure task state is updated too
     setSearchParams({ project: project.id });
   };
   

@@ -125,7 +125,7 @@ export const deleteColumn = async (columnId: string): Promise<ColumnOperationRes
       };
     }
     
-    // First, delete any tasks associated with this column
+    // First, delete any tasks associated with this column using a simpler approach to avoid deep type instantiation
     const { error: tasksError } = await supabase
       .from('tasks')
       .delete()
@@ -137,7 +137,7 @@ export const deleteColumn = async (columnId: string): Promise<ColumnOperationRes
       // Continue with column deletion despite error
     }
     
-    // Now delete the column
+    // Now delete the column using a simpler approach to avoid deep type instantiation
     const { error } = await supabase
       .from('columns')
       .delete()

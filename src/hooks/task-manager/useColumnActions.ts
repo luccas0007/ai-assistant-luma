@@ -32,13 +32,14 @@ export const useColumnActions = (
         return;
       }
       
-      // Skip if no active project
+      // Check if activeProject is null or undefined
       if (!activeProject || !activeProject.id) {
         toast({
           title: 'No project selected',
           description: 'Please select a project first',
           variant: 'destructive'
         });
+        setIsProcessing(false);
         return;
       }
       
@@ -51,6 +52,7 @@ export const useColumnActions = (
           description: 'A column with this name already exists.',
           variant: 'destructive'
         });
+        setIsProcessing(false);
         return;
       }
       

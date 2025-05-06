@@ -36,6 +36,7 @@ const TaskBoardHeader: React.FC<TaskBoardHeaderProps> = ({
                   variant="outline" 
                   onClick={onAddColumn} 
                   disabled={isProcessing || isLoading || !isProjectSelected}
+                  className={!isProjectSelected ? "cursor-not-allowed" : ""}
                 >
                   <Plus className="h-4 w-4 mr-1" />
                   Add Column
@@ -57,6 +58,7 @@ const TaskBoardHeader: React.FC<TaskBoardHeaderProps> = ({
                 <Button 
                   onClick={onAddTask} 
                   disabled={isProcessing || isLoading || !isProjectSelected}
+                  className={!isProjectSelected ? "cursor-not-allowed" : ""}
                 >
                   <Plus className="h-4 w-4 mr-1" />
                   Add Task
