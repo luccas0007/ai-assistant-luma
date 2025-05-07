@@ -14,10 +14,10 @@ export const getEmailAccounts = async (): Promise<EmailAccount[]> => {
     throw error;
   }
 
-  return data || [];
+  return data as EmailAccount[] || [];
 };
 
-export const addEmailAccount = async (account: Omit<EmailAccount, 'id' | 'user_id' | 'created_at' | 'updated_at'>): Promise<EmailAccount> => {
+export const addEmailAccount = async (account: Partial<EmailAccount> & { user_id: string }): Promise<EmailAccount> => {
   const { data, error } = await supabase
     .from('email_accounts')
     .insert(account)
@@ -29,7 +29,7 @@ export const addEmailAccount = async (account: Omit<EmailAccount, 'id' | 'user_i
     throw error;
   }
 
-  return data;
+  return data as EmailAccount;
 };
 
 export const updateEmailAccount = async (id: string, updates: Partial<EmailAccount>): Promise<EmailAccount> => {
@@ -45,7 +45,7 @@ export const updateEmailAccount = async (id: string, updates: Partial<EmailAccou
     throw error;
   }
 
-  return data;
+  return data as EmailAccount;
 };
 
 export const deleteEmailAccount = async (id: string): Promise<void> => {
@@ -74,7 +74,7 @@ export const getEmails = async (accountId: string, folder: string = 'inbox'): Pr
     throw error;
   }
 
-  return data || [];
+  return data as Email[] || [];
 };
 
 export const getEmail = async (id: string): Promise<Email> => {
@@ -92,7 +92,7 @@ export const getEmail = async (id: string): Promise<Email> => {
   // Mark as read
   await markEmailAsRead(id);
 
-  return data;
+  return data as Email;
 };
 
 export const markEmailAsRead = async (id: string): Promise<void> => {
@@ -169,7 +169,7 @@ export const syncEmails = async (accountId: string, folder: string = 'inbox'): P
 
     // Process and store emails in database
     const emails = response.data.messages;
-    const processedEmails: Partial<Email>[] = emails.map((msg: any) => ({
+    const processedEmails = emails.map((msg: any) => ({
       account_id: accountId,
       message_id: msg.messageId,
       from_address: msg.from?.address || '',
@@ -189,7 +189,7 @@ export const syncEmails = async (accountId: string, folder: string = 'inbox'): P
     if (processedEmails.length > 0) {
       const { data: savedEmails, error: insertError } = await supabase
         .from('emails')
-        .upsert(processedEmails, {
+        .upsert(processedEmails as any[], {
           onConflict: 'account_id,message_id',
           ignoreDuplicates: false,
         })
@@ -200,7 +200,7 @@ export const syncEmails = async (accountId: string, folder: string = 'inbox'): P
         throw insertError;
       }
 
-      return savedEmails;
+      return savedEmails as Email[];
     }
 
     return [];
@@ -245,7 +245,7 @@ export const sendEmail = async (accountId: string, emailData: EmailCompose): Pro
     }
 
     // Store the sent email in the database
-    const sentEmail: Partial<Email> = {
+    const sentEmail = {
       account_id: accountId,
       message_id: response.data.messageId || `sent-${Date.now()}`,
       from_address: account.email_address,
@@ -261,7 +261,7 @@ export const sendEmail = async (accountId: string, emailData: EmailCompose): Pro
       sent_at: new Date().toISOString(),
       folder: 'sent',
       has_attachments: false, // We'll handle attachments in a future enhancement
-    };
+    } as Email;
 
     const { data: savedEmail, error: insertError } = await supabase
       .from('emails')

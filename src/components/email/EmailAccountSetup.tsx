@@ -12,6 +12,7 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { addEmailAccount } from '@/services/emailService';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 // Form schema for custom email setup
 const customEmailSchema = z.object({
@@ -46,7 +47,7 @@ export default function EmailAccountSetup({ onComplete }: { onComplete: () => vo
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      provider: 'gmail',
+      provider: 'gmail' as const,
       account_name: '',
       email_address: '',
       username: '',
@@ -60,12 +61,23 @@ export default function EmailAccountSetup({ onComplete }: { onComplete: () => vo
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Authentication required",
+          description: "You must be logged in to add an email account",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // For MVP, we'll handle simple authentication only
       // In a real app, we would handle OAuth2 flow here
       const accountData = {
         account_name: values.account_name,
         email_address: values.email_address,
         provider: values.provider,
+        user_id: user.id,
         is_oauth: values.provider !== 'custom',
         username: values.provider === 'custom' ? values.username : values.email_address,
         auth_credentials: values.provider === 'custom' 
