@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
@@ -9,17 +9,28 @@ const Layout: React.FC = () => {
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   
+  // Close sidebar on mobile by default
+  useEffect(() => {
+    if (isMobile) {
+      setSidebarOpen(false);
+    } else {
+      setSidebarOpen(true);
+    }
+  }, [isMobile]);
+  
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
   
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex overflow-hidden">
       <Sidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
-      <div className={`transition-all duration-300 ${isMobile ? 'ml-0' : (sidebarOpen ? 'ml-64' : 'ml-20')}`}>
+      <div className={`flex-1 flex flex-col transition-all duration-300 ${isMobile ? 'ml-0' : (sidebarOpen ? 'ml-64' : 'ml-20')}`}>
         <Header toggleSidebar={toggleSidebar} />
-        <main className="container mx-auto px-2 sm:px-4 py-4 sm:py-8 overflow-hidden">
-          <Outlet />
+        <main className="flex-1 overflow-auto p-2 sm:p-4 md:p-6">
+          <div className="container mx-auto max-w-7xl">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

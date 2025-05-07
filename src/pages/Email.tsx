@@ -1,140 +1,180 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/context/AuthContext';
 import { 
   Mail, 
   Search, 
-  Inbox, 
-  Send, 
-  Trash, 
-  Star, 
-  AlertCircle, 
   MailOpen, 
-  ArrowLeft, 
-  MoreHorizontal, 
-  Paperclip
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-
-interface EmailItem {
-  id: number;
-  sender: string;
-  senderEmail: string;
-  subject: string;
-  content: string;
-  time: string;
-  unread: boolean;
-  starred: boolean;
-  attachments: boolean;
-  category: string;
-}
-
-const dummyEmails: EmailItem[] = [
-  {
-    id: 1,
-    sender: 'John Smith',
-    senderEmail: 'john.smith@company.com',
-    subject: 'Project Update - New Milestones',
-    content: `Hi there,
-
-I wanted to share the latest developments on our project. We've reached several key milestones ahead of schedule and the client feedback has been very positive.
-
-Here are the highlights:
-- Frontend development is 90% complete
-- Backend APIs are fully implemented
-- Quality assurance has begun on the core features
-- Documentation is being updated regularly
-
-Let me know if you have any questions or concerns.
-
-Best regards,
-John`,
-    time: 'Today, 10:45 AM',
-    unread: true,
-    starred: false,
-    attachments: true,
-    category: 'inbox'
-  },
-  {
-    id: 2,
-    sender: 'Marketing Team',
-    senderEmail: 'marketing@company.com',
-    subject: 'Campaign Results - Q2 Overview',
-    content: 'Here are the results from our latest marketing campaign...',
-    time: 'Yesterday',
-    unread: false,
-    starred: true,
-    attachments: true,
-    category: 'inbox'
-  },
-  {
-    id: 3,
-    sender: 'HR Department',
-    senderEmail: 'hr@company.com',
-    subject: 'Office Policy Update - Remote Work Guidelines',
-    content: 'Please review the updated office policies regarding remote work arrangements...',
-    time: 'May 2',
-    unread: false,
-    starred: false,
-    attachments: false,
-    category: 'inbox'
-  },
-  {
-    id: 4,
-    sender: 'Sarah Johnson',
-    senderEmail: 'sarah.j@partner.com',
-    subject: 'Partnership Opportunity',
-    content: 'I would like to discuss a potential partnership opportunity between our companies...',
-    time: 'Apr 30',
-    unread: true,
-    starred: true,
-    attachments: false,
-    category: 'inbox'
-  },
-  {
-    id: 5,
-    sender: 'Tech Support',
-    senderEmail: 'support@company.com',
-    subject: 'Your Ticket #45678 - Resolution',
-    content: 'Your recent support ticket regarding the database connection issue has been resolved...',
-    time: 'Apr 28',
-    unread: false,
-    starred: false,
-    attachments: false,
-    category: 'inbox'
-  }
-];
+import { Email, EmailAccount } from '@/types/email';
+import EmailSidebar from '@/components/email/EmailSidebar';
+import EmailItem from '@/components/email/EmailItem';
+import EmailDetail from '@/components/email/EmailDetail';
+import EmailCompose from '@/components/email/EmailCompose';
+import EmailAccountSetup from '@/components/email/EmailAccountSetup';
+import { getEmailAccounts, getEmails, getEmail, syncEmails } from '@/services/emailService';
 
 const EmailPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<string>('inbox');
-  const [selectedEmail, setSelectedEmail] = useState<EmailItem | null>(null);
-  const [emails, setEmails] = useState<EmailItem[]>(dummyEmails);
+  const { user } = useAuth();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [accounts, setAccounts] = useState<EmailAccount[]>([]);
+  const [currentAccountId, setCurrentAccountId] = useState<string | null>(null);
+  const [currentAccount, setCurrentAccount] = useState<EmailAccount | null>(null);
+  const [currentFolder, setCurrentFolder] = useState<string>('inbox');
+  const [emails, setEmails] = useState<Email[]>([]);
+  const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
+  const [showCompose, setShowCompose] = useState<boolean>(false);
+  const [showAddAccount, setShowAddAccount] = useState<boolean>(false);
+
+  // Load email accounts
+  useEffect(() => {
+    const loadAccounts = async () => {
+      if (!user) return;
+      
+      try {
+        const accounts = await getEmailAccounts();
+        setAccounts(accounts);
+        
+        if (accounts.length > 0) {
+          setCurrentAccountId(accounts[0].id);
+          setCurrentAccount(accounts[0]);
+        }
+      } catch (error) {
+        console.error('Error loading accounts:', error);
+      }
+    };
+    
+    loadAccounts();
+  }, [user]);
   
-  const filteredEmails = emails.filter(email => email.category === activeTab);
-  
-  const handleSelectEmail = (email: EmailItem) => {
-    // Mark as read when opened
-    if (email.unread) {
-      setEmails(emails.map(e => 
-        e.id === email.id ? { ...e, unread: false } : e
-      ));
+  // Load emails when account/folder changes
+  useEffect(() => {
+    const loadEmails = async () => {
+      if (!currentAccountId) {
+        setEmails([]);
+        setIsLoading(false);
+        return;
+      }
+      
+      setIsLoading(true);
+      try {
+        let emailData = await getEmails(currentAccountId, currentFolder);
+        
+        // If no emails in folder, try syncing
+        if (emailData.length === 0 && currentFolder === 'inbox') {
+          await syncEmails(currentAccountId, currentFolder);
+          emailData = await getEmails(currentAccountId, currentFolder);
+        }
+        
+        setEmails(emailData);
+      } catch (error) {
+        console.error('Error loading emails:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    if (selectedEmail) {
+      setSelectedEmail(null); // Reset selected email when changing folder/account
     }
-    setSelectedEmail(email);
+    
+    loadEmails();
+  }, [currentAccountId, currentFolder]);
+
+  const handleAccountChange = (accountId: string) => {
+    setCurrentAccountId(accountId);
+    const account = accounts.find(acc => acc.id === accountId) || null;
+    setCurrentAccount(account);
+  };
+  
+  const handleSelectEmail = async (email: Email) => {
+    try {
+      const fullEmail = await getEmail(email.id);
+      setSelectedEmail(fullEmail);
+    } catch (error) {
+      console.error('Error loading email details:', error);
+    }
+  };
+  
+  const handleRefreshEmails = async () => {
+    if (!currentAccountId) return;
+    
+    try {
+      const emailData = await getEmails(currentAccountId, currentFolder);
+      setEmails(emailData);
+    } catch (error) {
+      console.error('Error refreshing emails:', error);
+    }
+  };
+  
+  const handleAddAccountComplete = async () => {
+    setShowAddAccount(false);
+    
+    try {
+      const accounts = await getEmailAccounts();
+      setAccounts(accounts);
+      
+      if (accounts.length > 0 && !currentAccountId) {
+        setCurrentAccountId(accounts[0].id);
+        setCurrentAccount(accounts[0]);
+      }
+    } catch (error) {
+      console.error('Error reloading accounts:', error);
+    }
+  };
+
+  const handleComposeComplete = () => {
+    setShowCompose(false);
+    handleRefreshEmails();
+  };
+  
+  const handleReply = () => {
+    // For MVP, just open compose window
+    setShowCompose(true);
   };
   
   const handleBackToList = () => {
     setSelectedEmail(null);
   };
   
-  const toggleStar = (emailId: number, event: React.MouseEvent) => {
-    event.stopPropagation();
-    setEmails(emails.map(email => 
-      email.id === emailId ? { ...email, starred: !email.starred } : email
-    ));
-  };
+  if (showAddAccount) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold mb-1">Email</h1>
+          <p className="text-muted-foreground">Connect your email accounts</p>
+        </div>
+        
+        <div className="flex justify-center">
+          <EmailAccountSetup onComplete={handleAddAccountComplete} />
+        </div>
+      </div>
+    );
+  }
+  
+  if (showCompose) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold mb-1">Email</h1>
+          <p className="text-muted-foreground">Compose new message</p>
+        </div>
+        
+        <div className="flex justify-center">
+          <EmailCompose 
+            accounts={accounts}
+            onClose={() => setShowCompose(false)}
+            onSent={handleComposeComplete}
+          />
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="space-y-6">
@@ -152,60 +192,35 @@ const EmailPage: React.FC = () => {
               className="pl-9"
             />
           </div>
-          <Button className="ml-3">
+          <Button className="ml-3" onClick={() => setShowCompose(true)}>
             Compose
           </Button>
+          {accounts.length === 0 && (
+            <Button 
+              variant="outline"
+              className="ml-3"
+              onClick={() => setShowAddAccount(true)}
+            >
+              Add Account
+            </Button>
+          )}
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
           {/* Email navigation */}
           <Card className="md:col-span-3">
-            <CardContent className="p-2">
-              <div className="space-y-1">
-                <Button 
-                  variant={activeTab === 'inbox' ? 'secondary' : 'ghost'} 
-                  className="w-full justify-start" 
-                  onClick={() => setActiveTab('inbox')}
-                >
-                  <Inbox className="mr-2 h-4 w-4" />
-                  <span>Inbox</span>
-                  <Badge variant="secondary" className="ml-auto">
-                    {emails.filter(e => e.category === 'inbox' && e.unread).length}
-                  </Badge>
-                </Button>
-                <Button 
-                  variant={activeTab === 'starred' ? 'secondary' : 'ghost'} 
-                  className="w-full justify-start"
-                  onClick={() => setActiveTab('starred')}
-                >
-                  <Star className="mr-2 h-4 w-4" />
-                  <span>Starred</span>
-                </Button>
-                <Button 
-                  variant={activeTab === 'sent' ? 'secondary' : 'ghost'} 
-                  className="w-full justify-start"
-                  onClick={() => setActiveTab('sent')}
-                >
-                  <Send className="mr-2 h-4 w-4" />
-                  <span>Sent</span>
-                </Button>
-                <Button 
-                  variant={activeTab === 'trash' ? 'secondary' : 'ghost'} 
-                  className="w-full justify-start"
-                  onClick={() => setActiveTab('trash')}
-                >
-                  <Trash className="mr-2 h-4 w-4" />
-                  <span>Trash</span>
-                </Button>
-                <Button 
-                  variant={activeTab === 'spam' ? 'secondary' : 'ghost'} 
-                  className="w-full justify-start"
-                  onClick={() => setActiveTab('spam')}
-                >
-                  <AlertCircle className="mr-2 h-4 w-4" />
-                  <span>Spam</span>
-                </Button>
-              </div>
+            <CardContent className="p-0">
+              <EmailSidebar 
+                accounts={accounts}
+                currentAccount={currentAccount}
+                onAccountChange={handleAccountChange}
+                currentFolder={currentFolder}
+                onFolderChange={setCurrentFolder}
+                onAddAccount={() => setShowAddAccount(true)}
+                onCompose={() => setShowCompose(true)}
+                isRefreshing={isRefreshing}
+                setIsRefreshing={setIsRefreshing}
+              />
             </CardContent>
           </Card>
           
@@ -216,46 +231,20 @@ const EmailPage: React.FC = () => {
                 <>
                   {/* Email list view */}
                   <div className="h-[600px] overflow-auto">
-                    {filteredEmails.length > 0 ? (
-                      filteredEmails.map(email => (
-                        <div key={email.id}>
-                          <div 
-                            className={`
-                              flex items-start p-4 hover:bg-muted/50 cursor-pointer transition-colors
-                              ${email.unread ? 'bg-primary/5' : ''}
-                            `}
-                            onClick={() => handleSelectEmail(email)}
-                          >
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 mr-2 shrink-0"
-                              onClick={(e) => toggleStar(email.id, e)}
-                            >
-                              <Star className={`h-4 w-4 ${email.starred ? 'fill-yellow-400 text-yellow-400' : ''}`} />
-                            </Button>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex justify-between">
-                                <h3 className={`text-sm truncate ${email.unread ? 'font-semibold' : 'font-medium'}`}>
-                                  {email.sender}
-                                </h3>
-                                <span className="text-xs text-muted-foreground shrink-0 ml-2">
-                                  {email.time}
-                                </span>
-                              </div>
-                              <h4 className="text-sm font-medium truncate mt-1">
-                                {email.subject}
-                              </h4>
-                              <p className="text-xs text-muted-foreground truncate mt-1">
-                                {email.content.split('\n')[0]}
-                              </p>
-                            </div>
-                            {email.attachments && (
-                              <Paperclip className="h-4 w-4 text-muted-foreground ml-2 shrink-0" />
-                            )}
-                          </div>
-                          <Separator />
+                    {isLoading ? (
+                      <div className="flex items-center justify-center h-full">
+                        <div className="text-center p-6">
+                          <Mail className="h-12 w-12 text-muted-foreground mx-auto mb-4 animate-pulse" />
+                          <h3 className="text-lg font-medium">Loading emails...</h3>
                         </div>
+                      </div>
+                    ) : emails.length > 0 ? (
+                      emails.map(email => (
+                        <EmailItem 
+                          key={email.id} 
+                          email={email} 
+                          onClick={() => handleSelectEmail(email)} 
+                        />
                       ))
                     ) : (
                       <div className="flex items-center justify-center h-full">
@@ -263,7 +252,7 @@ const EmailPage: React.FC = () => {
                           <MailOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                           <h3 className="text-lg font-medium">No emails found</h3>
                           <p className="text-sm text-muted-foreground mt-1">
-                            {activeTab === 'inbox' ? 'Your inbox is empty' : `No emails in ${activeTab}`}
+                            {currentFolder === 'inbox' ? 'Your inbox is empty' : `No emails in ${currentFolder}`}
                           </p>
                         </div>
                       </div>
@@ -271,71 +260,13 @@ const EmailPage: React.FC = () => {
                   </div>
                 </>
               ) : (
-                <>
-                  {/* Email detail view */}
-                  <div className="p-4 border-b">
-                    <div className="flex items-center">
-                      <Button variant="ghost" size="icon" onClick={handleBackToList}>
-                        <ArrowLeft className="h-5 w-5" />
-                      </Button>
-                      <div className="ml-2 flex-1">
-                        <h2 className="text-xl font-semibold">{selectedEmail.subject}</h2>
-                      </div>
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="h-5 w-5" />
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  <div className="p-6">
-                    <div className="flex items-start justify-between mb-6">
-                      <div className="flex items-start">
-                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
-                          {selectedEmail.sender.charAt(0)}
-                        </div>
-                        <div className="ml-3">
-                          <h3 className="font-medium">{selectedEmail.sender}</h3>
-                          <p className="text-sm text-muted-foreground">{selectedEmail.senderEmail}</p>
-                        </div>
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {selectedEmail.time}
-                      </div>
-                    </div>
-                    
-                    <div className="email-content whitespace-pre-line">
-                      {selectedEmail.content}
-                    </div>
-                    
-                    {selectedEmail.attachments && (
-                      <div className="mt-6 pt-6 border-t">
-                        <h4 className="text-sm font-medium mb-3 flex items-center">
-                          <Paperclip className="h-4 w-4 mr-2" />
-                          Attachments
-                        </h4>
-                        <div className="flex gap-3">
-                          <div className="border rounded-md p-3 text-sm bg-muted/50 flex items-center">
-                            <span className="mr-2">📄</span>
-                            Project_Update.pdf
-                          </div>
-                          <div className="border rounded-md p-3 text-sm bg-muted/50 flex items-center">
-                            <span className="mr-2">📊</span>
-                            Metrics_Q2.xlsx
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    
-                    <div className="mt-6 pt-6">
-                      <Button>
-                        Reply
-                      </Button>
-                      <Button variant="outline" className="ml-2">
-                        Forward
-                      </Button>
-                    </div>
-                  </div>
-                </>
+                <EmailDetail 
+                  email={selectedEmail}
+                  onBack={handleBackToList}
+                  onReply={handleReply}
+                  account={currentAccount}
+                  onRefresh={handleBackToList}
+                />
               )}
             </CardContent>
           </Card>

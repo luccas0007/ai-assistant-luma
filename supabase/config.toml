@@ -1,1 +1,11 @@
+
 project_id = "kksxzbcvosofafpkstow"
+
+[api]
+# Port to use for functions
+port = 54321
+enabled = true
+
+[functions]
+[functions.email-operations]
+verify_jwt = true
