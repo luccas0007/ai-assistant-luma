@@ -89,6 +89,8 @@ export default function EmailAccountSetup({ onComplete }: { onComplete: () => vo
         accountData.smtp_host = values.smtp_host;
         accountData.smtp_port = values.smtp_port;
       } else {
+        // For OAuth providers, we use the email address as the username
+        // This is safe to add to the accountData directly since we're using 'any' type
         accountData.username = values.email_address;
         accountData.auth_credentials = { /* OAuth would store tokens here */ };
         accountData.imap_host = values.provider === 'gmail' ? 'imap.gmail.com' : 'outlook.office365.com';
