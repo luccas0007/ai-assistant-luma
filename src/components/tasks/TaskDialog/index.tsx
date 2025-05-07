@@ -65,8 +65,10 @@ const TaskDialog: React.FC<TaskDialogProps> = ({
       if (result.success && result.url) {
         setAttachmentURL(result.url);
       }
+      return result;
     } catch (error) {
       console.error('Error uploading file:', error);
+      return { success: false, url: null };
     } finally {
       setIsUploading(false);
     }
