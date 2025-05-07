@@ -22,7 +22,7 @@ const CustomCalendarDay = (props: CustomCalendarDayProps) => {
   
   return (
     <div 
-      className={cn(dayClasses)}
+      className={cn(dayClasses, "text-center w-full h-full flex items-center justify-center")}
       role="button"
     >
       {day.getDate()}

@@ -20,42 +20,44 @@ const CalendarSidebar: React.FC<CalendarSidebarProps> = ({ date, events, onDateS
   const { getDayClassNames } = useCalendarDayClassNames(events);
 
   return (
-    <Card className="md:col-span-4">
-      <CardContent className="p-4">
-        <Calendar
-          mode="single"
-          selected={date}
-          onSelect={(newDate) => newDate && onDateSelect(newDate)}
-          className="rounded-md border pointer-events-auto"
-          modifiers={{
-            highlighted: (day) => events.some(event => 
-              isSameDay(event.start, day) || isSameDay(event.end, day)
-            )
-          }}
-          modifiersStyles={{
-            highlighted: {
-              fontWeight: "bold"
-            }
-          }}
-          components={{
-            Day: (props: DayProps) => {
-              // This is for TypeScript compatibility
-              if (!props.date) return null;
-              
-              // Extract the necessary properties safely
-              const { date: dayDate, displayMonth } = props;
-              
-              return (
-                <CustomCalendarDay 
-                  day={dayDate} 
-                  events={events}
-                  displayMonth={displayMonth}
-                  // We'll handle className conditionally in the CustomCalendarDay component
-                />
-              );
-            }
-          }}
-        />
+    <Card className="md:col-span-4 w-full">
+      <CardContent className="p-2 sm:p-4">
+        <div className="overflow-hidden">
+          <Calendar
+            mode="single"
+            selected={date}
+            onSelect={(newDate) => newDate && onDateSelect(newDate)}
+            className="rounded-md border pointer-events-auto max-w-full"
+            modifiers={{
+              highlighted: (day) => events.some(event => 
+                isSameDay(event.start, day) || isSameDay(event.end, day)
+              )
+            }}
+            modifiersStyles={{
+              highlighted: {
+                fontWeight: "bold"
+              }
+            }}
+            components={{
+              Day: (props: DayProps) => {
+                // This is for TypeScript compatibility
+                if (!props.date) return null;
+                
+                // Extract the necessary properties safely
+                const { date: dayDate, displayMonth } = props;
+                
+                return (
+                  <CustomCalendarDay 
+                    day={dayDate} 
+                    events={events}
+                    displayMonth={displayMonth}
+                    // We'll handle className conditionally in the CustomCalendarDay component
+                  />
+                );
+              }
+            }}
+          />
+        </div>
       </CardContent>
       
       <CardHeader className="pb-3 border-t">

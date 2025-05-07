@@ -43,18 +43,18 @@ const CalendarPage: React.FC = () => {
   
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold mb-1">Calendar</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold mb-1">Calendar</h1>
           <p className="text-muted-foreground">Manage your schedule and events</p>
         </div>
-        <Button className="gap-1" onClick={handleAddEvent}>
+        <Button className="gap-1 w-full sm:w-auto" onClick={handleAddEvent}>
           <Plus className="h-4 w-4" />
           <span>Add Event</span>
         </Button>
       </div>
       
-      <div className="grid md:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         <CalendarSidebar 
           date={date} 
           events={events} 

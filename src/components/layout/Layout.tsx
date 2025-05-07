@@ -18,7 +18,7 @@ const Layout: React.FC = () => {
       <Sidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
       <div className={`transition-all duration-300 ${isMobile ? 'ml-0' : (sidebarOpen ? 'ml-64' : 'ml-20')}`}>
         <Header toggleSidebar={toggleSidebar} />
-        <main className="container mx-auto px-4 py-8">
+        <main className="container mx-auto px-2 sm:px-4 py-4 sm:py-8 overflow-hidden">
           <Outlet />
         </main>
       </div>

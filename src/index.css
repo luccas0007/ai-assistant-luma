@@ -98,3 +98,28 @@
     @apply bg-clip-text text-transparent bg-gradient-to-r from-assistant-blue to-assistant-purple;
   }
 }
+
+/* Responsive calendar styles */
+.rdp {
+  --rdp-cell-size: 36px;
+}
+
+@media (max-width: 640px) {
+  .rdp {
+    --rdp-cell-size: 32px;
+    margin: 0;
+  }
+  
+  .rdp-month {
+    width: 100%;
+  }
+  
+  .rdp-table {
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  .rdp-caption {
+    padding: 0 0.5rem;
+  }
+}
