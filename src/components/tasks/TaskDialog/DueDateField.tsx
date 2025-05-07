@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { format } from 'date-fns';
-import { Calendar } from 'lucide-react';
+import { Calendar as CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import {
@@ -9,7 +9,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { Calendar } from '@/components/ui/calendar';
 
 interface DueDateFieldProps {
   dueDate: Date | undefined;
@@ -28,12 +28,12 @@ const DueDateField: React.FC<DueDateFieldProps> = ({ dueDate, setDueDate }) => {
             variant="outline"
             className="justify-start text-left font-normal"
           >
-            <Calendar className="mr-2 h-4 w-4" />
+            <CalendarIcon className="mr-2 h-4 w-4" />
             {dueDate ? format(dueDate, 'PPP') : <span>Pick a date</span>}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
-          <CalendarComponent
+          <Calendar
             mode="single"
             selected={dueDate}
             onSelect={(date) => {
@@ -41,6 +41,7 @@ const DueDateField: React.FC<DueDateFieldProps> = ({ dueDate, setDueDate }) => {
               setCalendarOpen(false);
             }}
             initialFocus
+            className="pointer-events-auto"
           />
         </PopoverContent>
       </Popover>

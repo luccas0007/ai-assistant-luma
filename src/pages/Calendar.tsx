@@ -1,68 +1,68 @@
 
 import React, { useState } from 'react';
-import { Calendar as CalendarIcon, Plus, Clock } from 'lucide-react';
+import { format, isSameDay } from 'date-fns';
+import { Calendar as CalendarIcon, Plus, Clock, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-
-interface Event {
-  id: number;
-  title: string;
-  start: Date;
-  end: Date;
-  location: string;
-  description: string;
-}
-
-const dummyEvents: Event[] = [
-  {
-    id: 1,
-    title: 'Team Meeting',
-    start: new Date(2025, 4, 6, 14, 0),
-    end: new Date(2025, 4, 6, 15, 0),
-    location: 'Conference Room A',
-    description: 'Weekly team sync-up'
-  },
-  {
-    id: 2,
-    title: 'Project Deadline',
-    start: new Date(2025, 4, 8, 18, 0),
-    end: new Date(2025, 4, 8, 18, 0),
-    location: 'Remote',
-    description: 'Submit final deliverables'
-  },
-  {
-    id: 3,
-    title: 'Client Presentation',
-    start: new Date(2025, 4, 10, 9, 30),
-    end: new Date(2025, 4, 10, 11, 0),
-    location: 'Main Office',
-    description: 'Present the new feature set'
-  },
-  {
-    id: 4,
-    title: 'Training Session',
-    start: new Date(2025, 4, 12, 13, 0),
-    end: new Date(2025, 4, 12, 16, 0),
-    location: 'Training Room',
-    description: 'New software training'
-  }
-];
+import { useCalendarEvents } from '@/hooks/useCalendarEvents';
+import EventDialog from '@/components/calendar/EventDialog';
+import EventCard from '@/components/calendar/EventCard';
+import { CalendarEvent } from '@/types/calendar';
+import { cn } from '@/lib/utils';
+import { useToast } from '@/components/ui/use-toast';
 
 const CalendarPage: React.FC = () => {
   const [date, setDate] = useState<Date>(new Date());
-  const [events, setEvents] = useState<Event[]>(dummyEvents);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const { events, isLoading, saveEvent, deleteEvent } = useCalendarEvents();
+  const { toast } = useToast();
   
   const eventsForSelectedDate = events.filter(
-    event => event.start.toDateString() === date.toDateString()
+    event => isSameDay(event.start, date) || isSameDay(event.end, date)
   );
   
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    });
+  const handleAddEvent = () => {
+    setSelectedEvent(null);
+    setDialogOpen(true);
+  };
+  
+  const handleEditEvent = (event: CalendarEvent) => {
+    setSelectedEvent(event);
+    setDialogOpen(true);
+  };
+  
+  const handleDeleteEvent = (event: CalendarEvent) => {
+    if (confirm(`Are you sure you want to delete "${event.title}"?`)) {
+      deleteEvent(event.id);
+    }
+  };
+  
+  const handleSaveEvent = (event: CalendarEvent) => {
+    saveEvent(event);
+    setDialogOpen(false);
+  };
+  
+  // Function to highlight dates with events
+  const getDayClassNames = (day: Date) => {
+    const hasEvents = events.some(event => 
+      isSameDay(event.start, day) || isSameDay(event.end, day)
+    );
+    
+    const hasReminders = events.some(event => 
+      event.isReminder && isSameDay(event.start, day)
+    );
+    
+    if (hasReminders) {
+      return "bg-amber-100 text-amber-600 hover:bg-amber-200 focus:bg-amber-100";
+    }
+    
+    if (hasEvents) {
+      return "bg-blue-100 text-blue-600 hover:bg-blue-200 focus:bg-blue-100";
+    }
+    
+    return "";
   };
   
   return (
@@ -72,7 +72,7 @@ const CalendarPage: React.FC = () => {
           <h1 className="text-3xl font-bold mb-1">Calendar</h1>
           <p className="text-muted-foreground">Manage your schedule and events</p>
         </div>
-        <Button className="gap-1">
+        <Button className="gap-1" onClick={handleAddEvent}>
           <Plus className="h-4 w-4" />
           <span>Add Event</span>
         </Button>
@@ -85,8 +85,77 @@ const CalendarPage: React.FC = () => {
               mode="single"
               selected={date}
               onSelect={(newDate) => newDate && setDate(newDate)}
-              className="rounded-md border"
+              className="rounded-md border pointer-events-auto"
+              modifiers={{
+                highlighted: (day) => events.some(event => 
+                  isSameDay(event.start, day) || isSameDay(event.end, day)
+                )
+              }}
+              modifiersStyles={{
+                highlighted: {
+                  fontWeight: "bold"
+                }
+              }}
+              components={{
+                Day: ({ date: dayDate, ...props }) => {
+                  const customClass = getDayClassNames(dayDate);
+                  // Check if there's a reminder for this day
+                  const hasReminder = events.some(event => 
+                    event.isReminder && isSameDay(event.start, dayDate)
+                  );
+                  
+                  return (
+                    <div className="relative">
+                      <button 
+                        {...props} 
+                        className={cn(props.className, customClass)}
+                      />
+                      {hasReminder && (
+                        <span className="absolute bottom-0 right-0 h-1.5 w-1.5 rounded-full bg-amber-500" />
+                      )}
+                    </div>
+                  );
+                }
+              }}
             />
+          </CardContent>
+          
+          <CardHeader className="pb-3 border-t">
+            <CardTitle className="text-lg">Upcoming Events</CardTitle>
+          </CardHeader>
+          <CardContent className="px-4 pb-4 pt-0">
+            <div className="space-y-3">
+              {events
+                .filter(event => event.start >= new Date())
+                .sort((a, b) => a.start.getTime() - b.start.getTime())
+                .slice(0, 3)
+                .map(event => (
+                  <div key={event.id} className="flex items-center gap-3 pb-3 border-b last:border-0 last:pb-0">
+                    <div className="w-12 h-12 flex flex-col items-center justify-center bg-primary/10 rounded-md text-primary">
+                      <span className="text-xs font-medium">{format(event.start, 'MMM')}</span>
+                      <span className="text-lg font-bold">{format(event.start, 'd')}</span>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-sm">{event.title}</h4>
+                      <p className="text-xs text-muted-foreground">
+                        {format(event.start, 'h:mm a')}
+                        {event.isReminder && (
+                          <span className="ml-1 inline-flex items-center">
+                            <Bell className="h-3 w-3 mr-1" />
+                            Reminder
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              
+              {events.filter(event => event.start >= new Date()).length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  No upcoming events
+                </p>
+              )}
+            </div>
           </CardContent>
         </Card>
         
@@ -96,44 +165,28 @@ const CalendarPage: React.FC = () => {
               <CardTitle className="text-xl flex items-center gap-2">
                 <CalendarIcon className="h-5 w-5" />
                 <span>
-                  {date.toLocaleDateString('en-US', {
-                    weekday: 'long',
-                    month: 'long',
-                    day: 'numeric',
-                    year: 'numeric'
-                  })}
+                  {format(date, 'EEEE, MMMM d, yyyy')}
                 </span>
               </CardTitle>
             </CardHeader>
             <CardContent>
               {eventsForSelectedDate.length > 0 ? (
                 <div className="space-y-4">
-                  {eventsForSelectedDate.map(event => (
-                    <div key={event.id} className="flex items-start gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
-                      <div className="w-12 flex-shrink-0 flex flex-col items-center">
-                        <span className="text-sm font-medium">{formatTime(event.start)}</span>
-                        <div className="mt-1 h-full w-0.5 bg-border"></div>
-                        <span className="text-sm font-medium text-muted-foreground">{formatTime(event.end)}</span>
-                      </div>
-                      
-                      <div className="flex-1">
-                        <h3 className="text-base font-semibold">{event.title}</h3>
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
-                          <Clock className="h-3.5 w-3.5" />
-                          <span>
-                            {formatTime(event.start)} - {formatTime(event.end)}
-                          </span>
-                        </div>
-                        <p className="text-sm mt-1">{event.location}</p>
-                        <p className="text-sm text-muted-foreground mt-2">{event.description}</p>
-                      </div>
-                    </div>
-                  ))}
+                  {eventsForSelectedDate
+                    .sort((a, b) => a.start.getTime() - b.start.getTime())
+                    .map(event => (
+                      <EventCard 
+                        key={event.id} 
+                        event={event}
+                        onEdit={handleEditEvent}
+                        onDelete={handleDeleteEvent}
+                      />
+                    ))}
                 </div>
               ) : (
                 <div className="text-center py-8">
                   <p className="text-muted-foreground">No events scheduled for this date</p>
-                  <Button className="mt-4" variant="outline" size="sm">
+                  <Button className="mt-4" variant="outline" size="sm" onClick={handleAddEvent}>
                     <Plus className="h-4 w-4 mr-1" />
                     Add Event
                   </Button>
@@ -143,6 +196,14 @@ const CalendarPage: React.FC = () => {
           </Card>
         </div>
       </div>
+      
+      <EventDialog
+        isOpen={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        onSave={handleSaveEvent}
+        selectedEvent={selectedEvent}
+        selectedDate={date}
+      />
     </div>
   );
 };
