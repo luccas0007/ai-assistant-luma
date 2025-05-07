@@ -11,7 +11,7 @@ interface ProjectManagementSectionProps {
   setEditingProject: React.Dispatch<React.SetStateAction<Project | null>>;
   isProcessing: boolean;
   handleSaveProject: (name: string, description?: string) => Promise<void>;
-  handleDeleteProject: (id: string) => Promise<void>;
+  handleDeleteProject: (id: string) => Promise<boolean>; // Updated return type to match implementation
 }
 
 const ProjectManagementSection: React.FC<ProjectManagementSectionProps> = ({
