@@ -21,6 +21,12 @@ export const useDragAndDrop = (
       return;
     }
 
+    console.log('Drag end detected:', { 
+      taskId: draggableId, 
+      from: source.droppableId, 
+      to: destination.droppableId 
+    });
+
     // Update the task's status in UI immediately for better UX
     setTasks(prevTasks => 
       prevTasks.map(task => 
@@ -53,6 +59,8 @@ export const useDragAndDrop = (
             : task
           )
         );
+      } else {
+        console.log('Task status successfully updated to:', destination.droppableId);
       }
     } catch (error) {
       console.error('Exception in drag and drop:', error);

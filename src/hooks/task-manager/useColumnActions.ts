@@ -1,7 +1,8 @@
 
 import { useToast } from '@/hooks/use-toast';
 import { Column } from '@/types/task';
-import { createColumn } from '@/utils/columns';
+import { createColumn, deleteColumn } from '@/utils/columns';
+import { Project } from '@/types/project';
 
 /**
  * Hook for column action handlers
@@ -14,7 +15,7 @@ export const useColumnActions = (
   setColumnDialogOpen: React.Dispatch<React.SetStateAction<boolean>>,
   setIsProcessing: React.Dispatch<React.SetStateAction<boolean>>,
   setError: React.Dispatch<React.SetStateAction<string | null>>,
-  activeProject: any | null
+  activeProject: Project | null
 ) => {
   const { toast } = useToast();
 
@@ -54,7 +55,7 @@ export const useColumnActions = (
       // Now set processing state after validation passes
       setIsProcessing(true);
       
-      console.log('Creating column for project:', activeProject.id);
+      console.log(`Creating column for project: ${activeProject.id} with title: ${newColumnTitle}`);
       
       // Create the column in the database
       const { success, data, errorMessage } = await createColumn(activeProject.id, newColumnTitle);
@@ -71,6 +72,8 @@ export const useColumnActions = (
         user_id: data.user_id,
         position: data.position
       };
+      
+      console.log('New column created successfully:', newColumn);
       
       // Update columns in state - create a new array to ensure React detects the change
       setColumns(prevColumns => [...prevColumns, newColumn]);
@@ -98,7 +101,42 @@ export const useColumnActions = (
     }
   };
   
-  return { handleAddColumn };
+  const handleDeleteColumn = async (columnId: string) => {
+    try {
+      setIsProcessing(true);
+      console.log(`Deleting column: ${columnId}`);
+      
+      const { success, error, errorMessage } = await deleteColumn(columnId);
+      
+      if (!success) {
+        throw new Error(errorMessage || 'Failed to delete column');
+      }
+      
+      // Update local state
+      setColumns(prevColumns => prevColumns.filter(col => col.id !== columnId));
+      
+      toast({
+        title: 'Column deleted',
+        description: 'Column has been deleted successfully.'
+      });
+    } catch (error: any) {
+      console.error('Error deleting column:', error);
+      setError(`Error deleting column: ${error.message}`);
+      
+      toast({
+        title: 'Error deleting column',
+        description: error.message || 'An unexpected error occurred',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+  
+  return { 
+    handleAddColumn,
+    handleDeleteColumn
+  };
 };
 
 export default useColumnActions;

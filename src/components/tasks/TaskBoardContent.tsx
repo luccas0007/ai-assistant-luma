@@ -23,6 +23,7 @@ interface TaskBoardContentProps {
   onCreateProject: () => void;
   onCreateTask: () => void;
   onStatusChange: (taskId: string, newStatus: string) => void;
+  onDeleteColumn?: (columnId: string) => void;
 }
 
 const TaskBoardContent: React.FC<TaskBoardContentProps> = ({
@@ -38,7 +39,8 @@ const TaskBoardContent: React.FC<TaskBoardContentProps> = ({
   onDeleteTask,
   onCreateProject,
   onCreateTask,
-  onStatusChange
+  onStatusChange,
+  onDeleteColumn
 }) => {
   // Debug logging to help track issues with board loading
   useEffect(() => {
@@ -81,6 +83,7 @@ const TaskBoardContent: React.FC<TaskBoardContentProps> = ({
           columns={columns} 
           onEditTask={onEditTask} 
           onDeleteTask={onDeleteTask}
+          onDeleteColumn={onDeleteColumn}
         />
       ) : (
         <ListView 

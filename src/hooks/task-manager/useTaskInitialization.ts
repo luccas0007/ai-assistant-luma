@@ -6,6 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { initializeTaskSystem, fetchUserTasks } from '@/utils/tasks';
 import { fetchProjectColumns } from '@/utils/columns';
 import { Task, Column } from '@/types/task';
+import { Project } from '@/types/project';
 
 /**
  * Hook for initializing tasks and columns
@@ -15,7 +16,7 @@ export const useTaskInitialization = (
   setColumns: React.Dispatch<React.SetStateAction<Column[]>>,
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
   setError: React.Dispatch<React.SetStateAction<string | null>>,
-  activeProject: any | null
+  activeProject: Project | null
 ) => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -61,15 +62,14 @@ export const useTaskInitialization = (
     init();
   }, [user, toast, setIsLoading, setError]);
 
-  // Fetch tasks from Supabase when activeProject changes
+  // Fetch tasks and columns from Supabase when activeProject changes
   useEffect(() => {
     if (!user) {
-      navigate('/login');
       return;
     }
 
     if (!activeProject) {
-      // Clear tasks when no project is selected
+      // Clear tasks and columns when no project is selected
       setTasks([]);
       setColumns([]);
       return;
@@ -80,8 +80,9 @@ export const useTaskInitialization = (
       setError(null);
       
       try {
+        console.log(`Loading project data for project ID: ${activeProject.id}`);
+        
         // Step 1: Load columns first - this is crucial for new projects
-        console.log('Fetching columns for project:', activeProject.id);
         const { data: columnsData, success: columnsSuccess, error: columnsError, errorMessage } = 
           await fetchProjectColumns(activeProject.id);
         
@@ -93,14 +94,16 @@ export const useTaskInitialization = (
             description: errorMessage || 'There was a problem loading columns for this project.',
             variant: 'destructive'
           });
-          // Don't return early, try to fetch tasks anyway
+          // Still continue to fetch tasks
+        } else if (columnsData) {
+          console.log(`Successfully loaded ${columnsData.length} columns for project ${activeProject.id}`);
+          setColumns(columnsData);
         } else {
-          console.log(`Successfully loaded ${columnsData?.length || 0} columns`);
-          setColumns(columnsData || []);
+          console.warn('No columns data returned for project:', activeProject.id);
+          setColumns([]);
         }
         
         // Step 2: Load tasks
-        console.log('Fetching tasks for project:', activeProject.id);
         const { data: tasksData, error: tasksError, message: tasksMessage } = 
           await fetchUserTasks(user.id, activeProject.id);
         
@@ -115,11 +118,14 @@ export const useTaskInitialization = (
           
           // Set empty tasks array to prevent undefined errors
           setTasks([]);
-        } else {
-          console.log(`Successfully loaded ${tasksData.length} tasks`);
-          setTasks(tasksData || []);
+        } else if (tasksData) {
+          console.log(`Successfully loaded ${tasksData.length} tasks for project ${activeProject.id}`);
+          setTasks(tasksData);
           // Clear any existing errors if the fetch was successful
           setError(null);
+        } else {
+          console.warn('No tasks data returned for project:', activeProject.id);
+          setTasks([]);
         }
       } catch (error: any) {
         console.error('Error in project data loading process:', error);
@@ -131,8 +137,9 @@ export const useTaskInitialization = (
           variant: 'destructive'
         });
         
-        // Set empty tasks array to prevent undefined errors
+        // Set empty arrays to prevent undefined errors
         setTasks([]);
+        setColumns([]);
       } finally {
         setIsLoading(false);
       }

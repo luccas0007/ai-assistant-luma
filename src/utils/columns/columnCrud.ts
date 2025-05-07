@@ -125,7 +125,7 @@ export const deleteColumn = async (columnId: string): Promise<ColumnOperationRes
       };
     }
     
-    // First delete tasks to avoid foreign key constraints
+    // First update tasks to null column_id to avoid foreign key constraints
     const { error: tasksError } = await supabase
       .from('tasks')
       .update({ column_id: null })

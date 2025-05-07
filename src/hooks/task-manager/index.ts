@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import { useTaskState } from './useTaskState';
 import { useTaskActions } from './useTaskActions';
@@ -35,7 +36,7 @@ export const useTaskManager = () => {
   );
   
   // Column-related actions
-  const { handleAddColumn } = useColumnActions(
+  const { handleAddColumn, handleDeleteColumn } = useColumnActions(
     state.columns,
     state.setColumns,
     state.newColumnTitle,
@@ -83,12 +84,14 @@ export const useTaskManager = () => {
       state.setIsLoading(true);
       
       try {
+        console.log(`Loading columns for project: ${state.activeProject.id}`);
         const { success, data, errorMessage } = await fetchProjectColumns(state.activeProject.id);
         
         if (!success || !data) {
           throw new Error(errorMessage || 'Failed to load columns');
         }
         
+        console.log(`Loaded ${data.length} columns for project ${state.activeProject.id}`);
         state.setColumns(data);
       } catch (error: any) {
         console.error('Error loading columns:', error);
@@ -131,6 +134,13 @@ export const useTaskManager = () => {
     state.setError(null);
     
     try {
+      // Refresh columns first
+      const { success: colSuccess, data: colData } = await fetchProjectColumns(state.activeProject.id);
+      if (colSuccess && colData) {
+        state.setColumns(colData);
+      }
+      
+      // Then refresh tasks
       const { data, error, message } = await fetchUserTasks(user.id, state.activeProject.id);
       
       if (error) {
@@ -167,6 +177,7 @@ export const useTaskManager = () => {
     handleDeleteTask,
     handleDragEnd,
     handleAddColumn,
+    handleDeleteColumn,
     handleUploadAttachment,
     refreshTasks
   };

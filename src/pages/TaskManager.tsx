@@ -54,6 +54,7 @@ const TaskManager = () => {
     handleDeleteTask,
     handleDragEnd,
     handleAddColumn,
+    handleDeleteColumn,
     handleCreateProject,
     handleUpdateProject,
     handleDeleteProject,
@@ -119,7 +120,7 @@ const TaskManager = () => {
   const handleStatusChange = (taskId: string, newStatus: string) => {
     const taskToUpdate = tasks.find(t => t.id === taskId);
     if (taskToUpdate) {
-      const updatedTask = {...taskToUpdate, status: newStatus};
+      const updatedTask = {...taskToUpdate, status: newStatus, column_id: newStatus};
       handleUpdateTask(updatedTask);
     }
   };
@@ -167,6 +168,7 @@ const TaskManager = () => {
             onDragEnd={handleDragEnd}
             onEditTask={setEditingTask}
             onDeleteTask={handleDeleteTask}
+            onDeleteColumn={handleDeleteColumn}
             onCreateProject={handleCreateNewProject}
             onCreateTask={handleCreateNewTask}
             onStatusChange={handleStatusChange}
