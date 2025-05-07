@@ -53,30 +53,39 @@ export function useEmailAccountForm(onComplete: () => void) {
       username: '',
       // Notice: 'password' is only included in customEmailSchema, not in the defaultValues
       // as it's conditional based on the provider type
-      imap_host: '',
-      imap_port: 993,
-      smtp_host: '',
-      smtp_port: 587,
     },
   });
 
   const updateProvider = (provider: 'gmail' | 'outlook' | 'custom') => {
     setAccountType(provider);
-    form.setValue('provider', provider as any);
     
-    if (provider !== 'custom') {
-      // When switching to OAuth providers, set username to email address
-      const currentEmail = form.getValues('email_address');
-      if (currentEmail) {
-        form.setValue('username', currentEmail);
-      }
-      
-      // Set default server settings from provider config
+    // Reset the form with the appropriate default values based on provider type
+    if (provider === 'custom') {
+      form.reset({
+        provider: 'custom',
+        account_name: form.getValues('account_name') || '',
+        email_address: form.getValues('email_address') || '',
+        username: form.getValues('username') || '',
+        password: '',
+        imap_host: '',
+        imap_port: 993,
+        smtp_host: '',
+        smtp_port: 587,
+      });
+    } else {
+      // Handle OAuth providers (gmail/outlook)
       const config = getProviderConfig(provider);
-      form.setValue('imap_host', config.imap.host);
-      form.setValue('imap_port', config.imap.port);
-      form.setValue('smtp_host', config.smtp.host);
-      form.setValue('smtp_port', config.smtp.port);
+      const currentEmail = form.getValues('email_address') || '';
+      
+      form.reset({
+        provider: provider as 'gmail' | 'outlook',
+        account_name: form.getValues('account_name') || '',
+        email_address: currentEmail,
+        username: currentEmail, // Set username to email address for OAuth providers
+      });
+      
+      // We don't set these fields directly on the form values since they're not in the OAuth schema
+      // They will be retrieved from the provider config when needed
     }
     
     // Reset test connection result when changing provider
