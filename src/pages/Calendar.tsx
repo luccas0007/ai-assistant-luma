@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { format, isSameDay } from 'date-fns';
 import { Calendar as CalendarIcon, Plus, Clock, Bell } from 'lucide-react';
@@ -11,6 +10,7 @@ import EventCard from '@/components/calendar/EventCard';
 import { CalendarEvent } from '@/types/calendar';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/components/ui/use-toast';
+import { DayContentProps } from 'react-day-picker';
 
 const CalendarPage: React.FC = () => {
   const [date, setDate] = useState<Date>(new Date());
@@ -97,8 +97,8 @@ const CalendarPage: React.FC = () => {
                 }
               }}
               components={{
-                Day: (props) => {
-                  // Fix: Properly extract the date from props and handle className
+                Day: (props: DayContentProps) => {
+                  // Fix: Properly extract the date from props and handle props
                   const dayDate = props.date;
                   const customClass = getDayClassNames(dayDate);
                   // Check if there's a reminder for this day
@@ -108,15 +108,11 @@ const CalendarPage: React.FC = () => {
                   
                   return (
                     <div className="relative">
-                      <button 
-                        onClick={props.onClick}
-                        disabled={props.disabled}
-                        className={cn(props.className || "", customClass)}
-                        style={props.style}
-                        tabIndex={props.tabIndex}
-                      >
-                        {props.children}
-                      </button>
+                      {/* Use the component's own rendering */}
+                      <props.renderDay 
+                        {...props} 
+                        className={cn(props.classNames?.day, customClass)}
+                      />
                       {hasReminder && (
                         <span className="absolute bottom-0 right-0 h-1.5 w-1.5 rounded-full bg-amber-500" />
                       )}
