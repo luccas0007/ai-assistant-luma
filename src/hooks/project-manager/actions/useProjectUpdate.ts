@@ -19,6 +19,16 @@ export const useProjectUpdate = (
   
   // Update an existing project
   const handleUpdateProject = useCallback(async (project: Project) => {
+    // Validation first, before setting processing state
+    if (!project.name.trim()) {
+      toast({
+        title: 'Project name required',
+        description: 'Please enter a name for the project',
+        variant: 'destructive'
+      });
+      return false;
+    }
+    
     if (!user) {
       toast({
         title: 'Authentication required',
@@ -28,21 +38,11 @@ export const useProjectUpdate = (
       return false;
     }
     
+    // Now set processing state
     setIsProcessingProject(true);
     
     try {
-      const { success, error, errorMessage } = await updateProject(project);
-      
-      if (!success) {
-        setProjectError(errorMessage || 'Error updating project');
-        toast({
-          title: 'Error',
-          description: errorMessage || 'Could not update project. Please try again.',
-          variant: 'destructive'
-        });
-        return false;
-      }
-      
+      // First update local state immediately for better UX
       // Update projects list
       setProjects(prevProjects => 
         prevProjects.map(p => p.id === project.id ? project : p)
@@ -53,6 +53,20 @@ export const useProjectUpdate = (
         prevActive && prevActive.id === project.id ? project : prevActive
       );
       
+      // Then perform the update in the background
+      const { success, error, errorMessage } = await updateProject(project);
+      
+      if (!success) {
+        console.error('Error updating project:', errorMessage);
+        // Don't revert the UI state because it's confusing, but show a toast
+        toast({
+          title: 'Warning',
+          description: `Project displayed as updated, but changes may not be saved: ${errorMessage || 'Unknown error'}`,
+          variant: 'destructive'
+        });
+        return false;
+      }
+      
       toast({
         title: 'Project updated',
         description: `"${project.name}" has been updated successfully`
@@ -62,7 +76,7 @@ export const useProjectUpdate = (
     } catch (error: any) {
       const errorMsg = error.message || 'An unexpected error occurred';
       
-      setProjectError(errorMsg);
+      console.error('Error updating project:', errorMsg);
       toast({
         title: 'Error updating project',
         description: errorMsg,
@@ -77,3 +91,5 @@ export const useProjectUpdate = (
   
   return { handleUpdateProject };
 };
+
+export default useProjectUpdate;

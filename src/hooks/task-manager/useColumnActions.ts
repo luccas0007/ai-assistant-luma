@@ -20,8 +20,7 @@ export const useColumnActions = (
 
   const handleAddColumn = async () => {
     try {
-      setIsProcessing(true);
-      
+      // Validation first - before setting processing state
       // Skip if title is empty
       if (!newColumnTitle.trim()) {
         toast({
@@ -39,11 +38,8 @@ export const useColumnActions = (
           description: 'Please select a project first',
           variant: 'destructive'
         });
-        setIsProcessing(false);
         return;
       }
-      
-      console.log('Creating column for project:', activeProject.id);
       
       // Check if column with this title already exists
       if (columns.some(col => col.title.toLowerCase() === newColumnTitle.toLowerCase())) {
@@ -52,9 +48,13 @@ export const useColumnActions = (
           description: 'A column with this name already exists.',
           variant: 'destructive'
         });
-        setIsProcessing(false);
         return;
       }
+
+      // Now set processing state after validation passes
+      setIsProcessing(true);
+      
+      console.log('Creating column for project:', activeProject.id);
       
       // Create the column in the database
       const { success, data, errorMessage } = await createColumn(activeProject.id, newColumnTitle);
@@ -63,13 +63,23 @@ export const useColumnActions = (
         throw new Error(errorMessage || 'Failed to create column');
       }
       
-      // Update columns in state
-      setColumns(prevColumns => [...prevColumns, data]);
+      // Create a local copy of the column data for UI update
+      const newColumn = {
+        id: data.id,
+        title: data.title,
+        project_id: data.project_id,
+        user_id: data.user_id,
+        position: data.position
+      };
+      
+      // Update columns in state - create a new array to ensure React detects the change
+      setColumns(prevColumns => [...prevColumns, newColumn]);
       
       // Reset form and close dialog
       setNewColumnTitle('');
       setColumnDialogOpen(false);
       
+      // Show success toast
       toast({
         title: 'Column added',
         description: `Column "${newColumnTitle}" has been added.`

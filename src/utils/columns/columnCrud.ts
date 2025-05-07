@@ -125,19 +125,14 @@ export const deleteColumn = async (columnId: string): Promise<ColumnOperationRes
       };
     }
     
-    // First, delete any tasks associated with this column using a simpler approach to avoid deep type instantiation
-    const { error: tasksError } = await supabase
+    // First delete tasks to avoid type depth issues
+    await supabase
       .from('tasks')
       .delete()
       .eq('column_id', columnId)
       .eq('user_id', userId);
     
-    if (tasksError) {
-      console.error('Error deleting column tasks:', tasksError);
-      // Continue with column deletion despite error
-    }
-    
-    // Now delete the column using a simpler approach to avoid deep type instantiation
+    // Now delete the column itself
     const { error } = await supabase
       .from('columns')
       .delete()

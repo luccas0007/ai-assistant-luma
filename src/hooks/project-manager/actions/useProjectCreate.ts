@@ -20,6 +20,16 @@ export const useProjectCreate = (
   
   // Create a new project
   const handleCreateProject = useCallback(async (name: string, description?: string) => {
+    // Validation first, before setting processing state
+    if (!name.trim()) {
+      toast({
+        title: 'Project name required',
+        description: 'Please enter a name for the project',
+        variant: 'destructive'
+      });
+      return null;
+    }
+    
     if (!user) {
       toast({
         title: 'Authentication required',
@@ -29,6 +39,7 @@ export const useProjectCreate = (
       return null;
     }
     
+    // Now set processing state
     setIsProcessingProject(true);
     
     try {
@@ -57,21 +68,7 @@ export const useProjectCreate = (
       
       const newProject = data[0];
       
-      // Create default columns for the new project
-      const { success, error: columnsError, errorMessage: columnsErrorMessage } = await createDefaultColumns(newProject.id);
-      
-      if (columnsError) {
-        console.error('Error creating default columns:', columnsErrorMessage);
-        toast({
-          title: 'Warning',
-          description: 'Project created, but default columns could not be added.',
-          variant: 'destructive'
-        });
-        // Continue despite column error, just log it
-      } else {
-        console.log('Default columns created successfully for project:', newProject.id);
-      }
-      
+      // First update local state immediately for better UX
       // Update projects list
       setProjects(prevProjects => [...prevProjects, newProject]);
       
@@ -82,6 +79,24 @@ export const useProjectCreate = (
         title: 'Project created',
         description: `"${name}" has been created successfully`
       });
+      
+      // Create default columns for the new project as a background operation
+      try {
+        const { success, error: columnsError, errorMessage: columnsErrorMessage } = await createDefaultColumns(newProject.id);
+        
+        if (columnsError) {
+          console.error('Error creating default columns:', columnsErrorMessage);
+          toast({
+            title: 'Warning',
+            description: 'Project created, but default columns could not be added.',
+            variant: 'destructive'
+          });
+        } else {
+          console.log('Default columns created successfully for project:', newProject.id);
+        }
+      } catch (columnsErr) {
+        console.error('Error in default column creation:', columnsErr);
+      }
       
       return newProject;
     } catch (error: any) {
@@ -102,3 +117,5 @@ export const useProjectCreate = (
   
   return { handleCreateProject };
 };
+
+export default useProjectCreate;
