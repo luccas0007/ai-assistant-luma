@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { format, isSameDay } from 'date-fns';
 import { Calendar as CalendarIcon, Plus, Clock, Bell } from 'lucide-react';
@@ -11,6 +10,7 @@ import EventCard from '@/components/calendar/EventCard';
 import { CalendarEvent } from '@/types/calendar';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/components/ui/use-toast';
+import { DayProps } from 'react-day-picker';
 
 const CalendarPage: React.FC = () => {
   const [date, setDate] = useState<Date>(new Date());
@@ -97,7 +97,7 @@ const CalendarPage: React.FC = () => {
                 }
               }}
               components={{
-                Day: ({ date: dayDate, ...props }) => {
+                Day: ({ date: dayDate, ...dayProps }: DayProps) => {
                   // Check if there's a reminder for this day
                   const customClass = getDayClassNames(dayDate);
                   const hasReminder = events.some(event => 
@@ -106,15 +106,17 @@ const CalendarPage: React.FC = () => {
                   
                   return (
                     <div className="relative">
-                      <div 
+                      <button 
                         className={cn(
-                          props.className,
+                          dayProps.className,
                           customClass
                         )}
-                        {...props}
+                        onClick={dayProps.onClick}
+                        disabled={dayProps.disabled}
+                        tabIndex={dayProps.tabIndex}
                       >
-                        {props.children}
-                      </div>
+                        {dayProps.children}
+                      </button>
                       {hasReminder && (
                         <span className="absolute bottom-0 right-0 h-1.5 w-1.5 rounded-full bg-amber-500" />
                       )}
