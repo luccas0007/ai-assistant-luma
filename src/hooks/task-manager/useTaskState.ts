@@ -37,14 +37,16 @@ export const useTaskState = (initialActiveProject: Project | null = null) => {
     }
   }, []);
 
-  // Update active project with proper tracking
+  // Update active project with proper tracking and state reset
   const updateActiveProject = useCallback((project: Project | null) => {
     if (project?.id !== activeProject?.id) {
       console.log(`Changing active project from ${activeProject?.id || 'null'} to ${project?.id || 'null'}`);
       
-      // Clear existing columns when project changes
+      // Clear existing tasks and columns when project changes
       if (project?.id !== activeProject?.id) {
-        setColumns([]);
+        setTasks([]); // Clear tasks for the old project
+        setColumns([]); // Clear columns for the old project
+        console.log('Cleared tasks and columns due to project change');
       }
       
       setActiveProject(project);

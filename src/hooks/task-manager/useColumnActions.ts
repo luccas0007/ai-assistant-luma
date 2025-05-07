@@ -34,6 +34,7 @@ export const useColumnActions = (
       
       // Check if activeProject is null or undefined
       if (!activeProject || !activeProject.id) {
+        console.error('No active project found when creating column', { activeProject });
         toast({
           title: 'No project selected',
           description: 'Please select a project first',
@@ -85,7 +86,7 @@ export const useColumnActions = (
       // Show success toast
       toast({
         title: 'Column added',
-        description: `Column "${newColumnTitle}" has been added.`
+        description: `Column "${newColumnTitle}" has been added to project "${activeProject.name}"`
       });
     } catch (error: any) {
       console.error('Error adding column:', error);

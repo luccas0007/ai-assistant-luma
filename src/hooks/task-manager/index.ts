@@ -109,7 +109,7 @@ export const useTaskManager = () => {
     };
     
     loadColumns();
-  }, [state.activeProject, state.setColumns, state.setError, state.setIsLoading, toast, user]);
+  }, [state.activeProject?.id, user]); // Only reload when project ID or user changes
   
   // Function to refresh tasks
   const refreshTasks = async () => {
@@ -123,6 +123,7 @@ export const useTaskManager = () => {
     }
     
     if (!state.activeProject) {
+      console.warn("Attempting to refresh tasks with no active project");
       toast({
         title: "No project selected",
         description: "Please select a project first",
@@ -135,9 +136,12 @@ export const useTaskManager = () => {
     state.setError(null);
     
     try {
+      console.log(`Refreshing tasks for project: ${state.activeProject.id}`);
+      
       // Refresh columns first
       const { success: colSuccess, data: colData } = await fetchProjectColumns(state.activeProject.id);
       if (colSuccess && colData) {
+        console.log(`Refreshed columns for project: ${state.activeProject.id}, found: ${colData.length} columns`);
         state.setColumns(colData);
       }
       
@@ -161,10 +165,7 @@ export const useTaskManager = () => {
         
         state.setTasks(normalizedTasks);
         state.setError(null);
-        toast({
-          title: "Refreshed",
-          description: `Loaded ${data.length} tasks successfully`
-        });
+        console.log(`Refreshed tasks for project: ${state.activeProject.id}, found: ${normalizedTasks.length} tasks`);
       }
     } catch (error: any) {
       state.setError(`Error refreshing: ${error.message}`);
