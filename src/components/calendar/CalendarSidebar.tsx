@@ -38,21 +38,19 @@ const CalendarSidebar: React.FC<CalendarSidebarProps> = ({ date, events, onDateS
             }
           }}
           components={{
-            Day: ({ date: dayDate, ...otherProps }: DayProps) => {
+            Day: (props: DayProps) => {
               // This is for TypeScript compatibility
-              if (!dayDate) return null;
+              if (!props.date) return null;
               
-              // Pass only the properties that CustomCalendarDay actually accepts
+              // Extract the necessary properties safely
+              const { date: dayDate, displayMonth } = props;
+              
               return (
                 <CustomCalendarDay 
                   day={dayDate} 
                   events={events}
-                  displayMonth={otherProps.displayMonth}
-                  // Use optional chaining to safely access possibly undefined props
-                  onClick={otherProps.onClick}
-                  disabled={otherProps.disabled}
-                  tabIndex={otherProps.tabIndex}
-                  className={otherProps.selected ? 'selected' : ''}
+                  displayMonth={displayMonth}
+                  // We'll handle className conditionally in the CustomCalendarDay component
                 />
               );
             }

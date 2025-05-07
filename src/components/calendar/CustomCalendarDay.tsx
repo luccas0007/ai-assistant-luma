@@ -15,18 +15,15 @@ interface CustomCalendarDayProps {
 }
 
 const CustomCalendarDay = (props: CustomCalendarDayProps) => {
-  const { day, events, displayMonth, className, onClick, disabled, tabIndex } = props;
+  const { day, events, displayMonth } = props;
   const { getDayClassNames } = useCalendarDayClassNames(events);
   
   const dayClasses = getDayClassNames(day);
   
   return (
     <div 
-      className={cn(dayClasses, className)}
-      onClick={onClick}
+      className={cn(dayClasses)}
       role="button"
-      tabIndex={tabIndex}
-      aria-disabled={disabled}
     >
       {day.getDate()}
     </div>
