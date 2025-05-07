@@ -211,8 +211,6 @@ const TaskStandaloneList: React.FC<TaskStandaloneListProps> = ({
     );
   }
 
-  console.log("TaskStandaloneList rendering with tasks:", tasks.length);
-
   return (
     <Card>
       <CardHeader className="pb-3">

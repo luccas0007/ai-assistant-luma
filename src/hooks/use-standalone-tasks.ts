@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Task, Column } from '@/types/task';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,6 +12,7 @@ export const useStandaloneTasks = (projectId?: string | null) => {
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
+  const hasInitializedRef = useRef(false);
 
   // Default columns if none are provided from a project
   const defaultColumns: Column[] = [
@@ -22,11 +24,13 @@ export const useStandaloneTasks = (projectId?: string | null) => {
   // Fetch tasks
   const fetchTasks = useCallback(async () => {
     if (!user) {
+      console.log("No user, skipping fetch");
       setIsLoading(false);
       return;
     }
 
     try {
+      console.log("Fetching tasks for user:", user.id, projectId ? `and project: ${projectId}` : '');
       setIsLoading(true);
       setError(null);
 
@@ -78,7 +82,7 @@ export const useStandaloneTasks = (projectId?: string | null) => {
     } finally {
       setIsLoading(false);
     }
-  }, [user, projectId, toast, defaultColumns]);
+  }, [user?.id, projectId, toast]); // Removed defaultColumns from dependencies
 
   // Add a new task
   const addTask = async (newTask: Partial<Task>) => {
@@ -244,8 +248,12 @@ export const useStandaloneTasks = (projectId?: string | null) => {
 
   // Load tasks on component mount or when dependencies change
   useEffect(() => {
-    console.log("Fetching tasks, user:", user?.id);
-    fetchTasks();
+    // Only fetch tasks if we haven't initialized yet or the user/project changes
+    if (!hasInitializedRef.current || !isLoading) {
+      console.log("Fetching tasks, user:", user?.id, "initialized:", hasInitializedRef.current);
+      fetchTasks();
+      hasInitializedRef.current = true;
+    }
   }, [fetchTasks]);
 
   return {

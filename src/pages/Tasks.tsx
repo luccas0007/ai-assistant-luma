@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Check, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import TaskStandaloneList from '@/components/tasks/TaskStandaloneList';
@@ -23,6 +23,11 @@ const TasksPage: React.FC = () => {
   
   const { user } = useAuth();
   
+  useEffect(() => {
+    // This effect helps debug render cycles
+    console.log("Tasks page rendered - Auth status:", !!user, "Loading:", isLoading, "Tasks count:", tasks.length);
+  });
+  
   // Handle authentication check
   if (!user) {
     return (
@@ -38,8 +43,6 @@ const TasksPage: React.FC = () => {
       </div>
     );
   }
-  
-  console.log("Task page render - Loading:", isLoading, "Tasks:", tasks.length);
   
   // Handle error state
   if (error) {
