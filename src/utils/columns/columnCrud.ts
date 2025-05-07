@@ -125,12 +125,22 @@ export const deleteColumn = async (columnId: string): Promise<ColumnOperationRes
       };
     }
     
-    // First delete tasks to avoid type depth issues
-    await supabase
+    // First delete tasks to avoid foreign key constraints
+    const { error: tasksError } = await supabase
       .from('tasks')
-      .delete()
+      .update({ column_id: null })
       .eq('column_id', columnId)
       .eq('user_id', userId);
+      
+    if (tasksError) {
+      console.error('Error updating tasks before column deletion:', tasksError);
+      return { 
+        success: false, 
+        error: tasksError, 
+        errorMessage: `Failed to update tasks: ${tasksError.message}`,
+        data: null
+      };
+    }
     
     // Now delete the column itself
     const { error } = await supabase

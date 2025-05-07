@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Task } from '@/types/task';
 import { initializeTaskSystem } from './taskDatabaseUtils';
@@ -39,7 +38,7 @@ export const createTask = async (
       completed: newTask.completed || false,
       attachment_url: newTask.attachment_url || null,
       project_id: newTask.project_id || null,
-      column_id: newTask.column_id || null,
+      column_id: newTask.column_id || newTask.status || null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
@@ -78,12 +77,16 @@ export const createTask = async (
  */
 export const updateTask = async (updatedTask: Task) => {
   try {
+    // Ensure column_id is synced with status
+    const taskData = {
+      ...updatedTask,
+      column_id: updatedTask.column_id || updatedTask.status,
+      updated_at: new Date().toISOString()
+    };
+    
     const { error } = await supabase
       .from('tasks')
-      .update({
-        ...updatedTask,
-        updated_at: new Date().toISOString()
-      })
+      .update(taskData)
       .eq('id', updatedTask.id);
 
     if (error) {
@@ -145,6 +148,7 @@ export const updateTaskStatus = async (taskId: string, newStatus: string) => {
       .from('tasks')
       .update({
         status: newStatus,
+        column_id: newStatus,
         updated_at: new Date().toISOString()
       })
       .eq('id', taskId);
@@ -248,7 +252,7 @@ export const deleteTaskAttachment = async (filePath: string) => {
     return { 
       success: false, 
       error, 
-      errorMessage: `Unexpected error deleting attachment: ${error.message}` 
+      errorMessage: `Unexpected error deleting task attachment: ${error.message}` 
     };
   }
 };

@@ -102,6 +102,7 @@ export type Database = {
         Row: {
           attachment_path: string | null
           attachment_url: string | null
+          column_id: string | null
           completed: boolean | null
           created_at: string
           description: string | null
@@ -117,6 +118,7 @@ export type Database = {
         Insert: {
           attachment_path?: string | null
           attachment_url?: string | null
+          column_id?: string | null
           completed?: boolean | null
           created_at?: string
           description?: string | null
@@ -132,6 +134,7 @@ export type Database = {
         Update: {
           attachment_path?: string | null
           attachment_url?: string | null
+          column_id?: string | null
           completed?: boolean | null
           created_at?: string
           description?: string | null
@@ -145,6 +148,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "tasks_column_id_fkey"
+            columns: ["column_id"]
+            isOneToOne: false
+            referencedRelation: "columns"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tasks_project_id_fkey"
             columns: ["project_id"]

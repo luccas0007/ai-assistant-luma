@@ -1,4 +1,3 @@
-
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { Task } from '@/types/task';
@@ -44,8 +43,14 @@ export const useTaskActions = (
       setError(null);
       setIsProcessing(true);
       
+      // Ensure column_id is properly set from status
+      const taskWithColumnId = {
+        ...newTask,
+        column_id: newTask.status || newTask.column_id || null
+      };
+      
       // Create the task
-      const { data, error, errorMessage } = await apiCreateTask(user.id, newTask);
+      const { data, error, errorMessage } = await apiCreateTask(user.id, taskWithColumnId);
       
       if (error) {
         console.error('Task creation error details:', error);
@@ -97,7 +102,14 @@ export const useTaskActions = (
     try {
       setError(null);
       setIsProcessing(true);
-      const { error, errorMessage } = await apiUpdateTask(updatedTask);
+      
+      // Ensure column_id is set to match status
+      const taskWithColumnId = {
+        ...updatedTask,
+        column_id: updatedTask.status || updatedTask.column_id
+      };
+      
+      const { error, errorMessage } = await apiUpdateTask(taskWithColumnId);
 
       if (error) {
         setError(errorMessage || 'Error updating task');
@@ -171,6 +183,8 @@ export const useTaskActions = (
     try {
       setError(null);
       setIsProcessing(true);
+      
+      // Update both status and column_id to match
       const { error, errorMessage } = await apiUpdateTaskStatus(taskId, newStatus);
 
       if (error) {
@@ -180,7 +194,7 @@ export const useTaskActions = (
       
       // Update local state
       setTasks(tasks.map(task => 
-        task.id === taskId ? { ...task, status: newStatus } : task
+        task.id === taskId ? { ...task, status: newStatus, column_id: newStatus } : task
       ));
       
       return { success: true };
