@@ -97,7 +97,9 @@ const CalendarPage: React.FC = () => {
                 }
               }}
               components={{
-                Day: ({ date: dayDate, ...props }) => {
+                Day: (props) => {
+                  // Fix: Properly extract the date from props and handle className
+                  const dayDate = props.date;
                   const customClass = getDayClassNames(dayDate);
                   // Check if there's a reminder for this day
                   const hasReminder = events.some(event => 
