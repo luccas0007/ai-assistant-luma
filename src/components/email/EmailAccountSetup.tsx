@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -31,7 +32,6 @@ const oauthEmailSchema = z.object({
   provider: z.enum(['gmail', 'outlook']),
   account_name: z.string().min(1, 'Account name is required'),
   email_address: z.string().email('Valid email address required'),
-  // Add the username field to the OAuth schema as well, but derive it from email_address
   username: z.string().optional(),
 });
 
@@ -74,33 +74,44 @@ export default function EmailAccountSetup({ onComplete }: { onComplete: () => vo
 
       // For MVP, we'll handle simple authentication only
       // In a real app, we would handle OAuth2 flow here
-      const accountData = {
-        account_name: values.account_name,
-        email_address: values.email_address,
-        provider: values.provider,
-        user_id: user.id,
-        is_oauth: values.provider !== 'custom',
-        username: values.provider === 'custom' 
-          ? values.username 
-          : values.email_address, // Set username to email for OAuth providers
-        auth_credentials: values.provider === 'custom' 
-          ? { password: values.password } 
-          : {},
-        imap_host: values.provider === 'custom' 
-          ? values.imap_host 
-          : values.provider === 'gmail' ? 'imap.gmail.com' : 'outlook.office365.com',
-        imap_port: values.provider === 'custom' 
-          ? values.imap_port 
-          : 993,
-        smtp_host: values.provider === 'custom' 
-          ? values.smtp_host 
-          : values.provider === 'gmail' ? 'smtp.gmail.com' : 'smtp.office365.com',
-        smtp_port: values.provider === 'custom' 
-          ? values.smtp_port 
-          : 587,
-      };
+      if (values.provider === 'custom') {
+        // Handle custom provider fields
+        const customData = values as z.infer<typeof customEmailSchema>;
+        const accountData = {
+          account_name: customData.account_name,
+          email_address: customData.email_address,
+          provider: customData.provider,
+          user_id: user.id,
+          is_oauth: false,
+          username: customData.username,
+          auth_credentials: { password: customData.password },
+          imap_host: customData.imap_host,
+          imap_port: customData.imap_port,
+          smtp_host: customData.smtp_host,
+          smtp_port: customData.smtp_port,
+        };
+        
+        await addEmailAccount(accountData);
+      } else {
+        // Handle OAuth provider fields
+        const oauthData = values as z.infer<typeof oauthEmailSchema>;
+        const accountData = {
+          account_name: oauthData.account_name,
+          email_address: oauthData.email_address,
+          provider: oauthData.provider,
+          user_id: user.id,
+          is_oauth: true,
+          username: oauthData.email_address, // Use email as username for OAuth
+          auth_credentials: {}, // OAuth credentials would go here in a real app
+          imap_host: oauthData.provider === 'gmail' ? 'imap.gmail.com' : 'outlook.office365.com',
+          imap_port: 993,
+          smtp_host: oauthData.provider === 'gmail' ? 'smtp.gmail.com' : 'smtp.office365.com',
+          smtp_port: 587,
+        };
+        
+        await addEmailAccount(accountData);
+      }
       
-      await addEmailAccount(accountData);
       toast({
         title: "Account added successfully",
         description: `${values.account_name} has been added to your email accounts.`,
