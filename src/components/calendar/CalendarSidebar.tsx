@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { isSameDay } from 'date-fns';
 import { CalendarEvent } from '@/types/calendar';
 import { cn } from '@/lib/utils';
-import CalendarDay from './CalendarDay';
+import CustomCalendarDay from './CustomCalendarDay';
 import UpcomingEventsList from './UpcomingEventsList';
 import { useCalendarDayClassNames } from '@/hooks/useCalendarDayClassNames';
 
@@ -41,19 +41,16 @@ const CalendarSidebar: React.FC<CalendarSidebarProps> = ({ date, events, onDateS
               // This is for TypeScript compatibility
               if (!props.date) return null;
               
-              const customClass = getDayClassNames(props.date);
-              
               return (
-                <CalendarDay 
-                  date={props.date} 
+                <CustomCalendarDay 
+                  day={props.date} 
                   events={events}
-                  className={cn(props.className, customClass)}
+                  displayMonth={props.displayMonth}
+                  className={props.className}
                   onClick={props.onClick}
                   disabled={props.disabled}
                   tabIndex={props.tabIndex}
-                >
-                  {props.children}
-                </CalendarDay>
+                />
               );
             }
           }}
