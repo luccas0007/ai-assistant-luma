@@ -8,7 +8,8 @@ import {
   Calendar, 
   Paperclip, 
   Search, 
-  CheckSquare 
+  CheckSquare,
+  Loader2
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -69,6 +70,7 @@ const TaskStandaloneList: React.FC<TaskStandaloneListProps> = ({
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [quickAdd, setQuickAdd] = useState('');
+  const [isAdding, setIsAdding] = useState(false);
 
   // Filter tasks based on active filters
   const filteredTasks = tasks.filter(task => {
@@ -90,7 +92,7 @@ const TaskStandaloneList: React.FC<TaskStandaloneListProps> = ({
   const completedTasks = filteredTasks.filter(task => task.completed);
 
   // Handle quick add of a task
-  const handleQuickAdd = () => {
+  const handleQuickAdd = async () => {
     if (!quickAdd.trim()) return;
     
     const defaultColumn = columns.find(c => c.title.toLowerCase() === 'to do' || c.title.toLowerCase() === 'todo')?.id || 
@@ -106,7 +108,9 @@ const TaskStandaloneList: React.FC<TaskStandaloneListProps> = ({
       column_id: defaultColumn
     };
     
-    onAddTask(newTask);
+    setIsAdding(true);
+    await onAddTask(newTask);
+    setIsAdding(false);
     setQuickAdd('');
   };
   
@@ -201,10 +205,8 @@ const TaskStandaloneList: React.FC<TaskStandaloneListProps> = ({
             {title}
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="flex justify-center py-8">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          </div>
+        <CardContent className="flex justify-center items-center py-16">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </CardContent>
       </Card>
     );
@@ -239,9 +241,15 @@ const TaskStandaloneList: React.FC<TaskStandaloneListProps> = ({
               onChange={(e) => setQuickAdd(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleQuickAdd()}
             />
-            <Button onClick={handleQuickAdd} disabled={!quickAdd.trim()}>
-              <Plus className="h-4 w-4 mr-1" />
-              Add
+            <Button onClick={handleQuickAdd} disabled={!quickAdd.trim() || isAdding}>
+              {isAdding ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <>
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add
+                </>
+              )}
             </Button>
           </div>
         </div>

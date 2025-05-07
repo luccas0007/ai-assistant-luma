@@ -6,6 +6,7 @@ import TaskStandaloneList from '@/components/tasks/TaskStandaloneList';
 import { useStandaloneTasks } from '@/hooks/use-standalone-tasks';
 import { useAuth } from '@/context/AuthContext';
 import { Toaster } from '@/components/ui/toaster';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const TasksPage: React.FC = () => {
   const {
@@ -16,7 +17,8 @@ const TasksPage: React.FC = () => {
     addTask,
     updateTask,
     deleteTask,
-    changeTaskStatus
+    changeTaskStatus,
+    refreshTasks
   } = useStandaloneTasks();
   
   const { user } = useAuth();
@@ -40,10 +42,45 @@ const TasksPage: React.FC = () => {
   // Handle error state
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-4">
-        <h1 className="text-2xl font-bold mb-2">Something went wrong</h1>
-        <p className="text-muted-foreground mb-6">{error}</p>
-        <Button onClick={() => window.location.reload()}>Try Again</Button>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold mb-1">Tasks</h1>
+            <p className="text-muted-foreground">Manage your tasks and deadlines</p>
+          </div>
+        </div>
+        
+        <div className="flex flex-col items-center justify-center min-h-[40vh] text-center p-4 border rounded-lg bg-card">
+          <h1 className="text-xl font-bold mb-2">Something went wrong</h1>
+          <p className="text-muted-foreground mb-6">{error}</p>
+          <Button onClick={() => refreshTasks()}>Try Again</Button>
+        </div>
+      </div>
+    );
+  }
+  
+  // Loading skeleton
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold mb-1">Tasks</h1>
+            <p className="text-muted-foreground">Manage your tasks and deadlines</p>
+          </div>
+        </div>
+        
+        <div className="border rounded-lg p-6">
+          <div className="flex justify-between items-center mb-4">
+            <Skeleton className="h-8 w-[150px]" />
+            <Skeleton className="h-10 w-[120px]" />
+          </div>
+          <div className="space-y-4">
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-20 w-full" />
+          </div>
+        </div>
       </div>
     );
   }

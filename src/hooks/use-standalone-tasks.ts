@@ -61,12 +61,13 @@ export const useStandaloneTasks = (projectId?: string | null) => {
           throw columnError;
         }
 
-        setColumns(columnData as Column[]);
+        setColumns(columnData as Column[] || []);
       } else {
         setColumns(defaultColumns);
       }
 
-      setTasks(data as Task[]);
+      setTasks(data as Task[] || []);
+      setIsLoading(false);
     } catch (error: any) {
       console.error("Error fetching tasks:", error);
       setError(error.message);
@@ -75,7 +76,6 @@ export const useStandaloneTasks = (projectId?: string | null) => {
         description: "Failed to load tasks. Please try again.",
         variant: "destructive"
       });
-    } finally {
       setIsLoading(false);
     }
   }, [user, projectId, toast, defaultColumns]);
