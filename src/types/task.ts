@@ -19,9 +19,9 @@ export interface Task {
 export interface Column {
   id: string;
   title: string;
-  user_id?: string; // Added to match database schema update
-  project_id?: string; // Added for completeness
-  position?: number; // Added for completeness
+  user_id: string; // Changed from optional to required
+  project_id: string; // Changed from optional to required
+  position: number; // Changed from optional to required
 }
 
 export interface TaskState {

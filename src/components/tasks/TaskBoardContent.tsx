@@ -46,8 +46,8 @@ const TaskBoardContent: React.FC<TaskBoardContentProps> = ({
   useEffect(() => {
     if (activeProject) {
       console.log("TaskBoardContent: Project loaded:", activeProject.id, activeProject.name);
-      console.log("TaskBoardContent: Columns loaded:", columns.length, columns);
-      console.log("TaskBoardContent: Tasks loaded:", tasks.length);
+      console.log("TaskBoardContent: Columns loaded:", columns.length, columns.map(c => ({id: c.id, title: c.title, project_id: c.project_id})));
+      console.log("TaskBoardContent: Tasks loaded:", tasks.length, tasks.map(t => ({id: t.id, title: t.title, column_id: t.column_id})));
     }
   }, [activeProject, columns, tasks]);
 
@@ -59,7 +59,12 @@ const TaskBoardContent: React.FC<TaskBoardContentProps> = ({
     return <EmptyProjectState onCreateProject={onCreateProject} />;
   }
   
-  if (columns.length === 0) {
+  // Filter columns to only show those belonging to the active project
+  const projectColumns = columns.filter(column => 
+    column.project_id === activeProject.id
+  );
+  
+  if (projectColumns.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center p-6 text-center">
         <h3 className="text-xl font-semibold mb-2">No Columns Available</h3>
@@ -71,7 +76,10 @@ const TaskBoardContent: React.FC<TaskBoardContentProps> = ({
     );
   }
   
-  if (tasks.length === 0 && !error) {
+  // Filter tasks to show only those belonging to the current project
+  const projectTasks = tasks.filter(task => task.project_id === activeProject.id);
+  
+  if (projectTasks.length === 0 && !error) {
     return <EmptyTasksState onCreateTask={onCreateTask} />;
   }
   
@@ -79,16 +87,16 @@ const TaskBoardContent: React.FC<TaskBoardContentProps> = ({
     <DragDropContext onDragEnd={onDragEnd}>
       {viewMode === 'kanban' ? (
         <KanbanBoard 
-          tasks={tasks} 
-          columns={columns} 
+          tasks={projectTasks} 
+          columns={projectColumns} 
           onEditTask={onEditTask} 
           onDeleteTask={onDeleteTask}
           onDeleteColumn={onDeleteColumn}
         />
       ) : (
         <ListView 
-          tasks={tasks} 
-          columns={columns} 
+          tasks={projectTasks} 
+          columns={projectColumns} 
           onEditTask={onEditTask} 
           onDeleteTask={onDeleteTask}
           onStatusChange={onStatusChange}

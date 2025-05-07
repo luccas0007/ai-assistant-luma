@@ -45,8 +45,16 @@ export const useTaskProjectIntegration = (
           throw new Error(errorMessage || 'Failed to load columns');
         }
         
-        console.log(`Loaded ${data.length} columns for project ${activeProject.id}`);
-        setColumns(data);
+        // Ensure each column has the project_id properly set
+        const columnsWithProject = data.map(column => ({
+          ...column,
+          project_id: activeProject.id // Ensure project_id is consistently set
+        }));
+        
+        console.log(`Loaded ${columnsWithProject.length} columns for project ${activeProject.id}:`, 
+          columnsWithProject.map(c => ({id: c.id, title: c.title, project_id: c.project_id})));
+        
+        setColumns(columnsWithProject);
       } catch (error: any) {
         console.error('Error loading columns:', error);
         setError(`Error loading columns: ${error.message}`);

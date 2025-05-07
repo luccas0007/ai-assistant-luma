@@ -107,6 +107,9 @@ export const useColumnActions = (
       setIsProcessing(true);
       console.log(`Deleting column: ${columnId}`);
       
+      // Find the column before deletion to reference in success message
+      const columnToDelete = columns.find(col => col.id === columnId);
+      
       const { success, error, errorMessage } = await deleteColumn(columnId);
       
       if (!success) {
@@ -118,7 +121,9 @@ export const useColumnActions = (
       
       toast({
         title: 'Column deleted',
-        description: 'Column has been deleted successfully.'
+        description: columnToDelete 
+          ? `Column "${columnToDelete.title}" has been deleted successfully.`
+          : 'Column has been deleted successfully.'
       });
     } catch (error: any) {
       console.error('Error deleting column:', error);
