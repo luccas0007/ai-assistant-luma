@@ -109,9 +109,14 @@ const CalendarPage: React.FC = () => {
                   return (
                     <div className="relative">
                       <button 
-                        {...props} 
-                        className={cn(props.className, customClass)}
-                      />
+                        onClick={props.onClick}
+                        disabled={props.disabled}
+                        className={cn(props.className || "", customClass)}
+                        style={props.style}
+                        tabIndex={props.tabIndex}
+                      >
+                        {props.children}
+                      </button>
                       {hasReminder && (
                         <span className="absolute bottom-0 right-0 h-1.5 w-1.5 rounded-full bg-amber-500" />
                       )}
