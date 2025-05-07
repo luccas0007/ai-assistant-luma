@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -52,7 +51,8 @@ export function useEmailAccountForm(onComplete: () => void) {
       account_name: '',
       email_address: '',
       username: '',
-      password: '',
+      // Notice: 'password' is only included in customEmailSchema, not in the defaultValues
+      // as it's conditional based on the provider type
       imap_host: '',
       imap_port: 993,
       smtp_host: '',
