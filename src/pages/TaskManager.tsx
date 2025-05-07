@@ -1,24 +1,17 @@
 
-import React, { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import React from 'react';
 import { Toaster } from '@/components/ui/toaster';
 import { useProjectManager } from '@/hooks/project-manager';
 import useTaskManager from '@/hooks/task-manager';
 
-// Import our new components
+// Import our components
 import ProjectToolbar from '@/components/tasks/ProjectToolbar';
 import TaskManagerErrorAlert from '@/components/tasks/TaskManagerErrorAlert';
-import TaskBoardHeader from '@/components/tasks/TaskBoardHeader';
-import TaskBoardContent from '@/components/tasks/TaskBoardContent';
-import ColumnDialog from '@/components/tasks/ColumnDialog';
-import DeleteProjectDialog from '@/components/tasks/DeleteProjectDialog';
-import TaskDialog from '@/components/tasks/TaskDialog';
-import ProjectDialog from '@/components/projects/ProjectDialog';
+import TaskBoardContainer from '@/components/tasks/TaskBoardContainer';
+import TaskDialogsSection from '@/components/tasks/TaskDialogsSection';
+import ProjectManagementSection from '@/components/tasks/ProjectManagementSection';
 
 const TaskManager = () => {
-  // Project deletion state
-  const [projectToDelete, setProjectToDelete] = useState<null | { id: string; name: string }>(null);
-  
   const projectManager = useProjectManager();
   const taskManager = useTaskManager();
   
@@ -82,37 +75,6 @@ const TaskManager = () => {
     setProjectDialogOpen(true);
   };
   
-  const handleEditProject = (project: any) => {
-    setEditingProject(project);
-    setProjectDialogOpen(true);
-  };
-  
-  const handleDeleteProjectRequest = (project: any) => {
-    setProjectToDelete({
-      id: project.id,
-      name: project.name
-    });
-  };
-  
-  const confirmDeleteProject = async () => {
-    if (!projectToDelete) return;
-    
-    await handleDeleteProject(projectToDelete.id);
-    setProjectToDelete(null);
-  };
-  
-  const handleSaveProject = async (name: string, description?: string) => {
-    if (editingProject) {
-      await handleUpdateProject({
-        ...editingProject,
-        name,
-        description: description || null
-      });
-    } else {
-      await handleCreateProject(name, description);
-    }
-  };
-  
   const handleCreateNewTask = () => {
     try {
       setEditingTask(null);
@@ -130,6 +92,18 @@ const TaskManager = () => {
     }
   };
 
+  const handleSaveProject = async (name: string, description?: string) => {
+    if (editingProject) {
+      await handleUpdateProject({
+        ...editingProject,
+        name,
+        description: description || null
+      });
+    } else {
+      await handleCreateProject(name, description);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <ProjectToolbar
@@ -137,8 +111,8 @@ const TaskManager = () => {
         activeProject={activeProject}
         onSelectProject={projectManager.setActiveProject}
         onCreateProject={handleCreateNewProject}
-        onEditProject={handleEditProject}
-        onDeleteProject={handleDeleteProjectRequest}
+        onEditProject={setEditingProject}
+        onDeleteProject={(project) => handleDeleteProject(project.id)}
         isLoadingProjects={isLoadingProjects}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
@@ -151,75 +125,52 @@ const TaskManager = () => {
         handleDismissError={handleDismissError}
       />
 
-      <Card>
-        <TaskBoardHeader
-          title={activeProject ? activeProject.name : 'Project Board'}
-          onAddColumn={() => setColumnDialogOpen(true)}
-          onAddTask={handleCreateNewTask}
-          isProcessing={isProcessing}
-          isLoading={isLoading}
-          isProjectSelected={!!activeProject}
-        />
-        
-        <CardContent>
-          <TaskBoardContent
-            isLoading={isLoading}
-            isLoadingProjects={isLoadingProjects}
-            activeProject={activeProject}
-            tasks={tasks}
-            columns={columns}
-            viewMode={viewMode}
-            error={error}
-            onDragEnd={handleDragEnd}
-            onEditTask={setEditingTask}
-            onDeleteTask={handleDeleteTask}
-            onDeleteColumn={handleDeleteColumn}
-            onCreateProject={handleCreateNewProject}
-            onCreateTask={handleCreateNewTask}
-            onStatusChange={handleStatusChange}
-          />
-        </CardContent>
-      </Card>
-
-      <TaskDialog
-        isOpen={taskDialogOpen}
-        onClose={() => {
-          setTaskDialogOpen(false);
-          setEditingTask(null);
-        }}
-        onSave={editingTask ? handleUpdateTask : handleCreateTask}
-        onUploadAttachment={handleUploadAttachment}
-        task={editingTask}
+      <TaskBoardContainer 
+        activeProject={activeProject}
+        tasks={tasks}
+        columns={columns}
+        viewMode={viewMode}
+        isProcessing={isProcessing}
+        isLoading={isLoading}
+        isLoadingProjects={isLoadingProjects}
+        error={error}
+        onCreateTask={handleCreateNewTask}
+        onCreateProject={handleCreateNewProject}
+        onAddColumn={() => setColumnDialogOpen(true)}
+        onDragEnd={handleDragEnd}
+        onEditTask={setEditingTask}
+        onDeleteTask={handleDeleteTask}
+        onDeleteColumn={handleDeleteColumn}
+        onStatusChange={handleStatusChange}
+      />
+      
+      <TaskDialogsSection
+        taskDialogOpen={taskDialogOpen}
+        setTaskDialogOpen={setTaskDialogOpen}
+        editingTask={editingTask}
+        setEditingTask={setEditingTask}
+        columnDialogOpen={columnDialogOpen}
+        setColumnDialogOpen={setColumnDialogOpen}
+        newColumnTitle={newColumnTitle}
+        setNewColumnTitle={setNewColumnTitle}
+        handleAddColumn={handleAddColumn}
+        handleCreateTask={handleCreateTask}
+        handleUpdateTask={handleUpdateTask}
+        handleUploadAttachment={handleUploadAttachment}
         columns={columns}
         projects={projects}
         activeProject={activeProject}
-      />
-      
-      <ProjectDialog
-        isOpen={projectDialogOpen}
-        onClose={() => {
-          setProjectDialogOpen(false);
-          setEditingProject(null);
-        }}
-        onSave={handleSaveProject}
-        project={editingProject}
         isProcessing={isProcessing}
       />
       
-      <ColumnDialog
-        isOpen={columnDialogOpen}
-        onClose={() => setColumnDialogOpen(false)}
-        title={newColumnTitle}
-        onTitleChange={setNewColumnTitle}
-        onAddColumn={handleAddColumn}
+      <ProjectManagementSection 
+        projectDialogOpen={projectDialogOpen}
+        setProjectDialogOpen={setProjectDialogOpen}
+        editingProject={editingProject}
+        setEditingProject={setEditingProject}
         isProcessing={isProcessing}
-      />
-      
-      <DeleteProjectDialog
-        isOpen={projectToDelete !== null}
-        onClose={() => setProjectToDelete(null)}
-        projectName={projectToDelete?.name || null}
-        onConfirmDelete={confirmDeleteProject}
+        handleSaveProject={handleSaveProject}
+        handleDeleteProject={handleDeleteProject}
       />
       
       <Toaster />
