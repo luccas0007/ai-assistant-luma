@@ -14,10 +14,15 @@ export const getEmailAccounts = async (): Promise<EmailAccount[]> => {
     throw error;
   }
 
-  return data as EmailAccount[] || [];
+  return (data || []) as EmailAccount[];
 };
 
-export const addEmailAccount = async (account: Partial<EmailAccount> & { user_id: string }): Promise<EmailAccount> => {
+export const addEmailAccount = async (account: any): Promise<EmailAccount> => {
+  // Ensure required fields are present
+  if (!account.account_name || !account.email_address || !account.provider || !account.user_id) {
+    throw new Error('Missing required fields for email account');
+  }
+
   const { data, error } = await supabase
     .from('email_accounts')
     .insert(account)
@@ -189,7 +194,7 @@ export const syncEmails = async (accountId: string, folder: string = 'inbox'): P
     if (processedEmails.length > 0) {
       const { data: savedEmails, error: insertError } = await supabase
         .from('emails')
-        .upsert(processedEmails as any[], {
+        .upsert(processedEmails, {
           onConflict: 'account_id,message_id',
           ignoreDuplicates: false,
         })
@@ -261,7 +266,7 @@ export const sendEmail = async (accountId: string, emailData: EmailCompose): Pro
       sent_at: new Date().toISOString(),
       folder: 'sent',
       has_attachments: false, // We'll handle attachments in a future enhancement
-    } as Email;
+    };
 
     const { data: savedEmail, error: insertError } = await supabase
       .from('emails')

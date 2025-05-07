@@ -73,23 +73,29 @@ export default function EmailAccountSetup({ onComplete }: { onComplete: () => vo
 
       // For MVP, we'll handle simple authentication only
       // In a real app, we would handle OAuth2 flow here
-      const accountData = {
+      const accountData: any = {
         account_name: values.account_name,
         email_address: values.email_address,
         provider: values.provider,
         user_id: user.id,
         is_oauth: values.provider !== 'custom',
-        username: values.provider === 'custom' ? values.username : values.email_address,
-        auth_credentials: values.provider === 'custom' 
-          ? { password: values.password } 
-          : { /* OAuth would store tokens here */ },
-        imap_host: values.provider === 'custom' ? values.imap_host : 
-          values.provider === 'gmail' ? 'imap.gmail.com' : 'outlook.office365.com',
-        imap_port: values.provider === 'custom' ? values.imap_port : 993,
-        smtp_host: values.provider === 'custom' ? values.smtp_host :
-          values.provider === 'gmail' ? 'smtp.gmail.com' : 'smtp.office365.com',
-        smtp_port: values.provider === 'custom' ? values.smtp_port : 587,
       };
+      
+      if (values.provider === 'custom') {
+        accountData.username = values.username;
+        accountData.auth_credentials = { password: values.password };
+        accountData.imap_host = values.imap_host;
+        accountData.imap_port = values.imap_port;
+        accountData.smtp_host = values.smtp_host;
+        accountData.smtp_port = values.smtp_port;
+      } else {
+        accountData.username = values.email_address;
+        accountData.auth_credentials = { /* OAuth would store tokens here */ };
+        accountData.imap_host = values.provider === 'gmail' ? 'imap.gmail.com' : 'outlook.office365.com';
+        accountData.imap_port = 993;
+        accountData.smtp_host = values.provider === 'gmail' ? 'smtp.gmail.com' : 'smtp.office365.com';
+        accountData.smtp_port = 587;
+      }
       
       await addEmailAccount(accountData);
       toast({
