@@ -1,6 +1,7 @@
 
 import { isSameDay } from 'date-fns';
 import { CalendarEvent } from '@/types/calendar';
+import { cn } from '@/lib/utils';
 
 export function useCalendarDayClassNames(events: CalendarEvent[]) {
   const getDayClassNames = (day: Date) => {
@@ -12,15 +13,15 @@ export function useCalendarDayClassNames(events: CalendarEvent[]) {
       event.isReminder && isSameDay(event.start, day)
     );
     
+    let classNames = '';
+    
     if (hasReminders) {
-      return "bg-amber-100 text-amber-600 hover:bg-amber-200 focus:bg-amber-100";
+      classNames = "bg-amber-100 text-amber-600 hover:bg-amber-200 focus:bg-amber-100";
+    } else if (hasEvents) {
+      classNames = "bg-blue-100 text-blue-600 hover:bg-blue-200 focus:bg-blue-100";
     }
     
-    if (hasEvents) {
-      return "bg-blue-100 text-blue-600 hover:bg-blue-200 focus:bg-blue-100";
-    }
-    
-    return "";
+    return classNames;
   };
 
   return { getDayClassNames };

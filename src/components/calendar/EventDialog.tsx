@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -11,19 +10,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
 import { CalendarEvent } from '@/types/calendar';
-import { Switch } from '@/components/ui/switch';
-import TimePicker from './TimePicker';
+import DateTimeSection from './dialog/DateTimeSection';
+import EventDetailsForm from './dialog/EventDetailsForm';
+import ReminderSelector from './dialog/ReminderSelector';
 
 interface EventDialogProps {
   isOpen: boolean;
@@ -139,135 +129,32 @@ const EventDialog: React.FC<EventDialogProps> = ({
           </DialogHeader>
           
           <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="title">Title</Label>
-              <Input
-                id="title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Event title"
-                required
-              />
-            </div>
+            <EventDetailsForm
+              title={title}
+              location={location}
+              description={description}
+              onTitleChange={setTitle}
+              onLocationChange={setLocation}
+              onDescriptionChange={setDescription}
+            />
             
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="startDate">Start Date</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="justify-start text-left font-normal"
-                      id="startDate"
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {startDate ? format(startDate, 'PPP') : <span>Pick a date</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={startDate}
-                      onSelect={(date) => {
-                        setStartDate(date);
-                        if (!endDate) setEndDate(date);
-                      }}
-                      initialFocus
-                      className="pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-              
-              <div className="grid gap-2">
-                <Label htmlFor="startTime">Start Time</Label>
-                <TimePicker 
-                  value={startTime} 
-                  onChange={setStartTime} 
-                  id="startTime" 
-                />
-              </div>
-            </div>
+            <DateTimeSection
+              startDate={startDate}
+              endDate={endDate}
+              startTime={startTime}
+              endTime={endTime}
+              onStartDateChange={setStartDate}
+              onEndDateChange={setEndDate}
+              onStartTimeChange={setStartTime}
+              onEndTimeChange={setEndTime}
+            />
             
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="endDate">End Date</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="justify-start text-left font-normal"
-                      id="endDate"
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {endDate ? format(endDate, 'PPP') : <span>Pick a date</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={endDate}
-                      onSelect={setEndDate}
-                      disabled={(date) => date < (startDate || new Date())}
-                      initialFocus
-                      className="pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-              
-              <div className="grid gap-2">
-                <Label htmlFor="endTime">End Time</Label>
-                <TimePicker 
-                  value={endTime} 
-                  onChange={setEndTime} 
-                  id="endTime"
-                />
-              </div>
-            </div>
-            
-            <div className="grid gap-2">
-              <Label htmlFor="location">Location</Label>
-              <Input
-                id="location"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder="Event location (optional)"
-              />
-            </div>
-            
-            <div className="grid gap-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Event description (optional)"
-                rows={3}
-              />
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <Switch 
-                id="isReminder" 
-                checked={isReminder}
-                onCheckedChange={setIsReminder}
-              />
-              <Label htmlFor="isReminder">Set Reminder</Label>
-            </div>
-            
-            {isReminder && (
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="reminderTime">Reminder Time</Label>
-                  <TimePicker 
-                    value={reminderTimeString} 
-                    onChange={setReminderTimeString} 
-                    id="reminderTime"
-                  />
-                </div>
-              </div>
-            )}
+            <ReminderSelector
+              isReminder={isReminder}
+              reminderTimeString={reminderTimeString}
+              onReminderChange={setIsReminder}
+              onReminderTimeChange={setReminderTimeString}
+            />
           </div>
           
           <DialogFooter>
