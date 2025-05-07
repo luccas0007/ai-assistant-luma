@@ -23,7 +23,7 @@ interface TaskFormFieldsProps {
   setPriority: (priority: string) => void;
   attachmentURL: string | null;
   setAttachmentURL: (url: string | null) => void;
-  onFileUpload?: (file: File) => Promise<void>;
+  onFileUpload?: (file: File) => Promise<{ success: boolean; url: string | null; }>;
   columns: Column[];
   projects?: Project[];
   projectId?: string | null;
@@ -99,7 +99,7 @@ const TaskFormFields: React.FC<TaskFormFieldsProps> = ({
       <AttachmentField 
         attachmentURL={attachmentURL}
         setAttachmentURL={setAttachmentURL}
-        onFileUpload={onFileUpload ? file => onFileUpload(file) : undefined}
+        onFileUpload={onFileUpload}
       />
     </div>
   );

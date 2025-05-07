@@ -8,7 +8,7 @@ import { Paperclip, X, Upload, FileText, Link as LinkIcon } from 'lucide-react';
 interface AttachmentFieldProps {
   attachmentURL: string | null;
   setAttachmentURL: (url: string | null) => void;
-  onFileUpload?: (file: File) => Promise<void>;
+  onFileUpload?: (file: File) => Promise<{ success: boolean; url: string | null; }>;
 }
 
 const AttachmentField: React.FC<AttachmentFieldProps> = ({
@@ -27,7 +27,11 @@ const AttachmentField: React.FC<AttachmentFieldProps> = ({
     
     try {
       setIsUploading(true);
-      await onFileUpload(file);
+      const result = await onFileUpload(file);
+      // If upload was not successful, handle accordingly
+      if (!result.success) {
+        console.error('File upload failed');
+      }
     } catch (error) {
       console.error('File upload error:', error);
     } finally {
