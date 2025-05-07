@@ -1,6 +1,6 @@
-
 import { supabase } from '@/integrations/supabase/client';
-import { EmailAccount, Email, EmailAttachment, EmailCompose } from '@/types/email';
+import { EmailAccount, Email, EmailCompose } from '@/types/email';
+import { getProviderConfig } from '@/utils/emailProviders';
 
 // Account management
 export const getEmailAccounts = async (): Promise<EmailAccount[]> => {
@@ -35,6 +35,42 @@ export const addEmailAccount = async (account: any): Promise<EmailAccount> => {
   }
 
   return data as EmailAccount;
+};
+
+export const testEmailConnection = async (accountData: Partial<EmailAccount>): Promise<boolean> => {
+  try {
+    // For custom accounts, ensure we have all required fields
+    if (accountData.provider === 'custom') {
+      if (!accountData.username || !accountData.auth_credentials?.password || 
+          !accountData.imap_host || !accountData.smtp_host) {
+        throw new Error('Missing required fields for testing connection');
+      }
+    } else {
+      // For OAuth accounts, apply default settings from provider config
+      const providerConfig = getProviderConfig(accountData.provider!);
+      accountData.imap_host = providerConfig.imap.host;
+      accountData.imap_port = providerConfig.imap.port;
+      accountData.smtp_host = providerConfig.smtp.host;
+      accountData.smtp_port = providerConfig.smtp.port;
+    }
+
+    // Call the edge function to test connection
+    const response = await supabase.functions.invoke('email-operations', {
+      body: {
+        action: 'testConnection',
+        account: accountData
+      }
+    });
+
+    if (!response.data.success) {
+      throw new Error(response.data.error || 'Failed to test connection');
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error testing email connection:', error);
+    throw error;
+  }
 };
 
 export const updateEmailAccount = async (id: string, updates: Partial<EmailAccount>): Promise<EmailAccount> => {

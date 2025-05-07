@@ -13,6 +13,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { addEmailAccount } from '@/services/emailService';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { EmailProviderConfig, getProviderConfig } from '@/utils/emailProviders';
+import { AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 // Form schema for custom email setup
 const customEmailSchema = z.object({
@@ -44,6 +47,8 @@ const formSchema = z.discriminatedUnion('provider', [
 export default function EmailAccountSetup({ onComplete }: { onComplete: () => void }) {
   const [accountType, setAccountType] = useState<'gmail' | 'outlook' | 'custom'>('gmail');
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -62,6 +67,9 @@ export default function EmailAccountSetup({ onComplete }: { onComplete: () => vo
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
+      setIsSubmitting(true);
+      setFormError(null);
+      
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast({
@@ -95,6 +103,8 @@ export default function EmailAccountSetup({ onComplete }: { onComplete: () => vo
       } else {
         // Handle OAuth provider fields
         const oauthData = values as z.infer<typeof oauthEmailSchema>;
+        const providerConfig = getProviderConfig(oauthData.provider);
+        
         const accountData = {
           account_name: oauthData.account_name,
           email_address: oauthData.email_address,
@@ -103,10 +113,10 @@ export default function EmailAccountSetup({ onComplete }: { onComplete: () => vo
           is_oauth: true,
           username: oauthData.email_address, // Use email as username for OAuth
           auth_credentials: {}, // OAuth credentials would go here in a real app
-          imap_host: oauthData.provider === 'gmail' ? 'imap.gmail.com' : 'outlook.office365.com',
-          imap_port: 993,
-          smtp_host: oauthData.provider === 'gmail' ? 'smtp.gmail.com' : 'smtp.office365.com',
-          smtp_port: 587,
+          imap_host: providerConfig.imap.host,
+          imap_port: providerConfig.imap.port,
+          smtp_host: providerConfig.smtp.host,
+          smtp_port: providerConfig.smtp.port,
         };
         
         await addEmailAccount(accountData);
@@ -120,11 +130,14 @@ export default function EmailAccountSetup({ onComplete }: { onComplete: () => vo
       onComplete();
     } catch (error) {
       console.error('Error adding email account:', error);
+      setFormError(error instanceof Error ? error.message : 'An unknown error occurred');
       toast({
         title: "Failed to add account",
         description: error instanceof Error ? error.message : 'An unknown error occurred',
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -132,12 +145,19 @@ export default function EmailAccountSetup({ onComplete }: { onComplete: () => vo
     setAccountType(provider);
     form.setValue('provider', provider);
     
-    // When switching to OAuth providers, set username to email address
     if (provider !== 'custom') {
+      // When switching to OAuth providers, set username to email address
       const currentEmail = form.getValues('email_address');
       if (currentEmail) {
         form.setValue('username', currentEmail);
       }
+      
+      // Set default server settings from provider config
+      const config = getProviderConfig(provider);
+      form.setValue('imap_host', config.imap.host);
+      form.setValue('imap_port', config.imap.port);
+      form.setValue('smtp_host', config.smtp.host);
+      form.setValue('smtp_port', config.smtp.port);
     }
   };
 
@@ -148,6 +168,14 @@ export default function EmailAccountSetup({ onComplete }: { onComplete: () => vo
         <CardDescription>Connect your email account to manage messages</CardDescription>
       </CardHeader>
       <CardContent>
+        {formError && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{formError}</AlertDescription>
+          </Alert>
+        )}
+      
         <Tabs defaultValue="gmail" onValueChange={(value) => updateProvider(value as any)}>
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="gmail">Gmail</TabsTrigger>
@@ -182,7 +210,18 @@ export default function EmailAccountSetup({ onComplete }: { onComplete: () => vo
                     <FormItem>
                       <FormLabel>Email Address</FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder="you@example.com" {...field} />
+                        <Input 
+                          type="email" 
+                          placeholder="you@example.com" 
+                          {...field} 
+                          onChange={(e) => {
+                            field.onChange(e);
+                            // Auto-update username to match email for OAuth providers
+                            if (accountType !== 'custom') {
+                              form.setValue('username', e.target.value);
+                            }
+                          }}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -298,7 +337,9 @@ export default function EmailAccountSetup({ onComplete }: { onComplete: () => vo
               </div>
               
               <div className="flex justify-end">
-                <Button type="submit">Add Account</Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? 'Adding Account...' : 'Add Account'}
+                </Button>
               </div>
             </form>
           </Form>

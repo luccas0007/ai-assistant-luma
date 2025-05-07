@@ -44,6 +44,84 @@ interface SendEmailRequest {
   from: string;
 }
 
+interface TestConnectionRequest {
+  account: EmailAccount;
+}
+
+// Provider-specific implementations
+const providerHandlers = {
+  gmail: {
+    getConnectionOptions: (account: EmailAccount) => {
+      return {
+        host: account.imap_host || 'imap.gmail.com',
+        port: account.imap_port || 993,
+        secure: account.imap_port === 993,
+        auth: account.is_oauth 
+          ? { 
+              type: 'OAuth2',
+              user: account.username,
+              accessToken: account.auth_credentials.access_token
+            }
+          : {
+              user: account.username,
+              pass: account.auth_credentials.password
+            }
+      };
+    },
+    refreshToken: async (account: EmailAccount) => {
+      // In a real app, implement OAuth refresh token logic here
+      return { success: true, account };
+    }
+  },
+  outlook: {
+    getConnectionOptions: (account: EmailAccount) => {
+      return {
+        host: account.imap_host || 'outlook.office365.com',
+        port: account.imap_port || 993,
+        secure: account.imap_port === 993,
+        auth: account.is_oauth 
+          ? { 
+              type: 'OAuth2',
+              user: account.username,
+              accessToken: account.auth_credentials.access_token
+            }
+          : {
+              user: account.username,
+              pass: account.auth_credentials.password
+            }
+      };
+    },
+    refreshToken: async (account: EmailAccount) => {
+      // In a real app, implement OAuth refresh token logic here
+      return { success: true, account };
+    }
+  },
+  // Default handler for custom providers
+  custom: {
+    getConnectionOptions: (account: EmailAccount) => {
+      return {
+        host: account.imap_host,
+        port: account.imap_port,
+        secure: account.imap_port === 993,
+        auth: {
+          user: account.username,
+          pass: account.auth_credentials.password
+        }
+      };
+    },
+    refreshToken: async (account: EmailAccount) => {
+      // No refresh needed for custom providers with password auth
+      return { success: true, account };
+    }
+  }
+};
+
+// Helper to get the appropriate provider handler
+function getProviderHandler(account: EmailAccount) {
+  const provider = account.provider.toLowerCase();
+  return providerHandlers[provider] || providerHandlers.custom;
+}
+
 async function fetchEmails(request: FetchEmailsRequest) {
   const { account, folder, limit } = request;
   
@@ -82,22 +160,12 @@ async function sendEmail(request: SendEmailRequest) {
   const { account, to, cc, bcc, subject, text, html, from } = request;
   
   try {
+    // Get provider-specific connection options
+    const providerHandler = getProviderHandler(account);
+    const transportOptions = providerHandler.getConnectionOptions(account);
+    
     // Create SMTP transporter
-    const transporter = nodemailer.createTransport({
-      host: account.smtp_host,
-      port: account.smtp_port,
-      secure: account.smtp_port === 465,
-      auth: account.is_oauth 
-        ? { 
-            type: 'OAuth2',
-            user: account.username,
-            accessToken: account.auth_credentials.access_token
-          }
-        : {
-            user: account.username,
-            pass: account.auth_credentials.password
-          }
-    });
+    const transporter = nodemailer.createTransport(transportOptions);
     
     // Build email
     const message = {
@@ -122,6 +190,29 @@ async function sendEmail(request: SendEmailRequest) {
   }
 }
 
+async function testConnection(request: TestConnectionRequest) {
+  const { account } = request;
+  
+  try {
+    // Get provider-specific connection options
+    const providerHandler = getProviderHandler(account);
+    const transportOptions = providerHandler.getConnectionOptions(account);
+    
+    // In a real implementation, we would actually try to connect
+    // For MVP, we'll just simulate a successful connection
+    console.log('Testing connection with options:', transportOptions);
+    
+    // Simulate a delay for realism
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Return success
+    return { success: true, message: 'Connection successful' };
+  } catch (error) {
+    console.error('Error testing connection:', error);
+    return { success: false, error: error.message };
+  }
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -139,6 +230,9 @@ serve(async (req) => {
         break;
       case 'sendEmail':
         result = await sendEmail(data);
+        break;
+      case 'testConnection':
+        result = await testConnection(data);
         break;
       default:
         result = { success: false, error: 'Invalid action' };

@@ -4,7 +4,7 @@ export interface EmailAccount {
   user_id: string;
   account_name: string;
   email_address: string;
-  provider: 'gmail' | 'outlook' | 'custom';
+  provider: 'gmail' | 'outlook' | 'yahoo' | 'custom';
   imap_host: string | null;
   imap_port: number | null;
   smtp_host: string | null;
