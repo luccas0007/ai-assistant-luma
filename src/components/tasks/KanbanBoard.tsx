@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Droppable, Draggable } from 'react-beautiful-dnd';
-import { MoreHorizontal, Calendar, Paperclip } from 'lucide-react';
+import { MoreHorizontal, Calendar, Paperclip, X } from 'lucide-react';
 import { format } from 'date-fns';
 
 import { Task, Column } from '@/types/task';
@@ -20,6 +20,7 @@ interface KanbanBoardProps {
   columns: Column[];
   onEditTask: (task: Task) => void;
   onDeleteTask: (id: string) => void;
+  onDeleteColumn?: (columnId: string) => void;
 }
 
 const priorityColors = {
@@ -28,17 +29,29 @@ const priorityColors = {
   low: 'bg-green-100 text-green-800 hover:bg-green-200',
 };
 
-const KanbanBoard: React.FC<KanbanBoardProps> = ({ tasks, columns, onEditTask, onDeleteTask }) => {
+const KanbanBoard: React.FC<KanbanBoardProps> = ({ tasks, columns, onEditTask, onDeleteTask, onDeleteColumn }) => {
   return (
     <div className="flex gap-4 overflow-x-auto pb-4">
       {columns.map((column) => (
         <div key={column.id} className="flex-shrink-0 w-80">
           <div className="bg-muted rounded-md p-3">
             <h3 className="font-medium mb-3 px-1 flex justify-between items-center">
-              <span>{column.title}</span>
-              <Badge variant="outline">
-                {tasks.filter(task => task.status === column.id).length}
-              </Badge>
+              <div className="flex items-center">
+                <span>{column.title}</span>
+                <Badge variant="outline" className="ml-2">
+                  {tasks.filter(task => task.status === column.id).length}
+                </Badge>
+              </div>
+              {onDeleteColumn && (
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-5 w-5 rounded-full hover:bg-destructive/10"
+                  onClick={() => onDeleteColumn(column.id)}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              )}
             </h3>
             <Droppable droppableId={column.id}>
               {(provided, snapshot) => (

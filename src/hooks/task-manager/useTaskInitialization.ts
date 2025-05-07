@@ -70,6 +70,7 @@ export const useTaskInitialization = (
 
     if (!activeProject) {
       // Clear tasks and columns when no project is selected
+      console.log('No active project, clearing tasks and columns');
       setTasks([]);
       setColumns([]);
       return;
@@ -120,7 +121,17 @@ export const useTaskInitialization = (
           setTasks([]);
         } else if (tasksData) {
           console.log(`Successfully loaded ${tasksData.length} tasks for project ${activeProject.id}`);
-          setTasks(tasksData);
+          
+          // Make sure tasks have the correct column_id or status reference
+          const normalizedTasks = tasksData.map(task => ({
+            ...task,
+            // Ensure column_id is set to status if it's null
+            column_id: task.column_id || task.status,
+            // Ensure status is set to column_id if it exists
+            status: task.column_id || task.status
+          }));
+          
+          setTasks(normalizedTasks);
           // Clear any existing errors if the fetch was successful
           setError(null);
         } else {

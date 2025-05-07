@@ -151,7 +151,14 @@ export const useTaskManager = () => {
           variant: "destructive"
         });
       } else {
-        state.setTasks(data || []);
+        // Normalize tasks to ensure column_id and status are consistent
+        const normalizedTasks = data.map(task => ({
+          ...task,
+          column_id: task.column_id || task.status,
+          status: task.column_id || task.status
+        }));
+        
+        state.setTasks(normalizedTasks);
         state.setError(null);
         toast({
           title: "Refreshed",

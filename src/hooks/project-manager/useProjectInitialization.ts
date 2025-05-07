@@ -31,6 +31,7 @@ export const useProjectInitialization = (
       setProjectError(null);
       
       try {
+        console.log('Loading projects for user:', user.id);
         const { data, error, errorMessage } = await fetchUserProjects(user.id);
         
         if (error) {
@@ -47,6 +48,7 @@ export const useProjectInitialization = (
         
         if (data.length === 0) {
           // Create a default project if none exists
+          console.log('No projects found, creating default project');
           const defaultProject = await handleCreateProject('Default Project', 'Your default project board');
           
           if (defaultProject) {
@@ -55,27 +57,33 @@ export const useProjectInitialization = (
             
             // Update URL
             setSearchParams({ project: defaultProject.id });
+            console.log('Default project created:', defaultProject.id);
           }
         } else {
+          console.log(`Found ${data.length} projects`);
           setProjects(data);
           
           // Set active project from URL or use first project
           if (projectIdFromUrl) {
             const projectFromUrl = data.find(p => p.id === projectIdFromUrl);
             if (projectFromUrl) {
+              console.log('Setting active project from URL:', projectIdFromUrl);
               setActiveProject(projectFromUrl);
             } else {
               // Invalid project ID in URL, set first project as active
+              console.log('Project ID in URL not found, using first project:', data[0].id);
               setActiveProject(data[0]);
               setSearchParams({ project: data[0].id });
             }
           } else {
-            // No project ID in URL, set first project as active
+            // No project ID in URL, set first project as active and update URL
+            console.log('No project ID in URL, using first project:', data[0].id);
             setActiveProject(data[0]);
             setSearchParams({ project: data[0].id });
           }
         }
       } catch (error: any) {
+        console.error('Error in project initialization:', error);
         setProjectError(`Error loading projects: ${error.message}`);
         toast({
           title: 'Error',

@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Toaster } from '@/components/ui/toaster';
 import { useProjectManager } from '@/hooks/project-manager';
+import useTaskManager from '@/hooks/task-manager';
 
 // Import our new components
 import ProjectToolbar from '@/components/tasks/ProjectToolbar';
@@ -17,6 +18,25 @@ import ProjectDialog from '@/components/projects/ProjectDialog';
 const TaskManager = () => {
   // Project deletion state
   const [projectToDelete, setProjectToDelete] = useState<null | { id: string; name: string }>(null);
+  
+  const projectManager = useProjectManager();
+  const taskManager = useTaskManager();
+  
+  const {
+    // Project state & actions
+    projects,
+    activeProject,
+    isLoadingProjects,
+    projectError,
+    setProjectError,
+    projectDialogOpen,
+    setProjectDialogOpen,
+    editingProject,
+    setEditingProject,
+    handleCreateProject,
+    handleUpdateProject,
+    handleDeleteProject
+  } = projectManager;
   
   const {
     // Task state
@@ -37,31 +57,16 @@ const TaskManager = () => {
     newColumnTitle,
     setNewColumnTitle,
     
-    // Project state
-    projects,
-    activeProject,
-    isLoadingProjects,
-    projectError,
-    setProjectError,
-    projectDialogOpen,
-    setProjectDialogOpen,
-    editingProject,
-    setEditingProject,
-    
-    // Actions
+    // Task actions
     handleCreateTask,
     handleUpdateTask,
     handleDeleteTask,
     handleDragEnd,
     handleAddColumn,
     handleDeleteColumn,
-    handleCreateProject,
-    handleUpdateProject,
-    handleDeleteProject,
-    setActiveProject,
     handleUploadAttachment,
     refreshTasks
-  } = useProjectManager();
+  } = taskManager;
   
   const handleRetry = () => {
     refreshTasks();
@@ -130,7 +135,7 @@ const TaskManager = () => {
       <ProjectToolbar
         projects={projects}
         activeProject={activeProject}
-        onSelectProject={setActiveProject}
+        onSelectProject={projectManager.setActiveProject}
         onCreateProject={handleCreateNewProject}
         onEditProject={handleEditProject}
         onDeleteProject={handleDeleteProjectRequest}
