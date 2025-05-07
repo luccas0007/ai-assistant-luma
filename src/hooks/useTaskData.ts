@@ -22,6 +22,8 @@ export const useTaskData = (projectId?: string | null) => {
       setIsLoading(true);
       setError(null);
 
+      console.log(`Fetching tasks for user: ${user.id}${projectId ? ` and project: ${projectId}` : ''}`);
+      
       let query = supabase
         .from('tasks')
         .select('*')
@@ -39,6 +41,7 @@ export const useTaskData = (projectId?: string | null) => {
         throw taskError;
       }
 
+      console.log(`Successfully fetched ${taskData?.length || 0} tasks`);
       setData(taskData as Task[]);
     } catch (err: any) {
       console.error('Error fetching tasks:', err);

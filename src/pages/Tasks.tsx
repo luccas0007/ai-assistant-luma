@@ -7,6 +7,8 @@ import { useStandaloneTasks } from '@/hooks/use-standalone-tasks';
 import { useAuth } from '@/context/AuthContext';
 import { Toaster } from '@/components/ui/toaster';
 import { Skeleton } from '@/components/ui/skeleton';
+import LoadingIndicator from '@/components/common/LoadingIndicator';
+import { useTaskData } from '@/hooks/useTaskData';
 
 const TasksPage: React.FC = () => {
   const {

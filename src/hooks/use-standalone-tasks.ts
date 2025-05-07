@@ -118,8 +118,11 @@ export const useStandaloneTasks = (projectId?: string | null) => {
         attachment_url: newTask.attachment_url || null,
         attachment_path: newTask.attachment_path || null,
         project_id: projectId || null,
-        column_id: newTask.column_id || newTask.status || null,
+        // Fix: Don't set column_id to the status string, set it to null
+        column_id: null,
       };
+
+      console.log("Creating task with data:", taskData);
 
       const { data, error } = await supabase
         .from('tasks')
@@ -127,6 +130,7 @@ export const useStandaloneTasks = (projectId?: string | null) => {
         .select();
 
       if (error) {
+        console.error('Error adding task:', error);
         throw error;
       }
 
@@ -150,12 +154,16 @@ export const useStandaloneTasks = (projectId?: string | null) => {
   // Update a task
   const updateTask = async (updatedTask: Task) => {
     try {
+      // Fix: Ensure column_id is not set to a status string
+      const taskToUpdate = {
+        ...updatedTask,
+        column_id: null, // Always set to null to avoid UUID type errors
+        updated_at: new Date().toISOString()
+      };
+
       const { error } = await supabase
         .from('tasks')
-        .update({
-          ...updatedTask,
-          updated_at: new Date().toISOString()
-        })
+        .update(taskToUpdate)
         .eq('id', updatedTask.id);
 
       if (error) {
@@ -217,10 +225,11 @@ export const useStandaloneTasks = (projectId?: string | null) => {
         throw new Error("Task not found");
       }
       
+      // Fix: Do not set column_id to the status string
       const updatedTask = {
         ...taskToUpdate,
         status: newStatus,
-        column_id: newStatus,
+        column_id: null, // Set to null to avoid UUID type errors
         updated_at: new Date().toISOString()
       };
       
@@ -234,7 +243,7 @@ export const useStandaloneTasks = (projectId?: string | null) => {
       }
       
       setTasks((prevTasks) =>
-        prevTasks.map((task) => (task.id === taskId ? { ...task, status: newStatus, column_id: newStatus } : task))
+        prevTasks.map((task) => (task.id === taskId ? { ...task, status: newStatus, column_id: null } : task))
       );
     } catch (error: any) {
       console.error("Error changing task status:", error);
