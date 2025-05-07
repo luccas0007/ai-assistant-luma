@@ -9,7 +9,7 @@ interface CustomCalendarDayProps {
   events: CalendarEvent[];
   displayMonth?: Date;
   className?: string;
-  onClick?: () => void;
+  onClick?: React.MouseEventHandler<HTMLDivElement>;
   disabled?: boolean;
   tabIndex?: number;
 }

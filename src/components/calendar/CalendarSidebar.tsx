@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import CustomCalendarDay from './CustomCalendarDay';
 import UpcomingEventsList from './UpcomingEventsList';
 import { useCalendarDayClassNames } from '@/hooks/useCalendarDayClassNames';
+import type { DayProps } from 'react-day-picker';
 
 interface CalendarSidebarProps {
   date: Date;
@@ -37,23 +38,20 @@ const CalendarSidebar: React.FC<CalendarSidebarProps> = ({ date, events, onDateS
             }
           }}
           components={{
-            Day: (props) => {
+            Day: (props: DayProps) => {
               // This is for TypeScript compatibility
               if (!props.date) return null;
               
-              // Extract needed props to pass to our custom component
-              const { date: day, displayMonth } = props;
-              
               return (
                 <CustomCalendarDay 
-                  day={day} 
+                  day={props.date} 
                   events={events}
-                  displayMonth={displayMonth}
-                  // Extract the props needed from the original DayProps
-                  className={props.day?.className}
-                  onClick={props.day?.onClick}
-                  disabled={props.day?.disabled}
-                  tabIndex={props.day?.tabIndex}
+                  displayMonth={props.displayMonth}
+                  // Pass the correctly typed properties directly from props
+                  className={cn(props.className)}
+                  onClick={props.onClick}
+                  disabled={props.disabled}
+                  tabIndex={props.tabIndex}
                 />
               );
             }
