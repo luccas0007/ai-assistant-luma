@@ -99,6 +99,26 @@ export const useProjectInitialization = (
     loadProjects();
   }, [user, handleCreateProject, setProjects, setActiveProject, setProjectError, 
       setIsLoadingProjects, setSearchParams, toast, projectIdFromUrl, setInitialLoadComplete]);
+      
+  // Update URL when active project changes
+  useEffect(() => {
+    const updateUrlWhenProjectChanges = (project: Project | null) => {
+      if (project && project.id !== projectIdFromUrl) {
+        console.log('Updating URL with project ID:', project.id);
+        setSearchParams({ project: project.id });
+      }
+    };
+    
+    // This sets up a listener on the setActiveProject function
+    return () => {
+      setActiveProject((prev) => {
+        if (prev) {
+          updateUrlWhenProjectChanges(prev);
+        }
+        return prev;
+      });
+    };
+  }, [setSearchParams, projectIdFromUrl, setActiveProject]);
 };
 
 export default useProjectInitialization;

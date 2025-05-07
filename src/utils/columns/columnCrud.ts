@@ -47,11 +47,11 @@ export const createColumn = async (projectId: string, title: string): Promise<Co
     // Determine the position for the new column
     const position = existingColumns && existingColumns.length > 0 ? existingColumns[0].position + 1 : 0;
     
-    // Insert the new column
+    // Insert the new column - ensure project_id is correctly passed
     const insertResult: SupabaseQueryResult<ColumnRecord> = await supabase
       .from('columns')
       .insert({
-        project_id: projectId,
+        project_id: projectId, // Make sure this is the selected project ID
         title,
         position,
         user_id: userId

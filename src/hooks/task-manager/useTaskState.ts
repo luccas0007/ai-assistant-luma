@@ -37,6 +37,20 @@ export const useTaskState = (initialActiveProject: Project | null = null) => {
     }
   }, []);
 
+  // Update active project with proper tracking
+  const updateActiveProject = useCallback((project: Project | null) => {
+    if (project?.id !== activeProject?.id) {
+      console.log(`Changing active project from ${activeProject?.id || 'null'} to ${project?.id || 'null'}`);
+      
+      // Clear existing columns when project changes
+      if (project?.id !== activeProject?.id) {
+        setColumns([]);
+      }
+      
+      setActiveProject(project);
+    }
+  }, [activeProject?.id]);
+
   return {
     // Task state
     tasks,
@@ -48,7 +62,7 @@ export const useTaskState = (initialActiveProject: Project | null = null) => {
     
     // Project state
     activeProject,
-    setActiveProject,
+    setActiveProject: updateActiveProject,
     
     // UI state
     isLoading,

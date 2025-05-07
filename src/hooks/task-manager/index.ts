@@ -68,6 +68,7 @@ export const useTaskManager = () => {
   useEffect(() => {
     const loadColumns = async () => {
       if (!state.activeProject) {
+        console.log('No active project, clearing columns');
         state.setColumns([]);
         return;
       }
@@ -176,6 +177,15 @@ export const useTaskManager = () => {
       state.setIsLoading(false);
     }
   };
+  
+  // Set up a project change effect to refresh tasks when project changes
+  useEffect(() => {
+    if (state.activeProject) {
+      console.log(`Active project changed to: ${state.activeProject.id}. Refreshing tasks.`);
+      // Refresh tasks and columns when project changes
+      refreshTasks();
+    }
+  }, [state.activeProject?.id]); // Only trigger when project ID changes
   
   return {
     ...state,
