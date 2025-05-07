@@ -3,12 +3,11 @@ import React, { useEffect } from 'react';
 import { Check, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import TaskStandaloneList from '@/components/tasks/TaskStandaloneList';
-import { useStandaloneTasks } from '@/hooks/tasks/useStandaloneTasks';
+import { useStandaloneTasks } from '@/hooks/tasks';
 import { useAuth } from '@/context/AuthContext';
 import { Toaster } from '@/components/ui/toaster';
 import { Skeleton } from '@/components/ui/skeleton';
 import LoadingIndicator from '@/components/common/LoadingIndicator';
-import { useTaskData } from '@/hooks/useTaskData';
 
 const TasksPage: React.FC = () => {
   const {

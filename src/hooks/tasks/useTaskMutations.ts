@@ -47,8 +47,7 @@ export const useTaskMutations = (
         attachment_url: newTask.attachment_url || null,
         attachment_path: newTask.attachment_path || null,
         project_id: projectId || null,
-        // Fix: Don't set column_id to the status string, set it to null
-        column_id: null,
+        column_id: null, // IMPORTANT: Set to null to avoid UUID type errors
       };
 
       console.log("Creating task with data:", taskData);
@@ -83,6 +82,8 @@ export const useTaskMutations = (
   // Update a task
   const updateTask = async (updatedTask: Task) => {
     try {
+      console.log("Updating task:", updatedTask);
+      
       // Fix: Ensure column_id is not set to a status string
       const taskToUpdate = {
         ...updatedTask,
@@ -96,6 +97,7 @@ export const useTaskMutations = (
         .eq('id', updatedTask.id);
 
       if (error) {
+        console.error("Error during update:", error);
         throw error;
       }
 

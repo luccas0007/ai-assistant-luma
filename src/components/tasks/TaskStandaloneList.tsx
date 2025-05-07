@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   Plus, 
@@ -104,7 +105,7 @@ const TaskStandaloneList: React.FC<TaskStandaloneListProps> = ({
       priority: 'medium',
       completed: false,
       project_id: projectId,
-      column_id: defaultColumn
+      column_id: null // Set to null to avoid UUID type errors
     };
     
     setIsAdding(true);
@@ -113,12 +114,22 @@ const TaskStandaloneList: React.FC<TaskStandaloneListProps> = ({
     setQuickAdd('');
   };
   
-  // Toggle task completion
+  // Toggle task completion with fixed function
   const toggleTaskCompletion = (task: Task) => {
-    onEditTask({
+    const updatedTask = {
       ...task,
       completed: !task.completed
-    });
+    };
+    onEditTask(updatedTask);
+  };
+
+  // Change task priority
+  const changeTaskPriority = (task: Task, newPriority: string) => {
+    const updatedTask = {
+      ...task,
+      priority: newPriority
+    };
+    onEditTask(updatedTask);
   };
 
   // Task item component
@@ -136,14 +147,28 @@ const TaskStandaloneList: React.FC<TaskStandaloneListProps> = ({
               {task.title}
             </p>
             <div className="flex items-center gap-2">
-              {task.priority && (
-                <Badge 
-                  variant="outline" 
-                  className={priorityColors[task.priority as keyof typeof priorityColors]}
-                >
-                  {task.priority}
-                </Badge>
-              )}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Badge 
+                    variant="outline" 
+                    className={`cursor-pointer ${priorityColors[task.priority as keyof typeof priorityColors]}`}
+                  >
+                    {task.priority}
+                  </Badge>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => changeTaskPriority(task, 'high')} className="text-red-600">
+                    High
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => changeTaskPriority(task, 'medium')} className="text-amber-600">
+                    Medium
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => changeTaskPriority(task, 'low')} className="text-green-600">
+                    Low
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="h-6 w-6">
