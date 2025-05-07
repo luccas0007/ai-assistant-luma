@@ -28,7 +28,7 @@ interface TaskFormData {
 interface TaskDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (task: Partial<Task>) => void;
+  onSave: (task: Partial<Task>) => Promise<void>;
   onUploadAttachment: (file: File) => Promise<{ success: boolean; url: string | null }>;
   task: Task | null;
   columns: Column[];
@@ -54,6 +54,7 @@ const TaskDialog: React.FC<TaskDialogProps> = ({
   const [priority, setPriority] = useState('medium');
   const [dueDate, setDueDate] = useState<Date | undefined>(undefined);
   const [projectId, setProjectId] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
     handleSubmit,
@@ -64,6 +65,7 @@ const TaskDialog: React.FC<TaskDialogProps> = ({
   // Reset form when dialog opens/closes or task changes
   useEffect(() => {
     if (isOpen) {
+      console.log("Dialog opened with task:", task);
       setTitle(task?.title || '');
       setDescription(task?.description || '');
       setStatus(task?.status || (columns.length > 0 ? columns[0].id : ''));
@@ -81,25 +83,36 @@ const TaskDialog: React.FC<TaskDialogProps> = ({
       if (result.success && result.url) {
         setAttachmentURL(result.url);
       }
+      return result;
     } catch (error) {
       console.error('Error uploading file:', error);
+      return { success: false, url: null };
     } finally {
       setIsUploading(false);
     }
   };
 
-  const onSubmit = () => {
-    onSave({
-      ...task,
-      title,
-      description,
-      status,
-      priority,
-      due_date: dueDate ? dueDate.toISOString() : null,
-      attachment_url: attachmentURL,
-      project_id: projectId,
-      column_id: status, // Use the status as the column_id
-    });
+  const onSubmit = async () => {
+    if (!title.trim()) {
+      return;
+    }
+    
+    setIsSubmitting(true);
+    try {
+      await onSave({
+        ...task,
+        title,
+        description,
+        status,
+        priority,
+        due_date: dueDate ? dueDate.toISOString() : null,
+        attachment_url: attachmentURL,
+        project_id: projectId,
+        column_id: status,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -130,14 +143,17 @@ const TaskDialog: React.FC<TaskDialogProps> = ({
             setAttachmentURL={setAttachmentURL}
             onFileUpload={handleFileUpload}
             columns={columns}
+            projects={projects}
+            projectId={projectId}
+            setProjectId={setProjectId}
           />
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isUploading || !title.trim()}>
-              {isUploading ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : null}
+            <Button type="submit" disabled={isUploading || isSubmitting || !title.trim()}>
+              {(isUploading || isSubmitting) ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : null}
               {task ? 'Update Task' : 'Create Task'}
             </Button>
           </DialogFooter>

@@ -30,6 +30,7 @@ export const useTaskUpdate = (
         throw error;
       }
 
+      // Update the local state with the updated task
       setTasks((prevTasks) =>
         prevTasks.map((task) => (task.id === updatedTask.id ? updatedTask : task))
       );
@@ -38,6 +39,8 @@ export const useTaskUpdate = (
         title: "Success",
         description: "Task updated successfully."
       });
+      
+      return { success: true };
     } catch (error: any) {
       console.error("Error updating task:", error);
       toast({
@@ -45,6 +48,8 @@ export const useTaskUpdate = (
         description: `Failed to update task: ${error.message}`,
         variant: "destructive"
       });
+      
+      return { success: false, error };
     }
   };
 
