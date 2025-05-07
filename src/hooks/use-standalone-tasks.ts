@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { Task, Column } from '@/types/task';
 import { useAuth } from '@/context/AuthContext';
@@ -66,8 +65,8 @@ export const useStandaloneTasks = (projectId?: string | null) => {
         setColumns(defaultColumns);
       }
 
+      console.log("Tasks fetched:", data?.length || 0);
       setTasks(data as Task[] || []);
-      setIsLoading(false);
     } catch (error: any) {
       console.error("Error fetching tasks:", error);
       setError(error.message);
@@ -76,6 +75,7 @@ export const useStandaloneTasks = (projectId?: string | null) => {
         description: "Failed to load tasks. Please try again.",
         variant: "destructive"
       });
+    } finally {
       setIsLoading(false);
     }
   }, [user, projectId, toast, defaultColumns]);
@@ -104,7 +104,7 @@ export const useStandaloneTasks = (projectId?: string | null) => {
     try {
       // Create a properly typed task object for insertion
       const taskData = {
-        title: newTask.title, // Title is now guaranteed to exist
+        title: newTask.title,
         user_id: user.id,
         description: newTask.description || null,
         status: newTask.status || 'todo',
@@ -115,8 +115,6 @@ export const useStandaloneTasks = (projectId?: string | null) => {
         attachment_path: newTask.attachment_path || null,
         project_id: projectId || null,
         column_id: newTask.column_id || newTask.status || null,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
       };
 
       const { data, error } = await supabase
@@ -246,6 +244,7 @@ export const useStandaloneTasks = (projectId?: string | null) => {
 
   // Load tasks on component mount or when dependencies change
   useEffect(() => {
+    console.log("Fetching tasks, user:", user?.id);
     fetchTasks();
   }, [fetchTasks]);
 

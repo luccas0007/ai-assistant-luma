@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Check } from 'lucide-react';
+import { Check, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import TaskStandaloneList from '@/components/tasks/TaskStandaloneList';
 import { useStandaloneTasks } from '@/hooks/use-standalone-tasks';
@@ -39,6 +39,8 @@ const TasksPage: React.FC = () => {
     );
   }
   
+  console.log("Task page render - Loading:", isLoading, "Tasks:", tasks.length);
+  
   // Handle error state
   if (error) {
     return (
@@ -53,7 +55,10 @@ const TasksPage: React.FC = () => {
         <div className="flex flex-col items-center justify-center min-h-[40vh] text-center p-4 border rounded-lg bg-card">
           <h1 className="text-xl font-bold mb-2">Something went wrong</h1>
           <p className="text-muted-foreground mb-6">{error}</p>
-          <Button onClick={() => refreshTasks()}>Try Again</Button>
+          <Button onClick={() => refreshTasks()}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Try Again
+          </Button>
         </div>
       </div>
     );

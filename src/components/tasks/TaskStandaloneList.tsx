@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   Plus, 
@@ -9,7 +8,7 @@ import {
   Paperclip, 
   Search, 
   CheckSquare,
-  Loader2
+  Loader2 as Loader
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -206,11 +205,13 @@ const TaskStandaloneList: React.FC<TaskStandaloneListProps> = ({
           </CardTitle>
         </CardHeader>
         <CardContent className="flex justify-center items-center py-16">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <Loader className="h-8 w-8 animate-spin text-primary" />
         </CardContent>
       </Card>
     );
   }
+
+  console.log("TaskStandaloneList rendering with tasks:", tasks.length);
 
   return (
     <Card>
@@ -243,7 +244,7 @@ const TaskStandaloneList: React.FC<TaskStandaloneListProps> = ({
             />
             <Button onClick={handleQuickAdd} disabled={!quickAdd.trim() || isAdding}>
               {isAdding ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader className="h-4 w-4 animate-spin" />
               ) : (
                 <>
                   <Plus className="h-4 w-4 mr-1" />
