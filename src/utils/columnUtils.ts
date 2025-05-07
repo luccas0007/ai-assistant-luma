@@ -1,11 +1,29 @@
 
 import { Column } from '@/types/task';
 
-// Default columns for the Kanban board
+// Default columns for the Kanban board with required properties
 export const defaultColumns: Column[] = [
-  { id: 'todo', title: 'To Do' },
-  { id: 'in-progress', title: 'In Progress' },
-  { id: 'done', title: 'Done' }
+  { 
+    id: 'todo', 
+    title: 'To Do',
+    user_id: '',  // Will be populated when actually used
+    project_id: '', // Will be populated when actually used
+    position: 0
+  },
+  { 
+    id: 'in-progress', 
+    title: 'In Progress',
+    user_id: '',  // Will be populated when actually used
+    project_id: '', // Will be populated when actually used
+    position: 1
+  },
+  { 
+    id: 'done', 
+    title: 'Done',
+    user_id: '',  // Will be populated when actually used
+    project_id: '', // Will be populated when actually used
+    position: 2
+  }
 ];
 
 /**
@@ -46,6 +64,9 @@ export const createColumn = (title: string, existingColumns: Column[]): Column |
   
   return {
     id: newColumnId,
-    title: title
+    title: title,
+    user_id: '',  // Will be populated when actually used
+    project_id: '', // Will be populated when actually used
+    position: existingColumns.length // Set position to the end of the list
   };
 };
