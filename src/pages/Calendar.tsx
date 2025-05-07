@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { format, isSameDay } from 'date-fns';
 import { Calendar as CalendarIcon, Plus, Clock, Bell } from 'lucide-react';
@@ -10,7 +11,6 @@ import EventCard from '@/components/calendar/EventCard';
 import { CalendarEvent } from '@/types/calendar';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/components/ui/use-toast';
-import { DayContentProps } from 'react-day-picker';
 
 const CalendarPage: React.FC = () => {
   const [date, setDate] = useState<Date>(new Date());
@@ -97,22 +97,24 @@ const CalendarPage: React.FC = () => {
                 }
               }}
               components={{
-                Day: (props: DayContentProps) => {
-                  // Fix: Properly extract the date from props and handle props
-                  const dayDate = props.date;
-                  const customClass = getDayClassNames(dayDate);
+                Day: ({ date: dayDate, ...props }) => {
                   // Check if there's a reminder for this day
+                  const customClass = getDayClassNames(dayDate);
                   const hasReminder = events.some(event => 
                     event.isReminder && isSameDay(event.start, dayDate)
                   );
                   
                   return (
                     <div className="relative">
-                      {/* Use the component's own rendering */}
-                      <props.renderDay 
-                        {...props} 
-                        className={cn(props.classNames?.day, customClass)}
-                      />
+                      <div 
+                        className={cn(
+                          props.className,
+                          customClass
+                        )}
+                        {...props}
+                      >
+                        {props.children}
+                      </div>
                       {hasReminder && (
                         <span className="absolute bottom-0 right-0 h-1.5 w-1.5 rounded-full bg-amber-500" />
                       )}
