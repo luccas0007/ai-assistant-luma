@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import { Check, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import TaskStandaloneList from '@/components/tasks/TaskStandaloneList';
-import { useStandaloneTasks } from '@/hooks/use-standalone-tasks';
+import { useStandaloneTasks } from '@/hooks/tasks/useStandaloneTasks';
 import { useAuth } from '@/context/AuthContext';
 import { Toaster } from '@/components/ui/toaster';
 import { Skeleton } from '@/components/ui/skeleton';
