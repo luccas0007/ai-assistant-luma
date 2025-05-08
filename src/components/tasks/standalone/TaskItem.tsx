@@ -37,6 +37,17 @@ const TaskItem: React.FC<TaskItemProps> = ({
   changeTaskPriority,
   columns
 }) => {
+  // Add console logs for debugging
+  const handleEditClick = () => {
+    console.log('Edit task clicked:', task);
+    onEditTask(task);
+  };
+
+  const handleDeleteClick = () => {
+    console.log('Delete task clicked:', task.id);
+    onDeleteTask(task.id);
+  };
+
   return (
     <div className={`p-3 border rounded-md hover:bg-muted/50 transition-colors ${task.completed ? 'opacity-70' : ''}`}>
       <div className="flex items-start gap-3">
@@ -80,11 +91,11 @@ const TaskItem: React.FC<TaskItemProps> = ({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => onEditTask(task)}>
+                  <DropdownMenuItem onClick={handleEditClick}>
                     Edit
                   </DropdownMenuItem>
                   <DropdownMenuItem 
-                    onClick={() => onDeleteTask(task.id)}
+                    onClick={handleDeleteClick}
                     className="text-red-600 focus:text-red-600"
                   >
                     Delete

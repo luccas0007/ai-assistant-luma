@@ -62,6 +62,7 @@ const TaskStandaloneList: React.FC<TaskStandaloneListProps> = ({
 
   // Toggle task completion with fixed function
   const toggleTaskCompletion = (task: Task) => {
+    console.log("Toggling task completion:", task.id, !task.completed);
     const updatedTask = {
       ...task,
       completed: !task.completed
@@ -71,11 +72,18 @@ const TaskStandaloneList: React.FC<TaskStandaloneListProps> = ({
 
   // Change task priority
   const changeTaskPriority = (task: Task, newPriority: string) => {
+    console.log("Changing task priority:", task.id, "to", newPriority);
     const updatedTask = {
       ...task,
       priority: newPriority
     };
     onEditTask(updatedTask);
+  };
+
+  // Enhanced edit task handler with logging
+  const handleEditTask = (task: Task) => {
+    console.log("Edit task triggered for:", task);
+    onEditTask(task);
   };
 
   if (isLoading) {
@@ -112,7 +120,7 @@ const TaskStandaloneList: React.FC<TaskStandaloneListProps> = ({
             <TaskList 
               tasks={filteredTasks}
               columns={columns}
-              onEditTask={onEditTask}
+              onEditTask={handleEditTask}
               onDeleteTask={onDeleteTask}
               toggleTaskCompletion={toggleTaskCompletion}
               changeTaskPriority={changeTaskPriority}
@@ -124,7 +132,7 @@ const TaskStandaloneList: React.FC<TaskStandaloneListProps> = ({
             <TaskList 
               tasks={filteredTasks.filter(task => !task.completed)}
               columns={columns}
-              onEditTask={onEditTask}
+              onEditTask={handleEditTask}
               onDeleteTask={onDeleteTask}
               toggleTaskCompletion={toggleTaskCompletion}
               changeTaskPriority={changeTaskPriority}
@@ -136,7 +144,7 @@ const TaskStandaloneList: React.FC<TaskStandaloneListProps> = ({
             <TaskList 
               tasks={filteredTasks.filter(task => task.completed)}
               columns={columns}
-              onEditTask={onEditTask}
+              onEditTask={handleEditTask}
               onDeleteTask={onDeleteTask}
               toggleTaskCompletion={toggleTaskCompletion}
               changeTaskPriority={changeTaskPriority}

@@ -28,6 +28,12 @@ const TasksPage: React.FC = () => {
     // This effect helps debug render cycles
     console.log("Tasks page rendered - Auth status:", !!user, "Loading:", isLoading, "Tasks count:", tasks.length);
   });
+
+  // Add explicit handler for updateTask with debugging
+  const handleUpdateTask = (task: any) => {
+    console.log("TasksPage: Updating task:", task);
+    updateTask(task);
+  };
   
   // Handle authentication check
   if (!user) {
@@ -107,7 +113,7 @@ const TasksPage: React.FC = () => {
         tasks={tasks}
         columns={columns}
         onAddTask={addTask}
-        onEditTask={updateTask}
+        onEditTask={handleUpdateTask}
         onDeleteTask={deleteTask}
         onStatusChange={changeTaskStatus}
         isLoading={isLoading}

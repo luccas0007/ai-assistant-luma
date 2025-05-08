@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Task } from '@/types/task';
 import TaskDialog from '@/components/tasks/TaskDialog';
 import ColumnDialog from '@/components/tasks/ColumnDialog';
@@ -43,15 +43,30 @@ const TaskDialogsSection: React.FC<TaskDialogsSectionProps> = ({
   activeProject,
   isProcessing
 }) => {
+  // Add debugging for task editing
+  useEffect(() => {
+    if (taskDialogOpen && editingTask) {
+      console.log("TaskDialog opened for editing:", editingTask);
+    }
+  }, [taskDialogOpen, editingTask]);
+
   return (
     <>
       <TaskDialog
         isOpen={taskDialogOpen}
         onClose={() => {
+          console.log("Closing task dialog");
           setTaskDialogOpen(false);
           setEditingTask(null);
         }}
-        onSave={editingTask ? handleUpdateTask : handleCreateTask}
+        onSave={async (task) => {
+          console.log("Saving task:", task);
+          if (editingTask) {
+            await handleUpdateTask(task as Task);
+          } else {
+            await handleCreateTask(task);
+          }
+        }}
         onUploadAttachment={handleUploadAttachment}
         task={editingTask}
         columns={columns}

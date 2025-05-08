@@ -11,7 +11,7 @@ export const useTaskUpdate = (
 
   const updateTask = async (updatedTask: Task) => {
     try {
-      console.log("Updating task:", updatedTask);
+      console.log("Starting task update:", updatedTask);
       
       // Fix: Ensure column_id is not set to a status string
       const taskToUpdate = {
@@ -19,6 +19,8 @@ export const useTaskUpdate = (
         column_id: null, // Always set to null to avoid UUID type errors
         updated_at: new Date().toISOString()
       };
+
+      console.log("Sending to database:", taskToUpdate);
 
       const { error } = await supabase
         .from('tasks')
@@ -29,6 +31,8 @@ export const useTaskUpdate = (
         console.error("Error during update:", error);
         throw error;
       }
+
+      console.log("Task updated successfully in database");
 
       // Update the local state with the updated task
       setTasks((prevTasks) =>
