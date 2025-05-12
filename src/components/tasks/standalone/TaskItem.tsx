@@ -65,12 +65,14 @@ const TaskItem: React.FC<TaskItemProps> = ({
     changeTaskPriority(task, newPriority);
   };
 
-  const handleToggleCompletion = (e: React.MouseEvent | React.ChangeEvent) => {
-    // For checkbox we just need to stop propagation
-    e.stopPropagation();
-    
+  const handleToggleCompletion = () => {
     console.log("Toggling task completion:", task.id, !task.completed);
     toggleTaskCompletion(task);
+  };
+
+  // Separate handler for click events on the checkbox container
+  const handleCheckboxClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
   };
 
   return (
@@ -80,7 +82,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
           checked={task.completed}
           onCheckedChange={handleToggleCompletion}
           className="mt-0.5"
-          onClick={(e) => e.stopPropagation()}
+          onClick={handleCheckboxClick}
         />
         <div className="flex-1">
           <div className="flex items-center justify-between">

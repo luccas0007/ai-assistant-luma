@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Check, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { Skeleton } from '@/components/ui/skeleton';
 import LoadingIndicator from '@/components/common/LoadingIndicator';
 import { Task } from '@/types/task';
+import TaskDialogsSection from '@/components/tasks/TaskDialogsSection';
 
 const TasksPage: React.FC = () => {
   const {
