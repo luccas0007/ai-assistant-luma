@@ -114,6 +114,13 @@ const TasksPage: React.FC = () => {
     );
   }
   
+  // Create a wrapper function for TaskDialogsSection that matches the expected Promise<void> signature
+  const handleDialogUpdateTask = async (task: Task): Promise<void> => {
+    console.log("Dialog update task:", task);
+    await updateTask(task);
+    // No return value needed since Promise<void> is expected
+  };
+  
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -145,7 +152,7 @@ const TasksPage: React.FC = () => {
         setNewColumnTitle={() => {}}
         handleAddColumn={async () => {}}
         handleCreateTask={addTask}
-        handleUpdateTask={updateTask}
+        handleUpdateTask={handleDialogUpdateTask}
         handleUploadAttachment={async (file) => ({ success: true, url: "" })}
         columns={columns}
         projects={[]}

@@ -80,7 +80,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
       <div className="flex items-start gap-3">
         <Checkbox
           checked={task.completed}
-          onCheckedChange={handleToggleCompletion}
+          onCheckedChange={() => handleToggleCompletion()}
           className="mt-0.5"
           onClick={handleCheckboxClick}
         />
