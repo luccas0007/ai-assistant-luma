@@ -82,7 +82,7 @@ const TaskStandaloneList: React.FC<TaskStandaloneListProps> = ({
 
   // Enhanced edit task handler with logging
   const handleEditTask = (task: Task) => {
-    console.log("Edit task triggered for:", task);
+    console.log("TaskStandaloneList: Edit task triggered for:", task);
     onEditTask(task);
   };
 

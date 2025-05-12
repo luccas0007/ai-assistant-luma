@@ -66,6 +66,7 @@ const TaskDialogsSection: React.FC<TaskDialogsSectionProps> = ({
           } else {
             await handleCreateTask(task);
           }
+          setTaskDialogOpen(false);
         }}
         onUploadAttachment={handleUploadAttachment}
         task={editingTask}

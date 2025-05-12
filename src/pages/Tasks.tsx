@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Check, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,6 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Toaster } from '@/components/ui/toaster';
 import { Skeleton } from '@/components/ui/skeleton';
 import LoadingIndicator from '@/components/common/LoadingIndicator';
+import { Task } from '@/types/task';
 
 const TasksPage: React.FC = () => {
   const {
@@ -23,6 +23,8 @@ const TasksPage: React.FC = () => {
   } = useStandaloneTasks();
   
   const { user } = useAuth();
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   
   useEffect(() => {
     // This effect helps debug render cycles
@@ -30,8 +32,18 @@ const TasksPage: React.FC = () => {
   });
 
   // Add explicit handler for updateTask with debugging
-  const handleUpdateTask = (task: any) => {
-    console.log("TasksPage: Updating task:", task);
+  const handleUpdateTask = (task: Task) => {
+    console.log("TasksPage: Handling updateTask:", task);
+    
+    // Check if this is an edit action (from dropdown menu)
+    if (task && !taskDialogOpen) {
+      console.log("Opening edit dialog for task:", task);
+      setEditingTask(task);
+      setTaskDialogOpen(true);
+      return;
+    }
+    
+    // Otherwise, this is a direct update (like toggling completion)
     updateTask(task);
   };
   
@@ -118,6 +130,25 @@ const TasksPage: React.FC = () => {
         onStatusChange={changeTaskStatus}
         isLoading={isLoading}
         title="My Tasks"
+      />
+      
+      <TaskDialogsSection
+        taskDialogOpen={taskDialogOpen}
+        setTaskDialogOpen={setTaskDialogOpen}
+        editingTask={editingTask}
+        setEditingTask={setEditingTask}
+        columnDialogOpen={false}
+        setColumnDialogOpen={() => {}}
+        newColumnTitle=""
+        setNewColumnTitle={() => {}}
+        handleAddColumn={async () => {}}
+        handleCreateTask={addTask}
+        handleUpdateTask={updateTask}
+        handleUploadAttachment={async (file) => ({ success: true, url: "" })}
+        columns={columns}
+        projects={[]}
+        activeProject={null}
+        isProcessing={false}
       />
       
       <Toaster />

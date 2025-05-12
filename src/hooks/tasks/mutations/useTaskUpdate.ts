@@ -19,6 +19,8 @@ export const useTaskUpdate = (
         column_id: null, // Always set to null to avoid UUID type errors
         updated_at: new Date().toISOString()
       };
+      
+      delete taskToUpdate.updated_at; // Let the database handle the updated_at timestamp
 
       console.log("Sending to database:", taskToUpdate);
 

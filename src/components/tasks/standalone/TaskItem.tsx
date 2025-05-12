@@ -38,14 +38,39 @@ const TaskItem: React.FC<TaskItemProps> = ({
   columns
 }) => {
   // Add console logs for debugging
-  const handleEditClick = () => {
+  const handleEditClick = (e: React.MouseEvent) => {
+    // Prevent event propagation
+    e.preventDefault();
+    e.stopPropagation();
+    
     console.log('Edit task clicked:', task);
     onEditTask(task);
   };
 
-  const handleDeleteClick = () => {
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    // Prevent event propagation
+    e.preventDefault();
+    e.stopPropagation();
+    
     console.log('Delete task clicked:', task.id);
     onDeleteTask(task.id);
+  };
+
+  const handlePriorityClick = (e: React.MouseEvent, newPriority: string) => {
+    // Prevent event propagation
+    e.preventDefault();
+    e.stopPropagation();
+    
+    console.log("Changing task priority:", task.id, "to", newPriority);
+    changeTaskPriority(task, newPriority);
+  };
+
+  const handleToggleCompletion = (e: React.MouseEvent | React.ChangeEvent) => {
+    // For checkbox we just need to stop propagation
+    e.stopPropagation();
+    
+    console.log("Toggling task completion:", task.id, !task.completed);
+    toggleTaskCompletion(task);
   };
 
   return (
@@ -53,8 +78,9 @@ const TaskItem: React.FC<TaskItemProps> = ({
       <div className="flex items-start gap-3">
         <Checkbox
           checked={task.completed}
-          onCheckedChange={() => toggleTaskCompletion(task)}
+          onCheckedChange={handleToggleCompletion}
           className="mt-0.5"
+          onClick={(e) => e.stopPropagation()}
         />
         <div className="flex-1">
           <div className="flex items-center justify-between">
@@ -67,18 +93,19 @@ const TaskItem: React.FC<TaskItemProps> = ({
                   <Badge 
                     variant="outline" 
                     className={`cursor-pointer ${priorityColors[task.priority as keyof typeof priorityColors]}`}
+                    onClick={(e) => e.stopPropagation()}
                   >
                     {task.priority}
                   </Badge>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => changeTaskPriority(task, 'high')} className="text-red-600">
+                <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                  <DropdownMenuItem onClick={(e) => handlePriorityClick(e, 'high')} className="text-red-600">
                     High
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => changeTaskPriority(task, 'medium')} className="text-amber-600">
+                  <DropdownMenuItem onClick={(e) => handlePriorityClick(e, 'medium')} className="text-amber-600">
                     Medium
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => changeTaskPriority(task, 'low')} className="text-green-600">
+                  <DropdownMenuItem onClick={(e) => handlePriorityClick(e, 'low')} className="text-green-600">
                     Low
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -86,11 +113,11 @@ const TaskItem: React.FC<TaskItemProps> = ({
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-6 w-6">
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => e.stopPropagation()}>
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
+                <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
                   <DropdownMenuItem onClick={handleEditClick}>
                     Edit
                   </DropdownMenuItem>
