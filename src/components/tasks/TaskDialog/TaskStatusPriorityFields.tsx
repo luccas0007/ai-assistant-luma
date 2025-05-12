@@ -30,10 +30,10 @@ const TaskStatusPriorityFields: React.FC<TaskStatusPriorityFieldsProps> = ({
       <div className="grid gap-2">
         <Label htmlFor="status">Status</Label>
         <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger>
+          <SelectTrigger className="bg-background">
             <SelectValue placeholder="Select status" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-background">
             {columns.map((column) => (
               <SelectItem key={column.id} value={column.id}>
                 {column.title}
@@ -46,10 +46,10 @@ const TaskStatusPriorityFields: React.FC<TaskStatusPriorityFieldsProps> = ({
       <div className="grid gap-2">
         <Label htmlFor="priority">Priority</Label>
         <Select value={priority} onValueChange={setPriority}>
-          <SelectTrigger>
+          <SelectTrigger className="bg-background">
             <SelectValue placeholder="Select priority" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-background">
             <SelectItem value="high">High</SelectItem>
             <SelectItem value="medium">Medium</SelectItem>
             <SelectItem value="low">Low</SelectItem>

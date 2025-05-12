@@ -28,7 +28,6 @@ const AttachmentField: React.FC<AttachmentFieldProps> = ({
     try {
       setIsUploading(true);
       const result = await onFileUpload(file);
-      // If upload was not successful, handle accordingly
       if (!result.success) {
         console.error('File upload failed');
       }
