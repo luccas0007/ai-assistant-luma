@@ -49,6 +49,14 @@ const TaskFormFields: React.FC<TaskFormFieldsProps> = ({
   projectId = null,
   setProjectId = () => {}
 }) => {
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setTitle(e.target.value);
+  };
+
+  const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setDescription(e.target.value);
+  };
+
   return (
     <div className="grid gap-4 py-4">
       <div className="grid gap-2">
@@ -56,7 +64,7 @@ const TaskFormFields: React.FC<TaskFormFieldsProps> = ({
         <Input
           id="title"
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          onChange={handleTitleChange}
           placeholder="Task title"
           required
         />
@@ -67,7 +75,7 @@ const TaskFormFields: React.FC<TaskFormFieldsProps> = ({
         <Textarea
           id="description"
           value={description}
-          onChange={(e) => setDescription(e.target.value)}
+          onChange={handleDescriptionChange}
           placeholder="Task description (optional)"
           rows={3}
         />

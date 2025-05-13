@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
 import { Loader } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -15,15 +14,6 @@ import {
 import { Task, Column } from '@/types/task';
 import { Project } from '@/types/project';
 import TaskFormFields from './TaskDialog/TaskFormFields';
-
-interface TaskFormData {
-  title: string;
-  description: string;
-  status: string;
-  priority: string;
-  due_date: Date | null;
-  project_id: string | null;
-}
 
 interface TaskDialogProps {
   isOpen: boolean;
@@ -55,17 +45,13 @@ const TaskDialog: React.FC<TaskDialogProps> = ({
   const [dueDate, setDueDate] = useState<Date | undefined>(undefined);
   const [projectId, setProjectId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  const {
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<TaskFormData>();
-
-  // Reset form when dialog opens/closes or task changes
+  // Effect to initialize form values when dialog opens or task changes
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && task) {
       console.log("Dialog opened with task:", task);
+      
       setTitle(task?.title || '');
       setDescription(task?.description || '');
       setStatus(task?.status || (columns.length > 0 ? columns[0].id : ''));
@@ -73,8 +59,30 @@ const TaskDialog: React.FC<TaskDialogProps> = ({
       setDueDate(task?.due_date ? new Date(task.due_date) : undefined);
       setProjectId(task?.project_id || activeProject?.id || null);
       setAttachmentURL(task?.attachment_url || null);
+      
+      // Mark as initialized after setting all values
+      setIsInitialized(true);
+    } else if (!isOpen) {
+      // Reset initialized state when dialog closes
+      setIsInitialized(false);
     }
   }, [isOpen, task, columns, activeProject]);
+
+  // Reset form when opening for a new task
+  useEffect(() => {
+    if (isOpen && !task && !isInitialized) {
+      setTitle('');
+      setDescription('');
+      setStatus(columns.length > 0 ? columns[0].id : '');
+      setPriority('medium');
+      setDueDate(undefined);
+      setProjectId(activeProject?.id || null);
+      setAttachmentURL(null);
+      
+      // Mark as initialized
+      setIsInitialized(true);
+    }
+  }, [isOpen, task, columns, activeProject, isInitialized]);
 
   const handleFileUpload = async (file: File) => {
     setIsUploading(true);
@@ -92,15 +100,17 @@ const TaskDialog: React.FC<TaskDialogProps> = ({
     }
   };
 
-  const onSubmit = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
     if (!title.trim()) {
       return;
     }
     
     setIsSubmitting(true);
     try {
-      await onSave({
-        ...task,
+      const updatedTask: Partial<Task> = {
+        ...(task || {}),
         title,
         description,
         status,
@@ -109,7 +119,15 @@ const TaskDialog: React.FC<TaskDialogProps> = ({
         attachment_url: attachmentURL,
         project_id: projectId,
         column_id: status,
-      });
+      };
+      
+      console.log("Submitting task update:", updatedTask);
+      await onSave(updatedTask);
+      
+      // Don't call onClose here - it will be called by the parent component
+      // after the save operation completes successfully
+    } catch (error) {
+      console.error("Error saving task:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -120,7 +138,7 @@ const TaskDialog: React.FC<TaskDialogProps> = ({
       if (!open) onClose();
     }}>
       <DialogContent className="sm:max-w-[600px]">
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>{task ? 'Edit Task' : 'Create New Task'}</DialogTitle>
             <DialogDescription>
@@ -128,25 +146,27 @@ const TaskDialog: React.FC<TaskDialogProps> = ({
             </DialogDescription>
           </DialogHeader>
 
-          <TaskFormFields
-            title={title}
-            setTitle={setTitle}
-            description={description}
-            setDescription={setDescription}
-            dueDate={dueDate}
-            setDueDate={setDueDate}
-            status={status}
-            setStatus={setStatus}
-            priority={priority}
-            setPriority={setPriority}
-            attachmentURL={attachmentURL}
-            setAttachmentURL={setAttachmentURL}
-            onFileUpload={handleFileUpload}
-            columns={columns}
-            projects={projects}
-            projectId={projectId}
-            setProjectId={setProjectId}
-          />
+          {isInitialized && (
+            <TaskFormFields
+              title={title}
+              setTitle={setTitle}
+              description={description}
+              setDescription={setDescription}
+              dueDate={dueDate}
+              setDueDate={setDueDate}
+              status={status}
+              setStatus={setStatus}
+              priority={priority}
+              setPriority={setPriority}
+              attachmentURL={attachmentURL}
+              setAttachmentURL={setAttachmentURL}
+              onFileUpload={handleFileUpload}
+              columns={columns}
+              projects={projects}
+              projectId={projectId}
+              setProjectId={setProjectId}
+            />
+          )}
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>

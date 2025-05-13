@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Check, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -34,7 +35,7 @@ const TasksPage: React.FC = () => {
   // Handle opening the edit dialog
   const handleEditTask = (task: Task) => {
     console.log("Opening edit dialog for task:", task);
-    setEditingTask(task);
+    setEditingTask({...task});
     setTaskDialogOpen(true);
   };
   
@@ -45,9 +46,12 @@ const TasksPage: React.FC = () => {
       // This is an edit operation
       const updatedTask = { ...editingTask, ...task };
       await updateTask(updatedTask as Task);
+      setTaskDialogOpen(false);
+      setEditingTask(null);
     } else {
       // This is a create operation
       await addTask(task);
+      setTaskDialogOpen(false);
     }
   };
   
