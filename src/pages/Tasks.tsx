@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Check, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,9 +6,8 @@ import { useStandaloneTasks } from '@/hooks/tasks';
 import { useAuth } from '@/context/AuthContext';
 import { Toaster } from '@/components/ui/toaster';
 import { Skeleton } from '@/components/ui/skeleton';
-import LoadingIndicator from '@/components/common/LoadingIndicator';
 import { Task } from '@/types/task';
-import TaskDialogsSection from '@/components/tasks/TaskDialogsSection';
+import TaskDialog from '@/components/tasks/TaskDialog';
 
 const TasksPage: React.FC = () => {
   const {
@@ -33,20 +31,31 @@ const TasksPage: React.FC = () => {
     console.log("Tasks page rendered - Auth status:", !!user, "Loading:", isLoading, "Tasks count:", tasks.length);
   });
 
-  // Add explicit handler for updateTask with debugging
-  const handleUpdateTask = (task: Task) => {
-    console.log("TasksPage: Handling updateTask:", task);
-    
-    // Check if this is an edit action (from dropdown menu)
-    if (task && !taskDialogOpen) {
-      console.log("Opening edit dialog for task:", task);
-      setEditingTask(task);
-      setTaskDialogOpen(true);
-      return;
+  // Handle opening the edit dialog
+  const handleEditTask = (task: Task) => {
+    console.log("Opening edit dialog for task:", task);
+    setEditingTask(task);
+    setTaskDialogOpen(true);
+  };
+  
+  // Handle saving task updates
+  const handleSaveTask = async (task: Partial<Task>) => {
+    console.log("Saving task:", task);
+    if (editingTask) {
+      // This is an edit operation
+      const updatedTask = { ...editingTask, ...task };
+      await updateTask(updatedTask as Task);
+    } else {
+      // This is a create operation
+      await addTask(task);
     }
-    
-    // Otherwise, this is a direct update (like toggling completion)
-    updateTask(task);
+  };
+  
+  // Handle attachment uploads
+  const handleUploadAttachment = async (file: File) => {
+    console.log("Upload attachment stub - not implemented for standalone tasks");
+    // For now, just return a mock response since we're not implementing real uploads in this PR
+    return { success: false, url: null };
   };
   
   // Handle authentication check
@@ -114,13 +123,6 @@ const TasksPage: React.FC = () => {
     );
   }
   
-  // Create a wrapper function for TaskDialogsSection that matches the expected Promise<void> signature
-  const handleDialogUpdateTask = async (task: Task): Promise<void> => {
-    console.log("Dialog update task:", task);
-    await updateTask(task);
-    // No return value needed since Promise<void> is expected
-  };
-  
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -133,31 +135,29 @@ const TasksPage: React.FC = () => {
       <TaskStandaloneList
         tasks={tasks}
         columns={columns}
-        onAddTask={addTask}
-        onEditTask={handleUpdateTask}
+        onAddTask={() => {
+          setEditingTask(null);
+          setTaskDialogOpen(true);
+        }}
+        onEditTask={handleEditTask}
         onDeleteTask={deleteTask}
         onStatusChange={changeTaskStatus}
         isLoading={isLoading}
         title="My Tasks"
       />
       
-      <TaskDialogsSection
-        taskDialogOpen={taskDialogOpen}
-        setTaskDialogOpen={setTaskDialogOpen}
-        editingTask={editingTask}
-        setEditingTask={setEditingTask}
-        columnDialogOpen={false}
-        setColumnDialogOpen={() => {}}
-        newColumnTitle=""
-        setNewColumnTitle={() => {}}
-        handleAddColumn={async () => {}}
-        handleCreateTask={addTask}
-        handleUpdateTask={handleDialogUpdateTask}
-        handleUploadAttachment={async (file) => ({ success: true, url: "" })}
+      <TaskDialog
+        isOpen={taskDialogOpen}
+        onClose={() => {
+          setTaskDialogOpen(false);
+          setEditingTask(null);
+        }}
+        onSave={handleSaveTask}
+        onUploadAttachment={handleUploadAttachment}
+        task={editingTask}
         columns={columns}
         projects={[]}
         activeProject={null}
-        isProcessing={false}
       />
       
       <Toaster />

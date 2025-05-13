@@ -11,17 +11,17 @@ export const useTaskUpdate = (
 
   const updateTask = async (updatedTask: Task) => {
     try {
-      console.log("Starting task update:", updatedTask);
+      console.log("Starting task update with data:", updatedTask);
       
-      // Fix: Ensure column_id is not set to a status string
+      // Make a copy of the task to update
       const taskToUpdate = {
         ...updatedTask,
-        column_id: null, // Always set to null to avoid UUID type errors
         updated_at: new Date().toISOString()
       };
       
-      delete taskToUpdate.updated_at; // Let the database handle the updated_at timestamp
-
+      // Ensure we don't have properties that might cause issues
+      delete taskToUpdate.created_at;
+      
       console.log("Sending to database:", taskToUpdate);
 
       const { error } = await supabase
