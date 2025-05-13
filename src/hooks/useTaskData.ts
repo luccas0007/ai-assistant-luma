@@ -56,6 +56,20 @@ export const useTaskData = (projectId?: string | null) => {
     }
   }, [user, projectId, toast]);
 
+  // Listen for refresh events
+  useEffect(() => {
+    const handleRefresh = () => {
+      console.log('Task data received refresh event');
+      fetchTasks();
+    };
+    
+    window.addEventListener('app:refresh', handleRefresh);
+    
+    return () => {
+      window.removeEventListener('app:refresh', handleRefresh);
+    };
+  }, [fetchTasks]);
+
   useEffect(() => {
     fetchTasks();
   }, [fetchTasks]);
