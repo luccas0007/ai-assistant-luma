@@ -1,7 +1,7 @@
 
 import { useToast } from '@/hooks/use-toast';
 import { Task } from '@/types/task';
-import { supabase } from '@/integrations/supabase/client';
+import { updateTask as apiUpdateTask } from '@/utils/tasks/operations/updateTask';
 
 export const useTaskUpdate = (
   tasks: Task[], 
@@ -13,28 +13,14 @@ export const useTaskUpdate = (
     try {
       console.log("Starting task update with data:", updatedTask);
       
-      // Make a copy of the task to update
-      const taskToUpdate = {
-        ...updatedTask,
-        updated_at: new Date().toISOString()
-      };
-      
-      // Ensure we don't have properties that might cause issues
-      delete taskToUpdate.created_at;
-      
-      console.log("Sending to database:", taskToUpdate);
+      const { success, error } = await apiUpdateTask(updatedTask);
 
-      const { error } = await supabase
-        .from('tasks')
-        .update(taskToUpdate)
-        .eq('id', updatedTask.id);
-
-      if (error) {
+      if (!success) {
         console.error("Error during update:", error);
         throw error;
       }
 
-      console.log("Task updated successfully in database");
+      console.log("Task updated successfully in database, updating local state");
 
       // Update the local state with the updated task
       setTasks((prevTasks) =>

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Check, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,6 +8,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Task } from '@/types/task';
 import TaskDialog from '@/components/tasks/TaskDialog';
+import { useToast } from '@/hooks/use-toast';
 
 const TasksPage: React.FC = () => {
   const {
@@ -24,6 +24,7 @@ const TasksPage: React.FC = () => {
   } = useStandaloneTasks();
   
   const { user } = useAuth();
+  const { toast } = useToast();
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   
@@ -42,16 +43,43 @@ const TasksPage: React.FC = () => {
   // Handle saving task updates
   const handleSaveTask = async (task: Partial<Task>) => {
     console.log("Saving task:", task);
-    if (editingTask) {
-      // This is an edit operation
-      const updatedTask = { ...editingTask, ...task };
-      await updateTask(updatedTask as Task);
+    try {
+      if (editingTask) {
+        // This is an edit operation
+        const updatedTask = { 
+          ...editingTask, 
+          ...task,
+          // Ensure these fields are always present
+          id: editingTask.id,
+          user_id: editingTask.user_id,
+          created_at: editingTask.created_at,
+        } as Task;
+        
+        console.log("Final update task object:", updatedTask);
+        await updateTask(updatedTask);
+        toast({
+          title: "Success",
+          description: "Task updated successfully"
+        });
+      } else {
+        // This is a create operation
+        await addTask(task);
+        toast({
+          title: "Success",
+          description: "Task created successfully"
+        });
+      }
+      
+      // Always close dialog and clear editing state after operation
       setTaskDialogOpen(false);
       setEditingTask(null);
-    } else {
-      // This is a create operation
-      await addTask(task);
-      setTaskDialogOpen(false);
+    } catch (error: any) {
+      console.error("Error saving task:", error);
+      toast({
+        title: "Error",
+        description: `Failed to save task: ${error.message}`,
+        variant: "destructive"
+      });
     }
   };
   

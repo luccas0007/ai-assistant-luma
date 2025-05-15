@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Loader } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -46,43 +46,41 @@ const TaskDialog: React.FC<TaskDialogProps> = ({
   const [projectId, setProjectId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  const formInitialized = useRef(false);
 
   // Effect to initialize form values when dialog opens or task changes
   useEffect(() => {
-    if (isOpen && task) {
+    if (isOpen) {
       console.log("Dialog opened with task:", task);
       
-      setTitle(task?.title || '');
-      setDescription(task?.description || '');
-      setStatus(task?.status || (columns.length > 0 ? columns[0].id : ''));
-      setPriority(task?.priority || 'medium');
-      setDueDate(task?.due_date ? new Date(task.due_date) : undefined);
-      setProjectId(task?.project_id || activeProject?.id || null);
-      setAttachmentURL(task?.attachment_url || null);
+      if (task) {
+        // Editing an existing task
+        setTitle(task.title || '');
+        setDescription(task.description || '');
+        setStatus(task.status || task.column_id || (columns.length > 0 ? columns[0].id : ''));
+        setPriority(task.priority || 'medium');
+        setDueDate(task.due_date ? new Date(task.due_date) : undefined);
+        setProjectId(task.project_id || activeProject?.id || null);
+        setAttachmentURL(task.attachment_url || null);
+      } else {
+        // Creating a new task
+        setTitle('');
+        setDescription('');
+        setStatus(columns.length > 0 ? columns[0].id : '');
+        setPriority('medium');
+        setDueDate(undefined);
+        setProjectId(activeProject?.id || null);
+        setAttachmentURL(null);
+      }
       
-      // Mark as initialized after setting all values
       setIsInitialized(true);
-    } else if (!isOpen) {
-      // Reset initialized state when dialog closes
+      formInitialized.current = true;
+    } else {
+      // Reset initialization flag when dialog closes
+      formInitialized.current = false;
       setIsInitialized(false);
     }
   }, [isOpen, task, columns, activeProject]);
-
-  // Reset form when opening for a new task
-  useEffect(() => {
-    if (isOpen && !task && !isInitialized) {
-      setTitle('');
-      setDescription('');
-      setStatus(columns.length > 0 ? columns[0].id : '');
-      setPriority('medium');
-      setDueDate(undefined);
-      setProjectId(activeProject?.id || null);
-      setAttachmentURL(null);
-      
-      // Mark as initialized
-      setIsInitialized(true);
-    }
-  }, [isOpen, task, columns, activeProject, isInitialized]);
 
   const handleFileUpload = async (file: File) => {
     setIsUploading(true);
@@ -123,9 +121,6 @@ const TaskDialog: React.FC<TaskDialogProps> = ({
       
       console.log("Submitting task update:", updatedTask);
       await onSave(updatedTask);
-      
-      // Don't call onClose here - it will be called by the parent component
-      // after the save operation completes successfully
     } catch (error) {
       console.error("Error saving task:", error);
     } finally {
