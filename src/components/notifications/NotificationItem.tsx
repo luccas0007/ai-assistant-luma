@@ -22,13 +22,16 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
   markAsRead,
   deleteNotification,
 }) => {
+  // Get the icon component for this notification type
+  const IconComponent = typeIcons[notification.type];
+
   return (
     <div
       className={`p-4 rounded-lg ${notification.read ? 'bg-background' : 'bg-primary/5'} hover:bg-muted/50 transition-colors`}
     >
       <div className="flex gap-3">
         <div className={`flex-shrink-0 w-10 h-10 rounded-full ${typeColors[notification.type]} flex items-center justify-center`}>
-          {typeIcons[notification.type]}
+          {IconComponent && <IconComponent className="h-4 w-4" />}
         </div>
         <div className="flex-1">
           <div className="flex items-start justify-between">

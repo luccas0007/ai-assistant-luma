@@ -1,14 +1,15 @@
 
 import { Bell, Check, Calendar, Mail, MessageSquare } from 'lucide-react';
-import React from 'react';
+import { LucideIcon } from 'lucide-react';
 import { Notification } from '@/components/widgets/NotificationCenter';
 
-export const typeIcons = {
-  reminder: <Calendar className="h-4 w-4" />,
-  email: <Mail className="h-4 w-4" />,
-  message: <MessageSquare className="h-4 w-4" />,
-  task: <Check className="h-4 w-4" />,
-  system: <Bell className="h-4 w-4" />
+// Export icon components without JSX
+export const typeIcons: Record<string, LucideIcon> = {
+  reminder: Calendar,
+  email: Mail,
+  message: MessageSquare,
+  task: Check,
+  system: Bell
 };
 
 export const typeColors = {
