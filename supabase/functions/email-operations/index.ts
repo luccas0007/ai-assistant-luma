@@ -123,7 +123,7 @@ function getProviderHandler(account: EmailAccount) {
 }
 
 async function fetchEmails(request: FetchEmailsRequest) {
-  const { account, folder, limit } = request;
+  const { account, folder, limit, userId } = request;
   
   try {
     // For MVP, we'll return mock emails
@@ -147,6 +147,17 @@ async function fetchEmails(request: FetchEmailsRequest) {
         bodyText: `This is a test email body #${i + 1}`,
         bodyHtml: `<p>This is a <strong>test</strong> email body #${i + 1}</p>`,
       });
+    }
+    
+    // When emails are fetched, we also send a notification
+    try {
+      // In a real implementation, we would create a notification in the database
+      console.log(`Would create notification for ${mockEmails.length} new emails for user ${userId}`);
+      
+      // This is where you would insert a notification record in a notifications table
+      // For now we'll just log it
+    } catch (notificationError) {
+      console.error("Error creating email notification:", notificationError);
     }
     
     return { success: true, messages: mockEmails };

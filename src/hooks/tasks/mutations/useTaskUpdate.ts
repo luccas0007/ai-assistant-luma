@@ -27,10 +27,31 @@ export const useTaskUpdate = (
         prevTasks.map((task) => (task.id === updatedTask.id ? updatedTask : task))
       );
       
-      toast({
-        title: "Success",
-        description: "Task updated successfully."
-      });
+      // Show a notification for tasks with due dates
+      if (updatedTask.due_date) {
+        const dueDate = new Date(updatedTask.due_date);
+        const now = new Date();
+        // If due date is less than 24 hours away, show different message
+        const hoursUntilDue = Math.round((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60));
+        
+        if (hoursUntilDue <= 24 && hoursUntilDue > 0) {
+          toast({
+            title: "Task Due Soon",
+            description: `"${updatedTask.title}" is due in ${hoursUntilDue} hours`,
+            variant: "default"
+          });
+        } else {
+          toast({
+            title: "Task Updated",
+            description: "Task updated successfully."
+          });
+        }
+      } else {
+        toast({
+          title: "Task Updated",
+          description: "Task updated successfully."
+        });
+      }
       
       return { success: true };
     } catch (error: any) {
