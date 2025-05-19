@@ -8,11 +8,12 @@ import EmptyProjectState from '@/components/tasks/EmptyProjectState';
 import EmptyTasksState from '@/components/tasks/EmptyTasksState';
 import { Task } from '@/types/task';
 import { Column } from '@/types/task';
+import { Project } from '@/types/project';
 
 interface TaskBoardContentProps {
   isLoading: boolean;
   isLoadingProjects: boolean;
-  activeProject: any;
+  activeProject: Project | null;
   tasks: Task[];
   columns: Column[];
   viewMode: 'kanban' | 'list';
@@ -63,6 +64,12 @@ const TaskBoardContent: React.FC<TaskBoardContentProps> = ({
   const projectColumns = columns.filter(column => 
     column.project_id === activeProject.id
   );
+  
+  useEffect(() => {
+    if (activeProject && projectColumns.length === 0) {
+      console.log("No columns found for project:", activeProject.id);
+    }
+  }, [activeProject, projectColumns]);
   
   if (projectColumns.length === 0) {
     return (

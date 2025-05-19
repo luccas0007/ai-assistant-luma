@@ -44,10 +44,10 @@ export const useColumnActions = (
       }
       
       // Check if column with this title already exists
-      if (columns.some(col => col.title.toLowerCase() === newColumnTitle.toLowerCase())) {
+      if (columns.some(col => col.title.toLowerCase() === newColumnTitle.toLowerCase() && col.project_id === activeProject.id)) {
         toast({
           title: 'Column already exists',
-          description: 'A column with this name already exists.',
+          description: 'A column with this name already exists in this project.',
           variant: 'destructive'
         });
         return;

@@ -29,7 +29,6 @@ export const fetchProjectColumns = async (projectId: string): Promise<ColumnOper
       .from('columns')
       .select('id, title, position, project_id, user_id, created_at')
       .eq('project_id', projectId)
-      .eq('user_id', userId)
       .order('position', { ascending: true });
     
     const { data, error } = result;
@@ -53,35 +52,7 @@ export const fetchProjectColumns = async (projectId: string): Promise<ColumnOper
       position: col.position
     }));
     
-    console.log(`Fetched ${columns.length} columns for project ${projectId}:`, 
-      columns.map(c => ({id: c.id, title: c.title, project_id: c.project_id})));
-    
-    // If no columns found, create default columns automatically
-    if (columns.length === 0) {
-      console.log('No columns found, creating default columns');
-      const { data: defaultColumnsData, success } = await createDefaultColumns(projectId);
-      
-      if (success && defaultColumnsData) {
-        // Since we just created these columns, we know they match our expected structure
-        const defaultColumns = defaultColumnsData.map((col) => ({
-          id: col.id,
-          title: col.title,
-          project_id: col.project_id || projectId, // Ensure project_id is set
-          user_id: col.user_id,
-          position: col.position
-        }));
-        
-        console.log(`Created ${defaultColumns.length} default columns for project ${projectId}:`, 
-          defaultColumns.map(c => ({id: c.id, title: c.title, project_id: c.project_id})));
-        
-        return {
-          success: true,
-          error: null,
-          errorMessage: null,
-          data: defaultColumns
-        };
-      }
-    }
+    console.log(`Fetched ${columns.length} columns for project ${projectId}`);
     
     return { 
       success: true, 

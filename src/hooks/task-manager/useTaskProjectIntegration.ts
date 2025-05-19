@@ -2,15 +2,16 @@
 import { useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
-import { fetchProjectColumns } from '@/utils/columns';
+import { fetchProjectColumns, createDefaultColumns } from '@/utils/columns';
 import { Project } from '@/types/project';
+import { Column } from '@/types/task';
 
 /**
  * Hook for managing project-related task operations
  */
 export const useTaskProjectIntegration = (
   activeProject: Project | null,
-  setColumns: React.Dispatch<React.SetStateAction<any[]>>,
+  setColumns: React.Dispatch<React.SetStateAction<Column[]>>,
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
   setError: React.Dispatch<React.SetStateAction<string | null>>
 ) => {
@@ -39,7 +40,19 @@ export const useTaskProjectIntegration = (
       
       try {
         console.log(`Loading columns for project: ${activeProject.id}`);
-        const { success, data, errorMessage } = await fetchProjectColumns(activeProject.id);
+        let { success, data, errorMessage } = await fetchProjectColumns(activeProject.id);
+        
+        if (!success || !data || data.length === 0) {
+          console.log(`No columns found for project ${activeProject.id}, creating default columns`);
+          // If no columns exist, create default ones
+          const defaultResult = await createDefaultColumns(activeProject.id);
+          if (defaultResult.success && defaultResult.data) {
+            data = defaultResult.data;
+            success = true;
+          } else {
+            throw new Error(errorMessage || defaultResult.errorMessage || 'Failed to load columns');
+          }
+        }
         
         if (!success || !data) {
           throw new Error(errorMessage || 'Failed to load columns');

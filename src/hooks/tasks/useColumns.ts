@@ -10,9 +10,9 @@ export const useColumns = (projectId?: string | null) => {
 
   // Default columns if none are provided from a project
   const defaultColumns: Column[] = [
-    { id: 'todo', title: 'To Do', user_id: user?.id || '', project_id: 'default', position: 0 },
-    { id: 'inprogress', title: 'In Progress', user_id: user?.id || '', project_id: 'default', position: 1 },
-    { id: 'done', title: 'Done', user_id: user?.id || '', project_id: 'default', position: 2 },
+    { id: 'todo', title: 'To Do', user_id: user?.id || '', project_id: projectId || 'default', position: 0 },
+    { id: 'inprogress', title: 'In Progress', user_id: user?.id || '', project_id: projectId || 'default', position: 1 },
+    { id: 'done', title: 'Done', user_id: user?.id || '', project_id: projectId || 'default', position: 2 },
   ];
 
   // Fetch columns or use defaults
@@ -20,10 +20,13 @@ export const useColumns = (projectId?: string | null) => {
     const fetchColumns = async () => {
       // For standalone tasks without a project, use default columns
       if (!projectId || !user) {
+        console.log('No projectId or user, using default columns');
         setColumns(defaultColumns);
         return;
       }
 
+      console.log(`Fetching columns for project: ${projectId}`);
+      
       // If a project is specified, fetch its columns
       try {
         const { data: columnData, error: columnError } = await supabase
@@ -35,14 +38,21 @@ export const useColumns = (projectId?: string | null) => {
         if (columnError) {
           console.error("Error fetching columns:", columnError);
           // Fall back to default columns on error
-          setColumns(defaultColumns);
+          setColumns(defaultColumns.map(col => ({...col, project_id: projectId})));
           return;
         }
 
-        setColumns(columnData as Column[] || defaultColumns);
+        if (columnData && columnData.length > 0) {
+          console.log(`Found ${columnData.length} columns for project ${projectId}`);
+          setColumns(columnData as Column[]);
+        } else {
+          console.log(`No columns found for project ${projectId}, using defaults`);
+          // Create default columns for this project
+          setColumns(defaultColumns.map(col => ({...col, project_id: projectId})));
+        }
       } catch (error) {
         console.error("Exception fetching columns:", error);
-        setColumns(defaultColumns);
+        setColumns(defaultColumns.map(col => ({...col, project_id: projectId})));
       }
     };
 
