@@ -14,15 +14,19 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [confirmationNeeded, setConfirmationNeeded] = useState(false);
-  const { signIn, user } = useAuth();
+  const { signIn, session, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   // If user is already logged in, redirect to dashboard
+  // Using session instead of user to prevent redirect loops
   useEffect(() => {
-    if (user) {
+    console.log("Login page - Auth state:", { session, authLoading });
+    
+    if (session && !authLoading) {
+      console.log("Redirecting to dashboard - user is logged in");
       navigate('/');
     }
-  }, [user, navigate]);
+  }, [session, authLoading, navigate]);
 
   const handleResendConfirmation = async () => {
     if (!email) {
@@ -71,6 +75,18 @@ const Login = () => {
     }
   };
 
+  // If still loading auth state, show loading indicator
+  if (authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-4">
+        <div className="text-center">
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Only render the login form if user is not authenticated
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-md">
