@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { DragDropContext, DropResult } from 'react-beautiful-dnd';
 import KanbanBoard from '@/components/tasks/KanbanBoard';
 import ListView from '@/components/tasks/ListView';
@@ -43,14 +43,12 @@ const TaskBoardContent: React.FC<TaskBoardContentProps> = ({
   onStatusChange,
   onDeleteColumn
 }) => {
-  // Debug logging to help track issues with board loading
-  useEffect(() => {
-    if (activeProject) {
-      console.log("TaskBoardContent: Project loaded:", activeProject.id, activeProject.name);
-      console.log("TaskBoardContent: Columns loaded:", columns.length, columns.map(c => ({id: c.id, title: c.title, project_id: c.project_id})));
-      console.log("TaskBoardContent: Tasks loaded:", tasks.length, tasks.map(t => ({id: t.id, title: t.title, column_id: t.column_id})));
-    }
-  }, [activeProject, columns, tasks]);
+  // Log project and column data only once on render, not with useEffect
+  if (activeProject) {
+    console.log("TaskBoardContent: Project loaded:", activeProject.id, activeProject.name);
+    console.log("TaskBoardContent: Columns loaded:", columns.length, columns.map(c => ({id: c.id, title: c.title, project_id: c.project_id})));
+    console.log("TaskBoardContent: Tasks loaded:", tasks.length, tasks.map(t => ({id: t.id, title: t.title, column_id: t.column_id})));
+  }
 
   if (isLoading || isLoadingProjects) {
     return <LoadingState />;
@@ -65,11 +63,10 @@ const TaskBoardContent: React.FC<TaskBoardContentProps> = ({
     column.project_id === activeProject.id
   );
   
-  useEffect(() => {
-    if (activeProject && projectColumns.length === 0) {
-      console.log("No columns found for project:", activeProject.id);
-    }
-  }, [activeProject, projectColumns]);
+  // Log column info without useEffect to avoid hook consistency issues
+  if (activeProject && projectColumns.length === 0) {
+    console.log("No columns found for project:", activeProject.id);
+  }
   
   if (projectColumns.length === 0) {
     return (

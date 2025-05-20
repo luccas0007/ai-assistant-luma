@@ -17,11 +17,13 @@ export const useColumns = (projectId?: string | null) => {
 
   // Fetch columns or use defaults
   useEffect(() => {
+    let isMounted = true;
+    
     const fetchColumns = async () => {
       // For standalone tasks without a project, use default columns
       if (!projectId || !user) {
         console.log('No projectId or user, using default columns');
-        setColumns(defaultColumns);
+        if (isMounted) setColumns(defaultColumns);
         return;
       }
 
@@ -35,6 +37,9 @@ export const useColumns = (projectId?: string | null) => {
           .eq('project_id', projectId)
           .order('position', { ascending: true });
 
+        // Check if component is still mounted
+        if (!isMounted) return;
+        
         if (columnError) {
           console.error("Error fetching columns:", columnError);
           // Fall back to default columns on error
@@ -51,12 +56,19 @@ export const useColumns = (projectId?: string | null) => {
           setColumns(defaultColumns.map(col => ({...col, project_id: projectId})));
         }
       } catch (error) {
-        console.error("Exception fetching columns:", error);
-        setColumns(defaultColumns.map(col => ({...col, project_id: projectId})));
+        if (isMounted) {
+          console.error("Exception fetching columns:", error);
+          setColumns(defaultColumns.map(col => ({...col, project_id: projectId})));
+        }
       }
     };
 
     fetchColumns();
+    
+    // Cleanup function to prevent state updates after unmounting
+    return () => {
+      isMounted = false;
+    };
   }, [projectId, user, defaultColumns]);
 
   return { columns };
