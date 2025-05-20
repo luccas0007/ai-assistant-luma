@@ -6,51 +6,93 @@ import ListView from '@/components/tasks/ListView';
 import LoadingState from '@/components/tasks/LoadingState';
 import EmptyProjectState from '@/components/tasks/EmptyProjectState';
 import EmptyTasksState from '@/components/tasks/EmptyTasksState';
-import { Task } from '@/types/task';
-import { Column } from '@/types/task';
-import { Project } from '@/types/project';
+import { useTaskContext } from '@/context/TaskContext';
 
 interface TaskBoardContentProps {
-  isLoading: boolean;
-  isLoadingProjects: boolean;
-  activeProject: Project | null;
-  tasks: Task[];
-  columns: Column[];
   viewMode: 'kanban' | 'list';
-  error: string | null;
-  onDragEnd: (result: DropResult) => void;
-  onEditTask: (task: Task) => void;
-  onDeleteTask: (id: string) => void;
   onCreateProject: () => void;
   onCreateTask: () => void;
-  onStatusChange: (taskId: string, newStatus: string) => void;
-  onDeleteColumn?: (columnId: string) => void;
 }
 
 const TaskBoardContent: React.FC<TaskBoardContentProps> = ({
-  isLoading,
-  isLoadingProjects,
-  activeProject,
-  tasks,
-  columns,
   viewMode,
-  error,
-  onDragEnd,
-  onEditTask,
-  onDeleteTask,
   onCreateProject,
-  onCreateTask,
-  onStatusChange,
-  onDeleteColumn
+  onCreateTask
 }) => {
-  // Log project and column data only once on render, not with useEffect
-  if (activeProject) {
-    console.log("TaskBoardContent: Project loaded:", activeProject.id, activeProject.name);
-    console.log("TaskBoardContent: Columns loaded:", columns.length, columns.map(c => ({id: c.id, title: c.title, project_id: c.project_id})));
-    console.log("TaskBoardContent: Tasks loaded:", tasks.length, tasks.map(t => ({id: t.id, title: t.title, column_id: t.column_id})));
-  }
+  const { 
+    state, 
+    moveTask, 
+    updateTask, 
+    showConfirmDialog,
+    deleteTask,
+    removeColumn
+  } = useTaskContext();
+  
+  const { 
+    tasks, 
+    columns, 
+    activeProject, 
+    isLoading 
+  } = state;
 
-  if (isLoading || isLoadingProjects) {
+  // Handle drag and drop
+  const handleDragEnd = (result: DropResult) => {
+    const { destination, source, draggableId } = result;
+
+    // Dropped outside the list
+    if (!destination) {
+      return;
+    }
+
+    // Dropped in the same place
+    if (
+      destination.droppableId === source.droppableId &&
+      destination.index === source.index
+    ) {
+      return;
+    }
+
+    // Move the task to the new column
+    moveTask(draggableId, destination.droppableId);
+  };
+
+  // Handle task edit
+  const handleEditTask = (task: Task) => {
+    onEditTask(task);
+  };
+
+  // Handle task deletion with confirmation
+  const handleDeleteTask = (taskId: string) => {
+    showConfirmDialog(
+      'Delete Task',
+      'Are you sure you want to delete this task? This action cannot be undone.',
+      async () => {
+        await deleteTask(taskId);
+      }
+    );
+  };
+
+  // Handle column deletion with confirmation
+  const handleDeleteColumn = (columnId: string) => {
+    showConfirmDialog(
+      'Delete Column',
+      'Are you sure you want to delete this column? All tasks will be moved to the default column.',
+      async () => {
+        await removeColumn(columnId);
+      }
+    );
+  };
+
+  // Handle status change for list view
+  const handleStatusChange = (taskId: string, newStatus: string) => {
+    const taskToUpdate = tasks.find(t => t.id === taskId);
+    if (taskToUpdate) {
+      const updatedTask = {...taskToUpdate, column_id: newStatus};
+      updateTask(updatedTask);
+    }
+  };
+
+  if (isLoading) {
     return <LoadingState />;
   }
   
@@ -62,11 +104,6 @@ const TaskBoardContent: React.FC<TaskBoardContentProps> = ({
   const projectColumns = columns.filter(column => 
     column.project_id === activeProject.id
   );
-  
-  // Log column info without useEffect to avoid hook consistency issues
-  if (activeProject && projectColumns.length === 0) {
-    console.log("No columns found for project:", activeProject.id);
-  }
   
   if (projectColumns.length === 0) {
     return (
@@ -83,27 +120,27 @@ const TaskBoardContent: React.FC<TaskBoardContentProps> = ({
   // Filter tasks to show only those belonging to the current project
   const projectTasks = tasks.filter(task => task.project_id === activeProject.id);
   
-  if (projectTasks.length === 0 && !error) {
+  if (projectTasks.length === 0) {
     return <EmptyTasksState onCreateTask={onCreateTask} />;
   }
   
   return (
-    <DragDropContext onDragEnd={onDragEnd}>
+    <DragDropContext onDragEnd={handleDragEnd}>
       {viewMode === 'kanban' ? (
         <KanbanBoard 
           tasks={projectTasks} 
           columns={projectColumns} 
-          onEditTask={onEditTask} 
-          onDeleteTask={onDeleteTask}
-          onDeleteColumn={onDeleteColumn}
+          onEditTask={handleEditTask} 
+          onDeleteTask={handleDeleteTask}
+          onDeleteColumn={handleDeleteColumn}
         />
       ) : (
         <ListView 
           tasks={projectTasks} 
           columns={projectColumns} 
-          onEditTask={onEditTask} 
-          onDeleteTask={onDeleteTask}
-          onStatusChange={onStatusChange}
+          onEditTask={handleEditTask} 
+          onDeleteTask={handleDeleteTask}
+          onStatusChange={handleStatusChange}
         />
       )}
     </DragDropContext>

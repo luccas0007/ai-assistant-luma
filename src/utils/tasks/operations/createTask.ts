@@ -21,18 +21,27 @@ export const createTask = async (
       return { data: null, error: setupResult.error, errorMessage: 'Failed to initialize task system' };
     }
     
+    // Validate required column_id
+    if (!newTask.column_id) {
+      console.error('Task creation requires a column_id');
+      return { 
+        data: null, 
+        error: new Error('Column is required'), 
+        errorMessage: 'A column must be selected for the task' 
+      };
+    }
+    
     // Prepare the task data
     const taskData = {
       user_id: userId,
       title: newTask.title,
       description: newTask.description || null,
-      status: newTask.status || 'todo',
+      column_id: newTask.column_id,
       priority: newTask.priority || 'medium',
       due_date: newTask.due_date || null,
       completed: newTask.completed || false,
       attachment_url: newTask.attachment_url || null,
       project_id: newTask.project_id || null,
-      column_id: newTask.column_id || newTask.status || null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };

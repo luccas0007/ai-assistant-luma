@@ -1,107 +1,114 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Toaster } from '@/components/ui/toaster';
-import { useProjectManager } from '@/hooks/project-manager';
-import useTaskManager from '@/hooks/task-manager';
+import { TaskProvider, useTaskContext } from '@/context/TaskContext';
 
 // Import our components
 import ProjectToolbar from '@/components/tasks/ProjectToolbar';
 import TaskManagerErrorAlert from '@/components/tasks/TaskManagerErrorAlert';
 import TaskBoardContainer from '@/components/tasks/TaskBoardContainer';
-import TaskDialogsSection from '@/components/tasks/TaskDialogsSection';
-import ProjectManagementSection from '@/components/tasks/ProjectManagementSection';
+import TaskDialog from '@/components/tasks/TaskDialog';
+import ColumnDialog from '@/components/tasks/ColumnDialog';
+import ProjectDialog from '@/components/tasks/ProjectDialog';
+import DeleteProjectDialog from '@/components/tasks/DeleteProjectDialog';
 
-const TaskManager = () => {
-  const projectManager = useProjectManager();
-  const taskManager = useTaskManager();
+const TaskManagerContent = () => {
+  const { 
+    state, 
+    createProject, 
+    updateProject, 
+    deleteProject, 
+    setActiveProject,
+    showConfirmDialog,
+    addColumn
+  } = useTaskContext();
   
-  const {
-    // Project state & actions
-    projects,
-    activeProject,
-    isLoadingProjects,
-    projectError,
-    setProjectError,
-    projectDialogOpen,
-    setProjectDialogOpen,
-    editingProject,
-    setEditingProject,
-    handleCreateProject,
-    handleUpdateProject,
-    handleDeleteProject
-  } = projectManager;
-  
-  const {
-    // Task state
-    tasks,
-    columns,
-    isLoading,
-    error,
-    setError,
-    isProcessing,
-    viewMode,
-    setViewMode,
-    taskDialogOpen,
-    setTaskDialogOpen,
-    editingTask,
-    setEditingTask,
-    columnDialogOpen,
-    setColumnDialogOpen,
-    newColumnTitle,
-    setNewColumnTitle,
-    
-    // Task actions
-    handleCreateTask,
-    handleUpdateTask,
-    handleDeleteTask,
-    handleDragEnd,
-    handleAddColumn,
-    handleDeleteColumn,
-    handleUploadAttachment,
-    refreshTasks
-  } = taskManager;
-  
-  const handleRetry = () => {
-    refreshTasks();
+  const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
+  const [taskDialogOpen, setTaskDialogOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [columnDialogOpen, setColumnDialogOpen] = useState(false);
+  const [projectDialogOpen, setProjectDialogOpen] = useState(false);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [deleteProjectDialogOpen, setDeleteProjectDialogOpen] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
+
+  const { projects, activeProject, isProcessing } = state;
+
+  // Open task dialog for creating a new task
+  const handleCreateTask = () => {
+    setEditingTask(null);
+    setTaskDialogOpen(true);
   };
-  
-  const handleDismissError = () => {
-    setError(null);
-    setProjectError(null);
+
+  // Open task dialog for editing a task
+  const handleEditTask = (task: Task) => {
+    setEditingTask(task);
+    setTaskDialogOpen(true);
   };
-  
-  const handleCreateNewProject = () => {
+
+  // Handle project selection
+  const handleSelectProject = (project: Project | null) => {
+    setActiveProject(project);
+  };
+
+  // Open project dialog for creating a new project
+  const handleCreateProject = () => {
     setEditingProject(null);
     setProjectDialogOpen(true);
   };
-  
-  const handleCreateNewTask = () => {
-    try {
-      setEditingTask(null);
-      setTaskDialogOpen(true);
-    } catch (error) {
-      console.error("Error opening task dialog:", error);
-    }
-  };
-  
-  const handleStatusChange = (taskId: string, newStatus: string) => {
-    const taskToUpdate = tasks.find(t => t.id === taskId);
-    if (taskToUpdate) {
-      const updatedTask = {...taskToUpdate, status: newStatus, column_id: newStatus};
-      handleUpdateTask(updatedTask);
-    }
+
+  // Open project dialog for editing a project
+  const handleEditProject = (project: Project) => {
+    setEditingProject(project);
+    setProjectDialogOpen(true);
   };
 
+  // Confirm deleting a project
+  const handleDeleteProject = (project: Project) => {
+    setProjectToDelete(project);
+    setDeleteProjectDialogOpen(true);
+  };
+
+  // Handle saving project (create or update)
   const handleSaveProject = async (name: string, description?: string) => {
     if (editingProject) {
-      await handleUpdateProject({
+      await updateProject({
         ...editingProject,
         name,
         description: description || null
       });
     } else {
-      await handleCreateProject(name, description);
+      await createProject(name, description);
     }
+    setProjectDialogOpen(false);
+  };
+
+  // Handle confirm project delete
+  const handleConfirmDeleteProject = async () => {
+    if (projectToDelete) {
+      await deleteProject(projectToDelete.id);
+    }
+    setDeleteProjectDialogOpen(false);
+  };
+
+  // Handle adding a new column
+  const handleAddColumn = () => {
+    setColumnDialogOpen(true);
+  };
+
+  // Handle saving a new column
+  const handleSaveColumn = async (title: string) => {
+    if (title.trim() === '') return;
+    
+    await addColumn(title);
+    setColumnDialogOpen(false);
+  };
+
+  // Handle attachment upload (stub implementation)
+  const handleUploadAttachment = async (file: File) => {
+    console.log("Upload attachment stub - not implemented");
+    // Implement file upload to Supabase storage here
+    return { success: false, url: null };
   };
 
   return (
@@ -109,72 +116,68 @@ const TaskManager = () => {
       <ProjectToolbar
         projects={projects}
         activeProject={activeProject}
-        onSelectProject={projectManager.setActiveProject}
-        onCreateProject={handleCreateNewProject}
-        onEditProject={setEditingProject}
-        onDeleteProject={(project) => handleDeleteProject(project.id)}
-        isLoadingProjects={isLoadingProjects}
+        onSelectProject={handleSelectProject}
+        onCreateProject={handleCreateProject}
+        onEditProject={handleEditProject}
+        onDeleteProject={handleDeleteProject}
+        isLoadingProjects={state.isLoading}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
       />
 
-      <TaskManagerErrorAlert
-        error={error}
-        projectError={projectError}
-        handleRetry={handleRetry}
-        handleDismissError={handleDismissError}
-      />
+      <TaskManagerErrorAlert />
 
       <TaskBoardContainer 
-        activeProject={activeProject}
-        tasks={tasks}
-        columns={columns}
         viewMode={viewMode}
-        isProcessing={isProcessing}
-        isLoading={isLoading}
-        isLoadingProjects={isLoadingProjects}
-        error={error}
-        onCreateTask={handleCreateNewTask}
-        onCreateProject={handleCreateNewProject}
-        onAddColumn={() => setColumnDialogOpen(true)}
-        onDragEnd={handleDragEnd}
-        onEditTask={setEditingTask}
-        onDeleteTask={handleDeleteTask}
-        onDeleteColumn={handleDeleteColumn}
-        onStatusChange={handleStatusChange}
+        onCreateTask={handleCreateTask}
+        onCreateProject={handleCreateProject}
+        onAddColumn={handleAddColumn}
       />
       
-      <TaskDialogsSection
-        taskDialogOpen={taskDialogOpen}
-        setTaskDialogOpen={setTaskDialogOpen}
-        editingTask={editingTask}
-        setEditingTask={setEditingTask}
-        columnDialogOpen={columnDialogOpen}
-        setColumnDialogOpen={setColumnDialogOpen}
-        newColumnTitle={newColumnTitle}
-        setNewColumnTitle={setNewColumnTitle}
-        handleAddColumn={handleAddColumn}
-        handleCreateTask={handleCreateTask}
-        handleUpdateTask={handleUpdateTask}
-        handleUploadAttachment={handleUploadAttachment}
-        columns={columns}
-        projects={projects}
-        activeProject={activeProject}
+      {/* Task Dialog */}
+      <TaskDialog
+        isOpen={taskDialogOpen}
+        onClose={() => setTaskDialogOpen(false)}
+        task={editingTask}
+        onUploadAttachment={handleUploadAttachment}
+      />
+      
+      {/* Column Dialog */}
+      <ColumnDialog
+        isOpen={columnDialogOpen}
+        onClose={() => setColumnDialogOpen(false)}
+        onSave={handleSaveColumn}
         isProcessing={isProcessing}
       />
       
-      <ProjectManagementSection 
-        projectDialogOpen={projectDialogOpen}
-        setProjectDialogOpen={setProjectDialogOpen}
-        editingProject={editingProject}
-        setEditingProject={setEditingProject}
+      {/* Project Dialog */}
+      <ProjectDialog
+        isOpen={projectDialogOpen}
+        onClose={() => setProjectDialogOpen(false)}
+        onSave={handleSaveProject}
+        project={editingProject}
         isProcessing={isProcessing}
-        handleSaveProject={handleSaveProject}
-        handleDeleteProject={handleDeleteProject}
+      />
+      
+      {/* Delete Project Dialog */}
+      <DeleteProjectDialog
+        isOpen={deleteProjectDialogOpen}
+        onClose={() => setDeleteProjectDialogOpen(false)}
+        onConfirm={handleConfirmDeleteProject}
+        project={projectToDelete}
+        isProcessing={isProcessing}
       />
       
       <Toaster />
     </div>
+  );
+};
+
+const TaskManager = () => {
+  return (
+    <TaskProvider>
+      <TaskManagerContent />
+    </TaskProvider>
   );
 };
 

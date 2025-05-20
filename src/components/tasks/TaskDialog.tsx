@@ -11,31 +11,26 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Task, Column } from '@/types/task';
-import { Project } from '@/types/project';
+import { Task } from '@/types/task';
 import TaskFormFields from './TaskDialog/TaskFormFields';
+import { useTaskContext } from '@/context/TaskContext';
 
 interface TaskDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (task: Partial<Task>) => Promise<void>;
-  onUploadAttachment: (file: File) => Promise<{ success: boolean; url: string | null }>;
   task: Task | null;
-  columns: Column[];
-  projects: Project[];
-  activeProject: Project | null;
+  onUploadAttachment: (file: File) => Promise<{ success: boolean; url: string | null }>;
 }
 
 const TaskDialog: React.FC<TaskDialogProps> = ({
   isOpen,
   onClose,
-  onSave,
-  onUploadAttachment,
   task,
-  columns,
-  projects,
-  activeProject
+  onUploadAttachment,
 }) => {
+  const { state, createTask, updateTask } = useTaskContext();
+  const { columns, projects, activeProject } = state;
+
   const [isUploading, setIsUploading] = useState(false);
   const [attachmentURL, setAttachmentURL] = useState<string | null>(null);
   const [title, setTitle] = useState('');
@@ -57,7 +52,7 @@ const TaskDialog: React.FC<TaskDialogProps> = ({
         // Editing an existing task
         setTitle(task.title || '');
         setDescription(task.description || '');
-        setStatus(task.status || task.column_id || (columns.length > 0 ? columns[0].id : ''));
+        setStatus(task.column_id || (columns.length > 0 ? columns[0].id : ''));
         setPriority(task.priority || 'medium');
         setDueDate(task.due_date ? new Date(task.due_date) : undefined);
         setProjectId(task.project_id || activeProject?.id || null);
@@ -105,13 +100,16 @@ const TaskDialog: React.FC<TaskDialogProps> = ({
       return;
     }
     
+    if (!status && columns.length === 0) {
+      // No columns available
+      return;
+    }
+    
     setIsSubmitting(true);
     try {
-      const updatedTask: Partial<Task> = {
-        ...(task || {}),
+      const taskData: Partial<Task> = {
         title,
         description,
-        status,
         priority,
         due_date: dueDate ? dueDate.toISOString() : null,
         attachment_url: attachmentURL,
@@ -119,8 +117,25 @@ const TaskDialog: React.FC<TaskDialogProps> = ({
         column_id: status,
       };
       
-      console.log("Submitting task update:", updatedTask);
-      await onSave(updatedTask);
+      console.log("Submitting task data:", taskData);
+      
+      let success: boolean;
+      
+      if (task) {
+        // Update existing task
+        success = await updateTask({
+          ...task,
+          ...taskData,
+        });
+      } else {
+        // Create new task
+        const newTask = await createTask(taskData);
+        success = !!newTask;
+      }
+      
+      if (success) {
+        onClose();
+      }
     } catch (error) {
       console.error("Error saving task:", error);
     } finally {
@@ -167,7 +182,10 @@ const TaskDialog: React.FC<TaskDialogProps> = ({
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isUploading || isSubmitting || !title.trim()}>
+            <Button 
+              type="submit" 
+              disabled={isUploading || isSubmitting || !title.trim() || !status}
+            >
               {(isUploading || isSubmitting) ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : null}
               {task ? 'Update Task' : 'Create Task'}
             </Button>

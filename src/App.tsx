@@ -1,116 +1,64 @@
+import { useState, useEffect } from 'react';
+import { Routes, Route, BrowserRouter, Navigate } from 'react-router-dom';
+import { Auth } from '@supabase/auth-ui-react';
+import { ThemeSupa } from '@supabase/auth-ui-shared';
+import { useSession, useSupabaseClient } from '@supabase/auth-helpers-react';
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import Layout from "./components/layout/Layout";
-import Dashboard from "./pages/Dashboard";
-import VoiceCommand from "./pages/VoiceCommand";
-import Calendar from "./pages/Calendar";
-import Email from "./pages/Email";
-import Messages from "./pages/Messages";
-import Tasks from "./pages/Tasks";
-import TaskManager from "./pages/TaskManager";
-import Notifications from "./pages/Notifications";
-import NotFound from "./pages/NotFound";
-import React, { useEffect } from "react";
-import { AuthProvider, useAuth } from "./context/AuthContext";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import { initializeTaskSystem } from "./utils/taskDatabaseUtils";
+import Account from '@/pages/Account';
+import Home from '@/pages/Home';
+import TasksPage from '@/pages/Tasks';
+import TaskManager from '@/pages/TaskManager';
+import Login from '@/pages/Login';
+import Register from '@/pages/Register';
+import { TaskProvider } from '@/context/TaskContext';
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
+function App() {
+  const [authCompleted, setAuthCompleted] = useState(false);
+  const session = useSession();
+  const supabase = useSupabaseClient();
 
-// Initialize database when app loads
-const DatabaseInitializer = () => {
-  const { user } = useAuth();
-  
   useEffect(() => {
-    const init = async () => {
-      try {
-        console.log("Initializing database on app startup...");
-        
-        // Only try to initialize the database if a user is logged in
-        if (user) {
-          const { success, error } = await initializeTaskSystem();
-          
-          if (!success) {
-            console.error("Database initialization failed:", error);
-          } else {
-            console.log("Database initialization successful");
-          }
-        }
-      } catch (error) {
-        console.error("Error initializing database:", error);
-      }
+    const checkAuth = async () => {
+      // Simulate auth check delay
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      setAuthCompleted(true);
     };
-    
-    init();
-  }, [user]);
-  
-  return null;
-};
 
-// Protected route component
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading } = useAuth();
-  
-  if (loading) {
-    return <div className="flex items-center justify-center h-screen">Loading...</div>;
-  }
-  
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-  
-  return <>{children}</>;
-};
+    checkAuth();
+  }, []);
 
-const App = () => (
-  <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <BrowserRouter>
-          <TooltipProvider>
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/" element={
-                <ProtectedRoute>
-                  <Layout />
-                </ProtectedRoute>
-              }>
-                <Route index element={<Dashboard />} />
-                <Route path="voice-command" element={<VoiceCommand />} />
-                <Route path="calendar" element={<Calendar />} />
-                <Route path="email" element={<Email />} />
-                <Route path="messages" element={<Messages />} />
-                <Route path="tasks" element={<Tasks />} />
-                <Route path="task-manager" element={
-                  <>
-                    <DatabaseInitializer />
-                    <TaskManager />
-                  </>
-                } />
-                <Route path="notifications" element={<Notifications />} />
-              </Route>
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            <Toaster />
-            <Sonner />
-          </TooltipProvider>
-        </BrowserRouter>
-      </AuthProvider>
-    </QueryClientProvider>
-  </React.StrictMode>
-);
+  return (
+    <div className="app">
+      <TaskProvider>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route
+            path="/account"
+            element={
+              session ? (
+                <Account key={session.user.id} session={session} />
+              ) : (
+                <Navigate to="/login" />
+              )
+            }
+          />
+          <Route path="/tasks" element={<TasksPage />} />
+          <Route
+            path="/task-manager"
+            element={
+              session ? (
+                <TaskManager />
+              ) : (
+                <Navigate to="/login" />
+              )
+            }
+          />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+        </Routes>
+      </TaskProvider>
+    </div>
+  );
+}
 
 export default App;
