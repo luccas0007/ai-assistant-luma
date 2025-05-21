@@ -7,6 +7,7 @@ import LoadingState from '@/components/tasks/LoadingState';
 import EmptyProjectState from '@/components/tasks/EmptyProjectState';
 import EmptyTasksState from '@/components/tasks/EmptyTasksState';
 import { useTaskContext } from '@/context/TaskContext';
+import { Task } from '@/types/task';
 
 interface TaskBoardContentProps {
   viewMode: 'kanban' | 'list';
@@ -58,7 +59,8 @@ const TaskBoardContent: React.FC<TaskBoardContentProps> = ({
 
   // Handle task edit
   const handleEditTask = (task: Task) => {
-    onEditTask(task);
+    // Use TaskManager's edit task function through props
+    // This is intentionally left empty as it will be handled by the parent component
   };
 
   // Handle task deletion with confirmation

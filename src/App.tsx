@@ -1,8 +1,7 @@
+
 import { useState, useEffect } from 'react';
 import { Routes, Route, BrowserRouter, Navigate } from 'react-router-dom';
-import { Auth } from '@supabase/auth-ui-react';
-import { ThemeSupa } from '@supabase/auth-ui-shared';
-import { useSession, useSupabaseClient } from '@supabase/auth-helpers-react';
+import { supabase } from '@/integrations/supabase/client';
 
 import Account from '@/pages/Account';
 import Home from '@/pages/Home';
@@ -14,14 +13,27 @@ import { TaskProvider } from '@/context/TaskContext';
 
 function App() {
   const [authCompleted, setAuthCompleted] = useState(false);
-  const session = useSession();
-  const supabase = useSupabaseClient();
+  const [session, setSession] = useState(null);
 
   useEffect(() => {
     const checkAuth = async () => {
       // Simulate auth check delay
       await new Promise((resolve) => setTimeout(resolve, 500));
+      
+      // Get current session
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      setSession(currentSession);
+      
       setAuthCompleted(true);
+      
+      // Set up auth state change listener
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        (_event, newSession) => {
+          setSession(newSession);
+        }
+      );
+      
+      return () => subscription.unsubscribe();
     };
 
     checkAuth();
@@ -36,7 +48,7 @@ function App() {
             path="/account"
             element={
               session ? (
-                <Account key={session.user.id} session={session} />
+                <Account session={session} />
               ) : (
                 <Navigate to="/login" />
               )

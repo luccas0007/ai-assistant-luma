@@ -59,6 +59,8 @@ const TaskDialogsSection: React.FC<TaskDialogsSectionProps> = ({
           setTaskDialogOpen(false);
           setEditingTask(null);
         }}
+        task={editingTask}
+        onUploadAttachment={handleUploadAttachment}
         onSave={async (task) => {
           console.log("Saving task:", task);
           try {
@@ -75,11 +77,6 @@ const TaskDialogsSection: React.FC<TaskDialogsSectionProps> = ({
             setEditingTask(null);
           }
         }}
-        onUploadAttachment={handleUploadAttachment}
-        task={editingTask}
-        columns={columns}
-        projects={projects}
-        activeProject={activeProject}
       />
       
       <ColumnDialog

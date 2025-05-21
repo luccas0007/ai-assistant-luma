@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Loader } from 'lucide-react';
 
@@ -20,6 +19,7 @@ interface TaskDialogProps {
   onClose: () => void;
   task: Task | null;
   onUploadAttachment: (file: File) => Promise<{ success: boolean; url: string | null }>;
+  onSave?: (task: Partial<Task>) => Promise<void>; // Make onSave optional
 }
 
 const TaskDialog: React.FC<TaskDialogProps> = ({
@@ -27,6 +27,7 @@ const TaskDialog: React.FC<TaskDialogProps> = ({
   onClose,
   task,
   onUploadAttachment,
+  onSave, // Optional prop
 }) => {
   const { state, createTask, updateTask } = useTaskContext();
   const { columns, projects, activeProject } = state;
@@ -119,18 +120,25 @@ const TaskDialog: React.FC<TaskDialogProps> = ({
       
       console.log("Submitting task data:", taskData);
       
-      let success: boolean;
+      let success: boolean = false;
       
-      if (task) {
-        // Update existing task
-        success = await updateTask({
-          ...task,
-          ...taskData,
-        });
+      if (onSave) {
+        // Use provided onSave function if available
+        await onSave(taskData);
+        success = true;
       } else {
-        // Create new task
-        const newTask = await createTask(taskData);
-        success = !!newTask;
+        // Otherwise use context methods
+        if (task) {
+          // Update existing task
+          success = await updateTask({
+            ...task,
+            ...taskData,
+          });
+        } else {
+          // Create new task
+          const newTask = await createTask(taskData);
+          success = !!newTask;
+        }
       }
       
       if (success) {
