@@ -61,22 +61,6 @@ const TaskDialogsSection: React.FC<TaskDialogsSectionProps> = ({
         }}
         task={editingTask}
         onUploadAttachment={handleUploadAttachment}
-        onSave={async (task) => {
-          console.log("Saving task:", task);
-          try {
-            if (editingTask) {
-              // Make a complete copy to ensure we have all required fields
-              const updatedTask = { ...editingTask, ...task } as Task;
-              await handleUpdateTask(updatedTask);
-            } else {
-              await handleCreateTask(task);
-            }
-          } finally {
-            // Ensure dialog closes even if there's an error
-            setTaskDialogOpen(false);
-            setEditingTask(null);
-          }
-        }}
       />
       
       <ColumnDialog

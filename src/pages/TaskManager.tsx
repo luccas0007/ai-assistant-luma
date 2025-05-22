@@ -2,6 +2,8 @@
 import React, { useState } from 'react';
 import { Toaster } from '@/components/ui/toaster';
 import { TaskProvider, useTaskContext } from '@/context/TaskContext';
+import { Task } from '@/types/task';
+import { Project } from '@/types/project';
 
 // Import our components
 import ProjectToolbar from '@/components/tasks/ProjectToolbar';
@@ -9,7 +11,7 @@ import TaskManagerErrorAlert from '@/components/tasks/TaskManagerErrorAlert';
 import TaskBoardContainer from '@/components/tasks/TaskBoardContainer';
 import TaskDialog from '@/components/tasks/TaskDialog';
 import ColumnDialog from '@/components/tasks/ColumnDialog';
-import ProjectDialog from '@/components/tasks/ProjectDialog';
+import ProjectDialog from '@/components/projects/ProjectDialog';
 import DeleteProjectDialog from '@/components/tasks/DeleteProjectDialog';
 
 const TaskManagerContent = () => {
@@ -27,6 +29,7 @@ const TaskManagerContent = () => {
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [columnDialogOpen, setColumnDialogOpen] = useState(false);
+  const [newColumnTitle, setNewColumnTitle] = useState('');
   const [projectDialogOpen, setProjectDialogOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [deleteProjectDialogOpen, setDeleteProjectDialogOpen] = useState(false);
@@ -92,16 +95,12 @@ const TaskManagerContent = () => {
   };
 
   // Handle adding a new column
-  const handleAddColumn = () => {
-    setColumnDialogOpen(true);
-  };
-
-  // Handle saving a new column
-  const handleSaveColumn = async (title: string) => {
-    if (title.trim() === '') return;
+  const handleAddColumn = async () => {
+    if (newColumnTitle.trim() === '') return;
     
-    await addColumn(title);
+    await addColumn(newColumnTitle);
     setColumnDialogOpen(false);
+    setNewColumnTitle('');
   };
 
   // Handle attachment upload (stub implementation)
@@ -146,7 +145,9 @@ const TaskManagerContent = () => {
       <ColumnDialog
         isOpen={columnDialogOpen}
         onClose={() => setColumnDialogOpen(false)}
-        onSave={handleSaveColumn}
+        title={newColumnTitle}
+        onTitleChange={setNewColumnTitle}
+        onAddColumn={handleAddColumn}
         isProcessing={isProcessing}
       />
       

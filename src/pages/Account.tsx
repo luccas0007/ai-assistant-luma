@@ -5,9 +5,9 @@ import { Session } from '@supabase/supabase-js';
 
 export default function Account({ session }: { session: Session }) {
   const [loading, setLoading] = useState(true);
-  const [username, setUsername] = useState('');
-  const [website, setWebsite] = useState('');
-  const [avatar_url, setAvatarUrl] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState('');
 
   useEffect(() => {
     async function getProfile() {
@@ -15,15 +15,15 @@ export default function Account({ session }: { session: Session }) {
       
       const { data, error } = await supabase
         .from('profiles')
-        .select('username, website, avatar_url')
+        .select('first_name, last_name, avatar_url')
         .eq('id', session.user.id)
         .single();
       
       if (error) {
         console.warn('Error loading user profile', error);
       } else if (data) {
-        setUsername(data.username || '');
-        setWebsite(data.website || '');
+        setFirstName(data.first_name || '');
+        setLastName(data.last_name || '');
         setAvatarUrl(data.avatar_url || '');
       }
       
@@ -39,9 +39,9 @@ export default function Account({ session }: { session: Session }) {
       
       const { error } = await supabase.from('profiles').upsert({
         id: session.user.id,
-        username,
-        website,
-        avatar_url,
+        first_name: firstName,
+        last_name: lastName,
+        avatar_url: avatarUrl,
         updated_at: new Date().toISOString(),
       });
 
@@ -73,27 +73,27 @@ export default function Account({ session }: { session: Session }) {
           </div>
           
           <div>
-            <label className="block text-sm font-medium mb-1" htmlFor="username">
-              Username
+            <label className="block text-sm font-medium mb-1" htmlFor="firstName">
+              First Name
             </label>
             <input
-              id="username"
+              id="firstName"
               type="text"
-              value={username || ''}
-              onChange={(e) => setUsername(e.target.value)}
+              value={firstName || ''}
+              onChange={(e) => setFirstName(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
             />
           </div>
           
           <div>
-            <label className="block text-sm font-medium mb-1" htmlFor="website">
-              Website
+            <label className="block text-sm font-medium mb-1" htmlFor="lastName">
+              Last Name
             </label>
             <input
-              id="website"
-              type="url"
-              value={website || ''}
-              onChange={(e) => setWebsite(e.target.value)}
+              id="lastName"
+              type="text"
+              value={lastName || ''}
+              onChange={(e) => setLastName(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
             />
           </div>

@@ -24,7 +24,7 @@ const ProjectManagementSection: React.FC<ProjectManagementSectionProps> = ({
   handleDeleteProject
 }) => {
   // State for project deletion confirmation
-  const [projectToDelete, setProjectToDelete] = useState<null | { id: string; name: string }>(null);
+  const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
 
   const handleCreateNewProject = () => {
     setEditingProject(null);
@@ -37,10 +37,7 @@ const ProjectManagementSection: React.FC<ProjectManagementSectionProps> = ({
   };
   
   const handleDeleteProjectRequest = (project: Project) => {
-    setProjectToDelete({
-      id: project.id,
-      name: project.name
-    });
+    setProjectToDelete(project);
   };
   
   const confirmDeleteProject = async () => {
@@ -66,8 +63,9 @@ const ProjectManagementSection: React.FC<ProjectManagementSectionProps> = ({
       <DeleteProjectDialog
         isOpen={projectToDelete !== null}
         onClose={() => setProjectToDelete(null)}
-        projectName={projectToDelete?.name || null}
-        onConfirmDelete={confirmDeleteProject}
+        project={projectToDelete}
+        onConfirm={confirmDeleteProject}
+        isProcessing={isProcessing}
       />
     </>
   );
